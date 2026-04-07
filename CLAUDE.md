@@ -8,16 +8,18 @@ Weckrain Dashboard is a single-page weather/activity monitoring dashboard for a 
 
 ## Architecture
 
+- **This repo is frontend-only.** Backend (Code.gs), hardware setup, and full documentation are separate.
 - **Single-file app**: Everything (HTML, CSS, React components, logic) is in `index.html` (874 lines)
 - **Runtime-transpiled React**: Uses React 18 + Babel standalone from CDN (`<script type="text/babel">`) — no JSX build step
-- **Backend**: Google Apps Script Web App (`API_URL` constant) serves JSON data via `?format=json&pw=<password>`
-- **Hosting**: GitHub Pages with custom domain `weckrain.derkarsten.de` (see `CNAME`)
+- **Backend**: Google Apps Script (Code.gs) polls sensors via Fritz!Box AHA-HTTP-Interface every 30 min, logs to Google Sheets, and serves a JSON API (`?format=json&pw=<password>`)
+- **Hosting**: GitHub Pages with custom domain `weckrain.derkarsten.de` (CNAME → karstenhoffmann.github.io)
 - **Language**: UI is entirely in German
+- **Concept**: Displays sensor data as an anonymized "weather station" — only insiders know what it really monitors
 
 ## Key Concepts
 
 - **Time Slots (SLOTS)**: Day is divided into 6 slots — Nachts (00-04), Morgens (04-08), Vormittags (08-12), Mittags (12-14), Nachmittags (14-18), Abends (18-24)
-- **Sensor values**: Each slot has 4 sensors (`k`=Küche, `s`=Lesezimmer, `e`=Eingang, `g`=Gesang) with values: `true` (active), `false` (inactive), `"offline"`, `"fehler"` (error), or `null` (no data)
+- **Sensors**: `k`=Küche (FRITZ!DECT 200/Wasserkocher), `s`=Lesezimmer (FRITZ!DECT 200/Fernseher), `e`=Eingang (FRITZ!DECT 350/Haustür), `g`=Gesang (Fritz!Fon X6/Anrufliste). Values: `true` (active), `false` (inactive), `"offline"`, `"fehler"` (error), or `null` (no data)
 - **Sky themes (SKY)**: Each slot has a visual theme controlling sun position, star visibility, colors, etc.
 - **Weather labels**: Derived from activity count — Freundlich (8+), Heiter (4+), Ruhig (1+), Neblig (0)
 
@@ -35,7 +37,11 @@ Weckrain Dashboard is a single-page weather/activity monitoring dashboard for a 
 No build or test commands. To develop:
 1. Edit `index.html` directly
 2. Open in a browser (or serve with any static file server)
-3. Deploy by pushing to the branch served by GitHub Pages
+3. Deploy by pushing to `main` — GitHub Pages deploys automatically
+
+## Auth
+
+Password-protected: prompted on first visit, stored in localStorage. The password is configured in the Google Apps Script Config sheet (`DASHBOARD_PW`). Can also be passed via URL param `?pw=`.
 
 ## Conventions
 
