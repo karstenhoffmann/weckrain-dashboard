@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Slot-Row Varianten — Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #080e1a;
+      color: #e8edf5;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      padding: 0;
+    }
+
+    /* --- Improved color tokens --- */
+    :root {
+      --textHi: #e8edf5;
+      --textMid: #9aabbe;
+      --textLo: #8494a7;       /* improved from #5a6a80 */
+      --textFaint: #6b7f94;    /* improved from #3d4d60 */
+      --bg: #080e1a;
+      --bgCard: #0d1526;
+      --kitchen: #f0c45a;
+      --tv: #6ba4d4;
+      --door: #7bc77e;
+      --bird: #c49bdb;
+      --error: #c27a5a;
+      --dotOff: #1a2030;
+    }
+
+    .frame {
+      max-width: 390px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #1a1830 0%, #0d1526 100%);
+      min-height: 100vh;
+    }
+
+    .section-label {
+      text-align: center;
+      padding: 32px 16px 8px;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--textFaint);
+      font-weight: 500;
+    }
+    .section-label:first-child { padding-top: 24px; }
+
+    .option-title {
+      text-align: center;
+      padding: 8px 16px 4px;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--textHi);
+      letter-spacing: 0.5px;
+    }
+    .option-desc {
+      text-align: center;
+      padding: 2px 20px 16px;
+      font-size: 13px;
+      color: var(--textMid);
+      line-height: 1.5;
+    }
+
+    .divider {
+      height: 1px;
+      margin: 8px 32px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    }
+
+    .thick-divider {
+      height: 3px;
+      margin: 24px 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    }
+
+    /* ===== Sensor Dots (shared) ===== */
+    .dots {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--dotOff);
+    }
+    .dot.on-k { background: var(--kitchen); box-shadow: 0 0 5px var(--kitchen); }
+    .dot.on-s { background: var(--tv); box-shadow: 0 0 5px var(--tv); }
+    .dot.on-e { background: var(--door); box-shadow: 0 0 5px var(--door); }
+    .dot.on-g { background: var(--bird); box-shadow: 0 0 5px var(--bird); }
+    .dot.err { background: var(--error); opacity: 0.6; }
+    .dot.nodata { background: var(--textFaint); opacity: 0.2; }
+
+    /* ===== Aktuell (Referenz) ===== */
+    .current-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1px;
+      padding: 14px 4px 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .current-row .slot-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 14px 6px 12px;
+      cursor: pointer;
+      min-width: 52px;
+      flex: 1 1 0;
+      text-align: center;
+    }
+    .current-row .slot-btn.selected {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .current-row .slot-name {
+      font-size: 13px;
+      color: #5a6a80; /* original low contrast */
+      font-weight: 400;
+    }
+    .current-row .slot-btn.selected .slot-name {
+      color: var(--textHi);
+      font-weight: 500;
+    }
+    .current-row .slot-time {
+      font-size: 11px;
+      color: #3d4d60; /* original faint — very hard to read */
+      margin-top: 3px;
+    }
+    .current-row .dots { margin-top: 7px; }
+
+    /* ===== OPTION A: 3×2 Grid ===== */
+    .option-a-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 14px 12px 8px;
+    }
+    .option-a-grid .slot-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 14px 8px 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .option-a-grid .slot-btn.selected {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .option-a-grid .slot-name {
+      font-size: 15px;
+      color: var(--textLo);
+      font-weight: 400;
+    }
+    .option-a-grid .slot-btn.selected .slot-name {
+      color: var(--textHi);
+      font-weight: 500;
+    }
+    .option-a-grid .slot-time {
+      font-size: 13px;
+      color: var(--textFaint);
+      margin-top: 4px;
+    }
+    .option-a-grid .dots {
+      margin-top: 8px;
+      gap: 6px;
+    }
+    .option-a-grid .dot {
+      width: 9px;
+      height: 9px;
+    }
+
+    /* ===== OPTION C: Timeline ===== */
+    .option-c-wrapper {
+      padding: 14px 16px 8px;
+    }
+    .option-c-selected-label {
+      text-align: center;
+      font-size: 15px;
+      color: var(--textHi);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .option-c-selected-sub {
+      text-align: center;
+      font-size: 13px;
+      color: var(--textFaint);
+      margin-bottom: 14px;
+    }
+    .timeline {
+      display: flex;
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+    }
+    .tl-segment {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      position: relative;
+      transition: all 0.3s ease;
+      border-right: 1px solid rgba(255,255,255,0.04);
+    }
+    .tl-segment:last-child { border-right: none; }
+    /* Proportional widths: 4h + 4h + 4h + 2h + 4h + 6h = 24h */
+    .tl-segment.w4 { flex: 4; }
+    .tl-segment.w2 { flex: 2; }
+    .tl-segment.w6 { flex: 6; }
+    .tl-segment {
+      background: rgba(255,255,255,0.03);
+    }
+    .tl-segment.selected {
+      background: rgba(255,255,255,0.1);
+    }
+    .tl-segment .dots {
+      gap: 3px;
+    }
+    .tl-segment .dot {
+      width: 7px;
+      height: 7px;
+    }
+
+    .tl-hours {
+      display: flex;
+      width: 100%;
+      padding: 6px 0 0;
+    }
+    .tl-hour-label {
+      font-size: 11px;
+      color: var(--textFaint);
+      text-align: center;
+    }
+    .tl-hour-label.w4 { flex: 4; }
+    .tl-hour-label.w2 { flex: 2; }
+    .tl-hour-label.w6 { flex: 6; }
+
+    /* Slot name labels below */
+    .tl-names {
+      display: flex;
+      width: 100%;
+      padding: 2px 0 0;
+    }
+    .tl-name-label {
+      font-size: 12px;
+      color: var(--textFaint);
+      text-align: center;
+      font-weight: 400;
+    }
+    .tl-name-label.selected {
+      color: var(--textMid);
+      font-weight: 500;
+    }
+    .tl-name-label.w4 { flex: 4; }
+    .tl-name-label.w2 { flex: 2; }
+    .tl-name-label.w6 { flex: 6; }
+
+    /* Active segment indicator */
+    .tl-segment.selected::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 20%;
+      right: 20%;
+      height: 2px;
+      background: var(--textMid);
+      border-radius: 1px;
+    }
+
+    /* ===== OPTION D: Kurzlabels ===== */
+    .option-d-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 4px;
+      padding: 14px 8px 0;
+    }
+    .option-d-row .slot-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 12px 4px 10px;
+      cursor: pointer;
+      flex: 1 1 0;
+      text-align: center;
+      min-width: 0;
+      transition: all 0.3s ease;
+    }
+    .option-d-row .slot-btn.selected {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .option-d-row .slot-name {
+      font-size: 14px;
+      color: var(--textLo);
+      font-weight: 400;
+    }
+    .option-d-row .slot-btn.selected .slot-name {
+      color: var(--textHi);
+      font-weight: 500;
+    }
+    .option-d-row .dots {
+      margin-top: 8px;
+      gap: 4px;
+    }
+    .option-d-row .dot {
+      width: 7px;
+      height: 7px;
+    }
+    .option-d-selected-time {
+      text-align: center;
+      padding: 8px 0 8px;
+      font-size: 13px;
+      color: var(--textFaint);
+    }
+
+    /* ===== Footer ===== */
+    .mockup-footer {
+      text-align: center;
+      padding: 32px 16px 48px;
+      font-size: 12px;
+      color: var(--textFaint);
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+
+    <!-- ==================== AKTUELL (Referenz) ==================== -->
+    <div class="section-label">Aktuell (Referenz)</div>
+    <div class="option-desc" style="color: var(--error);">
+      Buttons gequetscht, "Nachmittags" &amp; "Abends" kaum sichtbar, schwacher Kontrast
+    </div>
+
+    <div class="current-row">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morgens</div>
+        <div class="slot-time">04–08</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vormittags</div>
+        <div class="slot-time">08–12</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachmittags</div>
+        <div class="slot-time">14–18</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <!-- ==================== OPTION A: 3×2 Grid ==================== -->
+    <div class="section-label">Option A</div>
+    <div class="option-title">3&times;2 Grid</div>
+    <div class="option-desc">
+      Zwei Zeilen à drei Slots. Alles sichtbar, kein Scrollen, volle Labels, mehr Platz pro Button.
+    </div>
+
+    <div class="option-a-grid">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morgens</div>
+        <div class="slot-time">04–08</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vormittags</div>
+        <div class="slot-time">08–12</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachmittags</div>
+        <div class="slot-time">14–18</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <!-- ==================== OPTION C: Timeline ==================== -->
+    <div class="section-label">Option C</div>
+    <div class="option-title">Timeline</div>
+    <div class="option-desc">
+      Durchgehende Zeitleiste 00–24h. Segmente proportional zur Dauer. Tap selektiert. Kompakt und modern.
+    </div>
+
+    <div class="option-c-wrapper">
+      <div class="option-c-selected-label">Abends</div>
+      <div class="option-c-selected-sub">18–24 Uhr</div>
+
+      <div class="timeline">
+        <!-- Nachts 4h -->
+        <div class="tl-segment w4">
+          <div class="dots">
+            <div class="dot on-k"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+        <!-- Morgens 4h -->
+        <div class="tl-segment w4">
+          <div class="dots">
+            <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot on-g"></div>
+          </div>
+        </div>
+        <!-- Vormittags 4h -->
+        <div class="tl-segment w4">
+          <div class="dots">
+            <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot on-g"></div>
+          </div>
+        </div>
+        <!-- Mittags 2h -->
+        <div class="tl-segment w2">
+          <div class="dots">
+            <div class="dot on-k"></div><div class="dot"></div>
+          </div>
+        </div>
+        <!-- Nachmittags 4h -->
+        <div class="tl-segment w4">
+          <div class="dots">
+            <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot"></div>
+          </div>
+        </div>
+        <!-- Abends 6h (selected) -->
+        <div class="tl-segment w6 selected">
+          <div class="dots">
+            <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hour labels -->
+      <div class="tl-hours">
+        <div class="tl-hour-label w4">00</div>
+        <div class="tl-hour-label w4">04</div>
+        <div class="tl-hour-label w4">08</div>
+        <div class="tl-hour-label w2">12</div>
+        <div class="tl-hour-label w4">14</div>
+        <div class="tl-hour-label w6">18</div>
+      </div>
+
+      <!-- Slot name labels below -->
+      <div class="tl-names">
+        <div class="tl-name-label w4">Na.</div>
+        <div class="tl-name-label w4">Mo.</div>
+        <div class="tl-name-label w4">Vo.</div>
+        <div class="tl-name-label w2">Mi.</div>
+        <div class="tl-name-label w4">Nm.</div>
+        <div class="tl-name-label w6 selected">Ab.</div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <!-- ==================== OPTION D: Kurzlabels ==================== -->
+    <div class="section-label">Option D</div>
+    <div class="option-title">Kurzlabels</div>
+    <div class="option-desc">
+      Einzeilig mit abgekürzten Namen. Zeitbereich wird nur für den selektierten Slot angezeigt.
+    </div>
+
+    <div class="option-d-row">
+      <div class="slot-btn">
+        <div class="slot-name">Nacht</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morg.</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vorm.</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittag</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachm.</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abend</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="option-d-selected-time">Abends &middot; 18–24 Uhr</div>
+
+    <div class="thick-divider"></div>
+
+    <!-- ==================== Footer ==================== -->
+    <div class="mockup-footer">
+      Statischer Mockup — keine Business-Logic<br>
+      Gleiche Mock-Daten in allen Varianten<br>
+      Selektierter Slot: Abends (18–24)
+    </div>
+
+  </div>
+</body>
+</html>
