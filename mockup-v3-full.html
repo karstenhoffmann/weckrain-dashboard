@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>V3 — Stacked Bars (Komplettansicht)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #080e1a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :root {
+      --textHi: #e8edf5;
+      --textMid: #a0b0c4;
+      --textLo: #8494a7;
+      --textFaint: #5e7086;
+      --kitchen: #f0c45a;
+      --tv: #6ba4d4;
+      --door: #7bc77e;
+      --bird: #c49bdb;
+      --error: #c27a5a;
+      --dotOff: #1a2030;
+      --surface: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.06);
+    }
+
+    .page {
+      max-width: 390px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #1a1830 0%, #0e1625 50%, #0a1018 100%);
+      color: var(--textHi);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ═══ HEADER ═══ */
+    .header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 16px 8px;
+    }
+    .header-sub {
+      font-size: 11px;
+      letter-spacing: 4px;
+      color: var(--textFaint);
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .weather-pill {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--kitchen);
+      padding: 3px 12px;
+      border-radius: 10px;
+      background: rgba(240,196,90,0.08);
+      border: 1px solid rgba(240,196,90,0.15);
+    }
+
+    /* ═══ DAY TABS ═══ */
+    .day-tabs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      padding: 8px 4px 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .day-tabs::-webkit-scrollbar { display: none; }
+    .day-tab {
+      flex: 0 0 auto;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 8px 8px 0 0;
+      padding: 8px 10px 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .day-tab.selected {
+      background: rgba(255,255,255,0.05);
+      border-bottom-color: var(--kitchen);
+    }
+    .day-tab .dt-wd {
+      font-size: 14px;
+      color: var(--textLo);
+      font-weight: 400;
+    }
+    .day-tab.selected .dt-wd { color: var(--textHi); font-weight: 500; }
+    .day-tab .dt-date {
+      font-size: 12px;
+      color: var(--textFaint);
+      margin-top: 1px;
+    }
+    .day-tab.selected .dt-date { color: var(--textLo); }
+    .now-btn {
+      flex: 0 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .now-btn span {
+      font-size: 12px;
+      color: var(--textMid);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    /* ═══ HOUSE PLACEHOLDER ═══ */
+    .house-wrap {
+      padding: 4px 10px 0;
+    }
+    .house-placeholder {
+      width: 100%;
+      aspect-ratio: 520 / 320;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #1a1535 0%, #2a1d3a 40%, #1a2030 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: var(--textFaint);
+      opacity: 0.5;
+      font-style: italic;
+    }
+
+    /* ═══ LEGEND (2×2 Grid) ═══ */
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px 20px;
+      padding: 14px 24px 4px;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 4px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-dot.active { box-shadow: 0 0 8px currentColor, 0 0 3px currentColor; }
+    .legend-dot.inactive { opacity: 0.2; }
+    .legend-label {
+      font-size: 15px;
+      color: var(--textMid);
+    }
+    .legend-item.inactive { opacity: 0.25; }
+    .legend-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--textFaint);
+      padding: 2px 16px 6px;
+      opacity: 0.7;
+    }
+
+    /* ═══ SLOT NAV — V3 Stacked Bars ═══ */
+    .slot-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 6px 8px;
+      gap: 3px;
+    }
+    .slot-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 10px 4px 8px;
+      cursor: pointer;
+      flex: 1 1 0;
+      text-align: center;
+      min-width: 0;
+    }
+    .slot-btn.selected {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .slot-name {
+      font-size: 13px;
+      color: var(--textLo);
+      font-weight: 400;
+    }
+    .slot-btn.selected .slot-name {
+      color: var(--textHi);
+      font-weight: 500;
+    }
+    .slot-time {
+      font-size: 12px;
+      color: var(--textFaint);
+      margin-top: 2px;
+    }
+    .bars-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin-top: 6px;
+      padding: 0 4px;
+    }
+    .bar-line {
+      width: 100%;
+      max-width: 28px;
+      height: 3px;
+      border-radius: 1.5px;
+      background: var(--dotOff);
+    }
+    .bar-line.on-k { background: var(--kitchen); box-shadow: 0 0 6px var(--kitchen); }
+    .bar-line.on-s { background: var(--tv); box-shadow: 0 0 6px var(--tv); }
+    .bar-line.on-e { background: var(--door); box-shadow: 0 0 6px var(--door); }
+    .bar-line.on-g { background: var(--bird); box-shadow: 0 0 6px var(--bird); }
+
+    /* ═══ DIVIDER ═══ */
+    .divider {
+      height: 1px;
+      margin: 12px 48px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* ═══ HISTORY GRID (MiniHouse-Style) ═══ */
+    .weekly-section {
+      padding: 10px 6px 8px;
+    }
+    .weekly-title {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--textLo);
+      text-align: center;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+    .weekly-grid {
+      display: grid;
+      grid-template-columns: 54px repeat(6, 1fr);
+      gap: 4px 3px;
+      align-items: center;
+    }
+    .wg-header {
+      font-size: 11px;
+      color: var(--textFaint);
+      text-align: center;
+      font-weight: 400;
+      padding-bottom: 2px;
+    }
+    .wg-day {
+      font-size: 12px;
+      color: var(--textFaint);
+      font-weight: 400;
+    }
+    .wg-day.selected { color: var(--textMid); font-weight: 500; }
+
+    /* MiniHouse cells */
+    .mh-cell {
+      display: flex;
+      justify-content: center;
+      padding: 3px 0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .mh-cell.selected { background: rgba(255,255,255,0.07); }
+    .mini-house {
+      width: 30px;
+      height: 28px;
+    }
+
+    /* ═══ FOOTER ═══ */
+    .footer {
+      text-align: center;
+      padding: 20px 16px 44px;
+      font-size: 13px;
+      color: var(--textFaint);
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- HEADER -->
+    <div class="header">
+      <span class="header-sub">Wetterbericht</span>
+      <span class="weather-pill">Freundlich</span>
+    </div>
+
+    <!-- DAY TABS -->
+    <div class="day-tabs">
+      <div class="day-tab">
+        <div class="dt-wd">Mi</div>
+        <div class="dt-date">01.04.</div>
+      </div>
+      <div class="day-tab">
+        <div class="dt-wd">Do</div>
+        <div class="dt-date">02.04.</div>
+      </div>
+      <div class="day-tab">
+        <div class="dt-wd">Fr</div>
+        <div class="dt-date">03.04.</div>
+      </div>
+      <div class="day-tab">
+        <div class="dt-wd">Sa</div>
+        <div class="dt-date">04.04.</div>
+      </div>
+      <div class="day-tab">
+        <div class="dt-wd">So</div>
+        <div class="dt-date">05.04.</div>
+      </div>
+      <div class="day-tab">
+        <div class="dt-wd">Mo</div>
+        <div class="dt-date">06.04.</div>
+      </div>
+      <div class="day-tab selected">
+        <div class="dt-wd">Di</div>
+        <div class="dt-date">07.04.</div>
+      </div>
+      <div class="now-btn"><span>Jetzt</span></div>
+    </div>
+
+    <!-- HOUSE -->
+    <div class="house-wrap">
+      <div class="house-placeholder">House SVG</div>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot active" style="background: var(--kitchen); color: var(--kitchen);"></div>
+        <span class="legend-label">Küche</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot active" style="background: var(--tv); color: var(--tv);"></div>
+        <span class="legend-label">Lesezimmer</span>
+      </div>
+      <div class="legend-item inactive">
+        <div class="legend-dot" style="background: var(--door);"></div>
+        <span class="legend-label">Eingang</span>
+      </div>
+      <div class="legend-item inactive">
+        <div class="legend-dot" style="background: var(--bird);"></div>
+        <span class="legend-label">Gesang</span>
+      </div>
+    </div>
+    <div class="legend-hint">Leuchtet bei Aktivität im Zeitfenster</div>
+
+    <!-- SLOT NAV (V3 — Stacked Bars) -->
+    <div class="slot-row">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div><div class="bar-line"></div><div class="bar-line"></div><div class="bar-line"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morg.</div>
+        <div class="slot-time">04–08</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div><div class="bar-line on-s"></div><div class="bar-line"></div><div class="bar-line on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vorm.</div>
+        <div class="slot-time">08–12</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div><div class="bar-line on-s"></div><div class="bar-line on-e"></div><div class="bar-line on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div><div class="bar-line"></div><div class="bar-line on-e"></div><div class="bar-line"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachm.</div>
+        <div class="slot-time">14–18</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div><div class="bar-line on-s"></div><div class="bar-line on-e"></div><div class="bar-line"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div><div class="bar-line on-s"></div><div class="bar-line"></div><div class="bar-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="divider"></div>
+
+    <!-- HISTORY GRID -->
+    <div class="weekly-section">
+      <div class="weekly-title">Wochenverlauf</div>
+      <div class="weekly-grid">
+        <!-- Header -->
+        <div></div>
+        <div class="wg-header">Na</div>
+        <div class="wg-header">Mo</div>
+        <div class="wg-header">Vo</div>
+        <div class="wg-header">Mi</div>
+        <div class="wg-header">Nm</div>
+        <div class="wg-header">Ab</div>
+
+        <!-- Mi 01.04. -->
+        <div class="wg-day">Mi 01.04.</div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+          </svg>
+        </div>
+
+        <!-- Do 02.04. -->
+        <div class="wg-day">Do 02.04.</div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+          </svg>
+        </div>
+
+        <!-- Di 07.04. (today/selected) -->
+        <div class="wg-day selected">Di 07.04.</div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+          </svg>
+        </div>
+        <div class="mh-cell">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
+          </svg>
+        </div>
+        <div class="mh-cell selected">
+          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
+            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
+            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
+            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
+            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">74653 &middot; Letzte Messung vor 14 Min.</div>
+
+  </div>
+</body>
+</html>
