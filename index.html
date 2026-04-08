@@ -803,7 +803,7 @@
                 </div>
 
                 {/* TIME SLOTS (Stacked Bars) */}
-                <div style={{ display: "flex", justifyContent: "space-between", gap: mob ? 3 : lg ? 8 : 4, padding: mob ? "10px 6px 8px" : lg ? "8px 12px 8px" : "14px 8px 10px", maxWidth: lg ? 660 : 620, margin: "0 auto" }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: mob ? 3 : "clamp(4px, 1vw, 8px)", padding: mob ? "10px 6px 8px" : "clamp(10px, 1.5vw, 16px) clamp(8px, 1.5vw, 16px) clamp(8px, 1vw, 12px)", maxWidth: mob ? undefined : "clamp(420px, 65vw, 660px)", margin: "0 auto" }}>
                   {SLOTS.map((name, idx) => {
                     const s = day.slots[idx];
                     const sel = idx === selSlot;
@@ -820,18 +820,18 @@
                         style={{
                           background: sel ? "rgba(255,255,255,0.06)" : "transparent",
                           border: sel ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
-                          borderRadius: lg ? 12 : 10, padding: mob ? "10px 4px 8px" : lg ? "14px 10px 12px" : "10px 6px 8px", cursor: "pointer", flex: "1 1 0", minWidth: 0, overflow: "hidden", transition: T("0.3s"),
+                          borderRadius: mob ? 10 : "clamp(10px, 1.2vw, 12px)", padding: mob ? "10px 4px 8px" : "clamp(10px, 1.3vw, 14px) clamp(6px, 1vw, 10px) clamp(8px, 1vw, 12px)", cursor: "pointer", flex: "1 1 0", minWidth: 0, overflow: "hidden", transition: T("0.3s"),
                         }}>
-                        <div style={{ fontSize: mob ? 13 : lg ? 15 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff, whiteSpace: "nowrap" }}>{SLOT_SHORT[name]}</div>
-                        <div style={{ fontSize: mob ? 12 : lg ? 13 : 11, color: C.textFaint, marginTop: 2, fontFamily: ff, whiteSpace: "nowrap" }}>{SLOT_LABELS[name]}</div>
-                        <div style={{ marginTop: lg ? 8 : 6, display: "flex", flexDirection: "column", alignItems: "center", gap: lg ? 3 : 2, padding: "0 4px" }}>
+                        <div style={{ fontSize: mob ? 13 : "clamp(12px, calc(8px + 0.8vw), 15px)", fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff, whiteSpace: "nowrap" }}>{SLOT_SHORT[name]}</div>
+                        <div style={{ fontSize: mob ? 12 : "clamp(11px, calc(8px + 0.55vw), 13px)", color: C.textFaint, marginTop: 2, fontFamily: ff, whiteSpace: "nowrap" }}>{SLOT_LABELS[name]}</div>
+                        <div style={{ marginTop: mob ? 6 : "clamp(6px, 0.8vw, 8px)", display: "flex", flexDirection: "column", alignItems: "center", gap: mob ? 2 : "clamp(2px, 0.3vw, 3px)", padding: "0 4px" }}>
                           {nd && slotPast ? (
-                            <div style={{ width: "100%", maxWidth: lg ? 36 : 30, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: C.error, opacity: 0.4 }} />
+                            <div style={{ width: "100%", maxWidth: mob ? 28 : "clamp(28px, 3.5vw, 36px)", height: mob ? 3 : "clamp(3px, 0.4vw, 4px)", borderRadius: 2, backgroundColor: C.error, opacity: 0.4 }} />
                           ) : nd && !slotPast ? (
-                            <div style={{ width: "100%", maxWidth: lg ? 36 : 30, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: C.textFaint, opacity: 0.3 }} />
+                            <div style={{ width: "100%", maxWidth: mob ? 28 : "clamp(28px, 3.5vw, 36px)", height: mob ? 3 : "clamp(3px, 0.4vw, 4px)", borderRadius: 2, backgroundColor: C.textFaint, opacity: 0.3 }} />
                           ) : sensors.map((d, i) => (
                             <div key={i} style={{
-                              width: "100%", maxWidth: lg ? 36 : 30, height: lg ? 4 : 3, borderRadius: 2,
+                              width: "100%", maxWidth: mob ? 28 : "clamp(28px, 3.5vw, 36px)", height: mob ? 3 : "clamp(3px, 0.4vw, 4px)", borderRadius: 2,
                               backgroundColor: isOn(d.v) ? d.c : isError(d.v) ? C.error : "#1a2030",
                               boxShadow: isOn(d.v) ? "0 0 6px "+d.c : "none", transition: T("0.3s"),
                             }} />
