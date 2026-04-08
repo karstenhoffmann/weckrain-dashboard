@@ -822,7 +822,7 @@
                           border: sel ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
                           borderRadius: 10, padding: mob ? "10px 4px 8px" : lg ? "12px 8px 10px" : "10px 8px 8px", cursor: "pointer", flex: "1 1 0", minWidth: 0, transition: T("0.3s"),
                         }}>
-                        <div style={{ fontSize: mob ? 13 : lg ? 13 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff }}>{mob ? SLOT_SHORT[name] : name}</div>
+                        <div style={{ fontSize: mob ? 13 : lg ? 13 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff }}>{SLOT_SHORT[name]}</div>
                         <div style={{ fontSize: mob ? 12 : lg ? 12 : 11, color: C.textFaint, marginTop: 2, fontFamily: ff }}>{SLOT_LABELS[name]}</div>
                         <div style={{ marginTop: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "0 4px" }}>
                           {nd && slotPast ? (
