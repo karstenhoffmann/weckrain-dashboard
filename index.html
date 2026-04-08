@@ -650,7 +650,7 @@
     }
 
     // ─── MAIN DASHBOARD ──────────────────────────────────────────────────
-    function DashboardMain({ history, lastPoll, showBird }) {
+    function DashboardMain({ history, lastPoll, showBird, onToggleBird }) {
       const [selDay, setSelDay] = useState(0);
       const [selSlot, setSelSlot] = useState(getNowSlot());
       const mob = useIsMobile();
@@ -825,6 +825,13 @@
           {/* FOOTER */}
           <div style={{ textAlign: "center", padding: mob ? "20px 12px 40px" : "28px 16px 40px", color: C.textFaint, fontSize: mob ? 13 : 11, letterSpacing: 1, fontFamily: ff }}>
             74653 &middot; Letzte Messung {timeSince(lastPoll)}
+            {showBird && <div style={{ marginTop: 12 }}>
+              <button onClick={onToggleBird} style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontSize: mob ? 11 : 10, color: C.textFaint, fontFamily: ff, opacity: 0.4,
+                padding: "4px 8px", transition: T("0.3s"),
+              }}>Erweiterten Modus deaktivieren</button>
+            </div>}
           </div>
         </div>
       );
@@ -840,7 +847,7 @@
         if (urlPw) { localStorage.setItem("wetter_pw", urlPw); return urlPw; }
         return localStorage.getItem("wetter_pw") || "";
       });
-      const [showBird] = useState(() => {
+      const [showBird, setShowBird] = useState(() => {
         const urlMode = new URLSearchParams(window.location.search).get("mode");
         if (urlMode === "karsten") { localStorage.setItem("wetter_mode", "karsten"); return true; }
         return localStorage.getItem("wetter_mode") === "karsten";
@@ -914,7 +921,7 @@
 
       if (state === "login") return <LoginScreen onSubmit={handleLogin} wrongPw={wrongPw} mob={mob} />;
       if (state === "loading") return <LoadingScreen mob={mob} />;
-      if (state === "ready" && data) return <DashboardMain history={data} lastPoll={lastPoll} showBird={showBird} />;
+      if (state === "ready" && data) return <DashboardMain history={data} lastPoll={lastPoll} showBird={showBird} onToggleBird={() => { setShowBird(false); localStorage.removeItem("wetter_mode"); }} />;
       return <LoadingScreen mob={mob} />;
     }
 
