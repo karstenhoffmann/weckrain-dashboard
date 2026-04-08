@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Slot-Labels — Variante V1 vs V2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #080e1a;
+      color: #e8edf5;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :root {
+      --textHi: #e8edf5;
+      --textMid: #a0b0c4;
+      --textLo: #8494a7;
+      --textFaint: #5e7086;
+      --kitchen: #f0c45a;
+      --tv: #6ba4d4;
+      --door: #7bc77e;
+      --bird: #c49bdb;
+      --error: #c27a5a;
+      --dotOff: #1a2030;
+    }
+
+    .frame {
+      max-width: 390px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #1a1830 0%, #0e1625 100%);
+      min-height: 100vh;
+    }
+
+    /* ── Section headers ── */
+    .variant-label {
+      text-align: center;
+      padding: 36px 16px 6px;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--textFaint);
+      font-weight: 500;
+    }
+    .variant-label:first-child { padding-top: 24px; }
+    .variant-name {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--textHi);
+      padding: 4px 16px 2px;
+    }
+    .variant-desc {
+      text-align: center;
+      font-size: 13px;
+      color: var(--textMid);
+      padding: 2px 24px 16px;
+      line-height: 1.5;
+    }
+
+    .thick-divider {
+      height: 3px;
+      margin: 20px 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    }
+
+    /* ── Shared slot row styles ── */
+    .slot-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 6px 8px;
+      flex-wrap: nowrap;
+      gap: 3px;
+    }
+    .slot-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      flex: 1 1 0;
+      text-align: center;
+      min-width: 0;
+      transition: all 0.3s ease;
+    }
+    .slot-btn.selected {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .slot-name {
+      color: var(--textLo);
+      font-weight: 400;
+    }
+    .slot-btn.selected .slot-name {
+      color: var(--textHi);
+      font-weight: 500;
+    }
+    .slot-time {
+      color: var(--textFaint);
+    }
+
+    /* Dots */
+    .dots {
+      display: flex;
+      justify-content: center;
+    }
+    .dot {
+      border-radius: 50%;
+      background: var(--dotOff);
+    }
+    .dot.on-k { background: var(--kitchen); box-shadow: 0 0 5px var(--kitchen); }
+    .dot.on-s { background: var(--tv); box-shadow: 0 0 5px var(--tv); }
+    .dot.on-e { background: var(--door); box-shadow: 0 0 5px var(--door); }
+    .dot.on-g { background: var(--bird); box-shadow: 0 0 5px var(--bird); }
+
+    /* ══════════════════════════════════════════════
+       V1: Kurzlabels + Uhrzeit immer sichtbar
+       ══════════════════════════════════════════════ */
+    .v1 .slot-btn { padding: 12px 4px 10px; }
+    .v1 .slot-name { font-size: 13px; }
+    .v1 .slot-time { font-size: 11px; margin-top: 2px; }
+    .v1 .dots { margin-top: 7px; gap: 5px; }
+    .v1 .dot { width: 7px; height: 7px; }
+
+    /* ══════════════════════════════════════════════
+       V2: Kurzlabels + Uhrzeit nur bei Selektion
+       Mehr Platz → größere Labels & Dots
+       ══════════════════════════════════════════════ */
+    .v2 .slot-btn { padding: 12px 4px 10px; }
+    .v2 .slot-name { font-size: 14px; }
+    .v2 .slot-time {
+      font-size: 0;
+      height: 0;
+      margin: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .v2 .slot-btn.selected .slot-time {
+      font-size: 11px;
+      height: auto;
+      margin-top: 2px;
+      opacity: 1;
+    }
+    .v2 .dots { margin-top: 8px; gap: 5px; }
+    .v2 .dot { width: 8px; height: 8px; }
+
+    /* ── Footer ── */
+    .mockup-footer {
+      text-align: center;
+      padding: 32px 16px 48px;
+      font-size: 12px;
+      color: var(--textFaint);
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+
+    <!-- ═══════════ V1 ═══════════ -->
+    <div class="variant-label">Variante</div>
+    <div class="variant-name">V1 — Kurzlabels + Uhrzeit</div>
+    <div class="variant-desc">
+      Abgekürzte Slot-Namen. Uhrzeit immer sichtbar.
+      Originales Layout mit Dots beibehalten.
+    </div>
+
+    <div class="slot-row v1">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morg.</div>
+        <div class="slot-time">04–08</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vorm.</div>
+        <div class="slot-time">08–12</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachm.</div>
+        <div class="slot-time">14–18</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <!-- ═══════════ V2 ═══════════ -->
+    <div class="variant-label">Variante</div>
+    <div class="variant-name">V2 — Kurzlabels, Uhrzeit nur bei Auswahl</div>
+    <div class="variant-desc">
+      Wie V1, aber Uhrzeit nur beim selektierten Slot.
+      Spart Platz → größere Labels und Dots möglich.
+    </div>
+
+    <div class="slot-row v2">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morg.</div>
+        <div class="slot-time">04–08</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vorm.</div>
+        <div class="slot-time">08–12</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachm.</div>
+        <div class="slot-time">14–18</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot on-e"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="dots">
+          <div class="dot on-k"></div><div class="dot on-s"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <div class="mockup-footer">
+      Statischer Mockup — gleiche Mock-Daten in beiden Varianten<br>
+      Verbesserte Kontraste (WCAG AA) in beiden<br>
+      Selektierter Slot: Abends (18–24)
+    </div>
+
+  </div>
+</body>
+</html>
