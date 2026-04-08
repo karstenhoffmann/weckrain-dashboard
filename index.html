@@ -738,12 +738,12 @@
           {/* ─── TWO-COLUMN WRAPPER (lg: main left, weekly right) ─── */}
           {(() => {
             const weeklyGrid = (
-              <div style={{ padding: lg ? "0" : mob ? "10px 6px 8px" : "14px 16px 8px" }}>
-                <div style={{ fontSize: mob ? 11 : lg ? 12 : 11, color: C.textLo, textTransform: "uppercase", letterSpacing: 3, textAlign: lg ? "left" : "center", marginBottom: mob ? 12 : lg ? 16 : 16, fontWeight: 500, paddingLeft: lg ? 4 : 0 }}>
+              <div style={{ padding: lg ? "12px 20px" : mob ? "10px 6px 8px" : "14px 16px 8px" }}>
+                <div style={{ fontSize: mob ? 11 : 12, color: C.textLo, textTransform: "uppercase", letterSpacing: 3, textAlign: "center", marginBottom: mob ? 12 : 16, fontWeight: 500 }}>
                   Wochenverlauf
                 </div>
                 <div style={{
-                  maxWidth: mob ? "100%" : 420, margin: lg ? "0" : "0 auto", display: "grid",
+                  maxWidth: mob ? "100%" : 420, margin: "0 auto", display: "grid",
                   gridTemplateColumns: mob ? "54px repeat(6, 1fr)" : "60px repeat(6, 1fr)", gap: mob ? "4px 3px" : "5px 4px", alignItems: "center",
                 }}>
                   <div />
@@ -845,9 +845,10 @@
             );
 
             return lg ? (
-              <div style={{ display: "flex", gap: 24, padding: "12px 32px 0", maxWidth: 1100, margin: "0 auto", alignItems: "flex-start" }}>
+              <div style={{ display: "flex", gap: 0, padding: "16px 32px 0", maxWidth: 1100, margin: "0 auto", alignItems: "stretch" }}>
                 <div style={{ flex: "1 1 0", minWidth: 0 }}>{mainContent}</div>
-                <div style={{ flex: "0 0 380px", paddingTop: 8 }}>{weeklyGrid}</div>
+                <div style={{ width: 1, background: "linear-gradient(180deg, transparent, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent)", margin: "0 28px", flexShrink: 0 }} />
+                <div style={{ flex: "0 0 380px", display: "flex", flexDirection: "column", justifyContent: "center", padding: "16px 0", background: "rgba(255,255,255,0.015)", borderRadius: 16 }}>{weeklyGrid}</div>
               </div>
             ) : (
               <React.Fragment>
