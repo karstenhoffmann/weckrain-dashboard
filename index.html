@@ -697,22 +697,25 @@
           </header>
 
           {/* DAY TABS: Jetzt links, dann heute → Vergangenheit */}
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "stretch", gap: 0, padding: mob ? "6px 4px 6px" : "10px 8px 8px", overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-            {[{ key: "now", label: "Jetzt", sub: "" }, ...history.map((d, i) => ({ key: d.date, label: wday(d.date), sub: fmt(d.date), idx: i, problems: dayHasProblems(d) }))].map(item => {
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 0, padding: mob ? "6px 4px 6px" : "10px 8px 8px", overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+            {[{ key: "now", label: "Jetzt" }, ...history.map((d, i) => ({ key: d.date, label: wday(d.date), sub: fmt(d.date), idx: i, problems: dayHasProblems(d) }))].map((item, arrIdx) => {
               const isNow = item.key === "now";
               const sel = !isNow && item.idx === selDay;
               return (
-                <button key={item.key} onClick={() => { if (isNow) { handleNow(); } else { setSelDay(item.idx); setSelSlot(0); } }}
-                  style={{
-                    background: sel ? "rgba(255,255,255,0.05)" : "transparent",
-                    border: "none", borderBottom: sel ? "2px solid "+C.kitchen.on : "2px solid transparent",
-                    borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto",
-                    textAlign: "center", transition: T("0.3s"),
-                  }}>
-                  <div style={{ fontSize: mob ? 14 : 13, color: sel ? C.textHi : C.textLo, fontWeight: sel ? 500 : 400, fontFamily: ff }}>{item.label}</div>
-                  <div style={{ fontSize: mob ? 12 : 11, color: sel ? C.textLo : C.textFaint, fontFamily: ff, marginTop: 1 }}>{item.sub || "\u00A0"}</div>
-                  {!isNow && item.problems && <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: C.error, margin: "4px auto 0", opacity: 0.7 }} />}
-                </button>
+                <React.Fragment key={item.key}>
+                  <button onClick={() => { if (isNow) { handleNow(); } else { setSelDay(item.idx); setSelSlot(0); } }}
+                    style={{
+                      background: sel ? "rgba(255,255,255,0.05)" : "transparent",
+                      border: "none", borderBottom: sel ? "2px solid "+C.kitchen.on : "2px solid transparent",
+                      borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto",
+                      textAlign: "center", transition: T("0.3s"),
+                    }}>
+                    <div style={{ fontSize: mob ? 14 : 13, color: sel ? C.textHi : C.textLo, fontWeight: sel ? 500 : 400, fontFamily: ff }}>{item.label}</div>
+                    {!isNow && <div style={{ fontSize: mob ? 12 : 11, color: sel ? C.textLo : C.textFaint, fontFamily: ff, marginTop: 1 }}>{item.sub}</div>}
+                    {!isNow && item.problems && <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: C.error, margin: "4px auto 0", opacity: 0.7 }} />}
+                  </button>
+                  {isNow && <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.06)", margin: "0 4px", alignSelf: "center" }} />}
+                </React.Fragment>
               );
             })}
           </div>
