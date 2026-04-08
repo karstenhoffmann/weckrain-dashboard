@@ -697,26 +697,21 @@
           </header>
 
           {/* DAY TABS: Jetzt links, dann heute → Vergangenheit */}
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0, padding: mob ? "6px 4px 6px" : "10px 8px 8px", overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-            <button onClick={handleNow} style={{
-              background: "transparent", border: "none", borderBottom: "2px solid transparent",
-              borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto", transition: T("0.3s"),
-            }}>
-              <div style={{ fontSize: mob ? 14 : 13, color: C.textMid, fontWeight: 500, fontFamily: ff }}>Jetzt</div>
-              <div style={{ fontSize: mob ? 12 : 11, color: C.textFaint, fontFamily: ff, marginTop: 1 }}>&nbsp;</div>
-            </button>
-            {history.map((d, i) => {
-              const sel = i === selDay;
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "stretch", gap: 0, padding: mob ? "6px 4px 6px" : "10px 8px 8px", overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+            {[{ key: "now", label: "Jetzt", sub: "" }, ...history.map((d, i) => ({ key: d.date, label: wday(d.date), sub: fmt(d.date), idx: i, problems: dayHasProblems(d) }))].map(item => {
+              const isNow = item.key === "now";
+              const sel = !isNow && item.idx === selDay;
               return (
-                <button key={d.date} onClick={() => { setSelDay(i); setSelSlot(0); }}
+                <button key={item.key} onClick={() => { if (isNow) { handleNow(); } else { setSelDay(item.idx); setSelSlot(0); } }}
                   style={{
                     background: sel ? "rgba(255,255,255,0.05)" : "transparent",
                     border: "none", borderBottom: sel ? "2px solid "+C.kitchen.on : "2px solid transparent",
-                    borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto", transition: T("0.3s"),
+                    borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto",
+                    textAlign: "center", transition: T("0.3s"),
                   }}>
-                  <div style={{ fontSize: mob ? 14 : 13, color: sel ? C.textHi : C.textLo, fontWeight: sel ? 500 : 400, fontFamily: ff }}>{wday(d.date)}</div>
-                  <div style={{ fontSize: mob ? 12 : 11, color: sel ? C.textLo : C.textFaint, fontFamily: ff, marginTop: 1 }}>{fmt(d.date)}</div>
-                  {dayHasProblems(d) && <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: C.error, margin: "4px auto 0", opacity: 0.7 }} />}
+                  <div style={{ fontSize: mob ? 14 : 13, color: sel ? C.textHi : C.textLo, fontWeight: sel ? 500 : 400, fontFamily: ff }}>{item.label}</div>
+                  <div style={{ fontSize: mob ? 12 : 11, color: sel ? C.textLo : C.textFaint, fontFamily: ff, marginTop: 1 }}>{item.sub || "\u00A0"}</div>
+                  {!isNow && item.problems && <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: C.error, margin: "4px auto 0", opacity: 0.7 }} />}
                 </button>
               );
             })}
@@ -751,7 +746,7 @@
           </div>
 
           {/* TIME SLOTS (Stacked Bars) */}
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 3, padding: mob ? "10px 6px 8px" : "14px 8px 10px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 3, padding: mob ? "10px 6px 8px" : "14px 8px 10px", maxWidth: 620, margin: "0 auto" }}>
             {SLOTS.map((name, idx) => {
               const s = day.slots[idx];
               const sel = idx === selSlot;
@@ -845,12 +840,29 @@
         if (urlPw) { localStorage.setItem("wetter_pw", urlPw); return urlPw; }
         return localStorage.getItem("wetter_pw") || "";
       });
+      const [showBird] = useState(() => {
+        const urlMode = new URLSearchParams(window.location.search).get("mode");
+        if (urlMode === "karsten") { localStorage.setItem("wetter_mode", "karsten"); return true; }
+        return localStorage.getItem("wetter_mode") === "karsten";
+      });
       const [pwInput, setPwInput] = useState("");
       const [wrongPw, setWrongPw] = useState(false);
       const mob = useIsMobile();
 
       const fetchData = useCallback((password) => {
         setState("loading");
+        // Show cached data immediately while fetching fresh data
+        const cached = localStorage.getItem("wetter_cache");
+        if (cached) {
+          try {
+            const c = JSON.parse(cached);
+            if (c.history) {
+              setData(c.history);
+              setLastPoll(c.lastPoll || null);
+              setState("ready");
+            }
+          } catch(e) {}
+        }
         fetch(API_URL + "?format=json&pw=" + encodeURIComponent(password))
           .then(r => {
             if (!r.ok) throw new Error("HTTP " + r.status);
@@ -861,6 +873,7 @@
               setData(json.history);
               setLastPoll(json.lastPoll || null);
               localStorage.setItem("wetter_pw", password);
+              localStorage.setItem("wetter_cache", JSON.stringify({ history: json.history, lastPoll: json.lastPoll }));
               setPw(password);
               setWrongPw(false);
               setState("ready");
@@ -869,12 +882,15 @@
             }
           })
           .catch(err => {
+            // If we already showed cached data, don't kick back to login
+            if (state === "ready" && data) return;
             localStorage.removeItem("wetter_pw");
+            localStorage.removeItem("wetter_cache");
             setPw("");
             setWrongPw(true);
             setState("login");
           });
-      }, []);
+      }, [state, data]);
 
       useEffect(() => {
         if (pw) fetchData(pw);
@@ -898,7 +914,7 @@
 
       if (state === "login") return <LoginScreen onSubmit={handleLogin} wrongPw={wrongPw} mob={mob} />;
       if (state === "loading") return <LoadingScreen mob={mob} />;
-      if (state === "ready" && data) return <DashboardMain history={data} lastPoll={lastPoll} showBird={pw === "karsten"} />;
+      if (state === "ready" && data) return <DashboardMain history={data} lastPoll={lastPoll} showBird={showBird} />;
       return <LoadingScreen mob={mob} />;
     }
 
