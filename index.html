@@ -820,10 +820,10 @@
                         style={{
                           background: sel ? "rgba(255,255,255,0.06)" : "transparent",
                           border: sel ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
-                          borderRadius: lg ? 12 : 10, padding: mob ? "10px 4px 8px" : lg ? "14px 10px 12px" : "10px 8px 8px", cursor: "pointer", flex: "1 1 0", minWidth: 0, transition: T("0.3s"),
+                          borderRadius: lg ? 12 : 10, padding: mob ? "10px 4px 8px" : lg ? "14px 10px 12px" : "10px 6px 8px", cursor: "pointer", flex: "1 1 0", minWidth: 0, overflow: "hidden", transition: T("0.3s"),
                         }}>
-                        <div style={{ fontSize: mob ? 13 : lg ? 15 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff }}>{SLOT_SHORT[name]}</div>
-                        <div style={{ fontSize: mob ? 12 : lg ? 13 : 11, color: C.textFaint, marginTop: 2, fontFamily: ff }}>{SLOT_LABELS[name]}</div>
+                        <div style={{ fontSize: mob ? 13 : lg ? 15 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff, whiteSpace: "nowrap" }}>{SLOT_SHORT[name]}</div>
+                        <div style={{ fontSize: mob ? 12 : lg ? 13 : 11, color: C.textFaint, marginTop: 2, fontFamily: ff, whiteSpace: "nowrap" }}>{SLOT_LABELS[name]}</div>
                         <div style={{ marginTop: lg ? 8 : 6, display: "flex", flexDirection: "column", alignItems: "center", gap: lg ? 3 : 2, padding: "0 4px" }}>
                           {nd && slotPast ? (
                             <div style={{ width: "100%", maxWidth: lg ? 36 : 30, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: C.error, opacity: 0.4 }} />
