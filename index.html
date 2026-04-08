@@ -705,14 +705,14 @@
         }}>
 
           {/* HEADER */}
-          <header style={{ textAlign: lg ? "left" : "center", padding: mob ? "20px 12px 6px" : lg ? "32px 52px 6px" : "28px 16px 8px", maxWidth: lg ? 1100 : undefined, margin: lg ? "0 auto" : undefined }}>
-            <div style={{ fontSize: mob ? 11 : lg ? 22 : 12, letterSpacing: mob ? 4 : lg ? 6 : 5, color: lg ? C.textHi : C.textLo, textTransform: "uppercase", fontWeight: lg ? 300 : 500 }}>
+          <header style={{ textAlign: lg ? "left" : "center", padding: mob ? "20px 12px 6px" : lg ? "24px 32px 16px" : "28px 16px 8px", maxWidth: lg ? 1100 : undefined, margin: lg ? "0 auto" : undefined }}>
+            <div style={{ fontSize: mob ? 11 : lg ? 14 : 12, letterSpacing: mob ? 4 : 6, color: C.textLo, textTransform: "uppercase", fontWeight: 500 }}>
               Mama Wetter
             </div>
           </header>
 
-          {/* DAY TABS: Jetzt links, dann heute → Vergangenheit */}
-          <div style={{ display: "flex", justifyContent: lg ? "flex-start" : "center", alignItems: "flex-end", gap: lg ? 2 : 0, padding: mob ? "6px 4px 6px" : lg ? "4px 52px 10px" : "10px 8px 8px", maxWidth: lg ? 1100 : undefined, margin: lg ? "0 auto" : undefined, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+          {/* DAY TABS — sit directly on top of content area like real tabs */}
+          <div style={{ display: "flex", justifyContent: lg ? "flex-start" : "center", alignItems: "flex-end", gap: lg ? 2 : 0, padding: mob ? "6px 4px 6px" : lg ? "0 32px 0" : "10px 8px 8px", maxWidth: lg ? 1100 : undefined, margin: lg ? "0 auto" : undefined, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
             {[{ key: "now", label: "Jetzt" }, ...history.map((d, i) => ({ key: d.date, label: wday(d.date), sub: fmt(d.date), idx: i, problems: dayHasProblems(d) }))].map((item, arrIdx) => {
               const isNow = item.key === "now";
               const sel = !isNow && item.idx === selDay;
@@ -775,7 +775,7 @@
             const mainContent = (
               <div style={{ flex: lg ? "1 1 0" : undefined, minWidth: 0 }}>
                 {/* HOUSE */}
-                <div style={{ padding: mob ? "4px 8px 0" : lg ? "8px 20px 0" : "8px 20px 0" }}>
+                <div style={{ padding: mob ? "4px 8px 0" : lg ? "0 0 0" : "8px 20px 0" }}>
                   <House slot={slot} slotName={slotName} date={day.date} slotIdx={selSlot} showBird={showBird} />
                 </div>
 
@@ -845,10 +845,10 @@
             );
 
             return lg ? (
-              <div style={{ display: "flex", gap: 0, padding: "16px 32px 0", maxWidth: 1100, margin: "0 auto", alignItems: "stretch" }}>
+              <div style={{ display: "flex", gap: 0, padding: "0 32px", maxWidth: 1100, margin: "0 auto", alignItems: "stretch" }}>
                 <div style={{ flex: "1 1 0", minWidth: 0 }}>{mainContent}</div>
                 <div style={{ width: 1, background: "linear-gradient(180deg, transparent, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent)", margin: "0 28px", flexShrink: 0 }} />
-                <div style={{ flex: "0 0 380px", display: "flex", flexDirection: "column", justifyContent: "center", padding: "16px 0", background: "rgba(255,255,255,0.015)", borderRadius: 16 }}>{weeklyGrid}</div>
+                <div style={{ flex: "0 0 380px", display: "flex", flexDirection: "column", justifyContent: "center", padding: "20px 0", background: "rgba(255,255,255,0.015)", borderRadius: "0 16px 16px 0" }}>{weeklyGrid}</div>
               </div>
             ) : (
               <React.Fragment>
