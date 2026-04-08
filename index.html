@@ -45,6 +45,17 @@
       return mobile;
     }
 
+    // Returns "sm" (<520), "md" (520-899), "lg" (900+)
+    function useBreakpoint() {
+      const [bp, setBp] = useState(window.innerWidth < 520 ? "sm" : window.innerWidth < 900 ? "md" : "lg");
+      useEffect(() => {
+        const onResize = () => setBp(window.innerWidth < 520 ? "sm" : window.innerWidth < 900 ? "md" : "lg");
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+      }, []);
+      return bp;
+    }
+
     // ─── CONFIG ──────────────────────────────────────────────────────────
     const SLOTS = ["Nachts", "Morgens", "Vormittags", "Mittags", "Nachmittags", "Abends"];
     const SLOT_LABELS = { Nachts: "00–04", Morgens: "04–08", Vormittags: "08–12", Mittags: "12–14", Nachmittags: "14–18", Abends: "18–24" };
@@ -398,13 +409,15 @@
     }
 
     // ─── MINI HOUSE ──────────────────────────────────────────────────────
-    function MiniHouse({ slot, date, slotIdx, showBird }) {
+    function MiniHouse({ slot, date, slotIdx, showBird, lg }) {
       const allNull = noDataCount(slot) === 4;
       const past = isSlotPast(date, slotIdx);
       const noConnection = allNull && past;
       const pending = allNull && !past;
+      const sz = lg ? 38 : 30;
+      const szH = lg ? 35 : 28;
       return (
-        <svg viewBox="0 0 30 28" fill="none" style={{ width: 30, height: 28 }}>
+        <svg viewBox="0 0 30 28" fill="none" style={{ width: sz, height: szH }}>
           <polygon points="3,14 15,5 27,14" fill="#4a3828" />
           <rect x="5" y="14" width="20" height="12" fill="#2d3548" />
           {noConnection ? <React.Fragment>
@@ -654,6 +667,8 @@
       const [selDay, setSelDay] = useState(0);
       const [selSlot, setSelSlot] = useState(getNowSlot());
       const mob = useIsMobile();
+      const bp = useBreakpoint();
+      const lg = bp === "lg";
 
       // Empty state
       if (!history || history.length === 0) {
@@ -690,14 +705,14 @@
         }}>
 
           {/* HEADER */}
-          <header style={{ textAlign: "center", padding: mob ? "20px 12px 6px" : "28px 16px 8px" }}>
-            <div style={{ fontSize: mob ? 11 : 12, letterSpacing: 4, color: C.textLo, textTransform: "uppercase", fontWeight: 500 }}>
+          <header style={{ textAlign: "center", padding: mob ? "20px 12px 6px" : lg ? "36px 16px 10px" : "28px 16px 8px" }}>
+            <div style={{ fontSize: mob ? 11 : lg ? 13 : 12, letterSpacing: mob ? 4 : 5, color: C.textLo, textTransform: "uppercase", fontWeight: 500 }}>
               Mama Wetter
             </div>
           </header>
 
           {/* DAY TABS: Jetzt links, dann heute → Vergangenheit */}
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: 0, padding: mob ? "6px 4px 6px" : "10px 8px 8px", overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: lg ? 2 : 0, padding: mob ? "6px 4px 6px" : lg ? "12px 16px 10px" : "10px 8px 8px", overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
             {[{ key: "now", label: "Jetzt" }, ...history.map((d, i) => ({ key: d.date, label: wday(d.date), sub: fmt(d.date), idx: i, problems: dayHasProblems(d) }))].map((item, arrIdx) => {
               const isNow = item.key === "now";
               const sel = !isNow && item.idx === selDay;
@@ -707,11 +722,11 @@
                     style={{
                       background: sel ? "rgba(255,255,255,0.05)" : "transparent",
                       border: "none", borderBottom: sel ? "2px solid "+C.kitchen.on : "2px solid transparent",
-                      borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto",
+                      borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : lg ? "10px 18px 8px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto",
                       textAlign: "center", transition: T("0.3s"),
                     }}>
-                    <div style={{ fontSize: mob ? 14 : 13, color: sel ? C.textHi : C.textLo, fontWeight: sel ? 500 : 400, fontFamily: ff }}>{item.label}</div>
-                    {!isNow && <div style={{ fontSize: mob ? 12 : 11, color: sel ? C.textLo : C.textFaint, fontFamily: ff, marginTop: 1 }}>{item.sub}</div>}
+                    <div style={{ fontSize: mob ? 14 : lg ? 15 : 13, color: sel ? C.textHi : C.textLo, fontWeight: sel ? 500 : 400, fontFamily: ff }}>{item.label}</div>
+                    {!isNow && <div style={{ fontSize: mob ? 12 : lg ? 13 : 11, color: sel ? C.textLo : C.textFaint, fontFamily: ff, marginTop: 1 }}>{item.sub}</div>}
                     {!isNow && item.problems && <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: C.error, margin: "4px auto 0", opacity: 0.7 }} />}
                   </button>
                   {isNow && <div style={{ width: 1, height: 20, backgroundColor: "rgba(255,255,255,0.06)", margin: "0 4px", alignSelf: "center" }} />}
@@ -721,12 +736,12 @@
           </div>
 
           {/* HOUSE */}
-          <div style={{ padding: mob ? "4px 8px 0" : "8px 20px 0" }}>
+          <div style={{ padding: mob ? "4px 8px 0" : lg ? "12px 40px 0" : "8px 20px 0", maxWidth: lg ? 720 : undefined, margin: "0 auto" }}>
             <House slot={slot} slotName={slotName} date={day.date} slotIdx={selSlot} showBird={showBird} />
           </div>
 
           {/* LEGEND (Bars-Zeile) */}
-          <div style={{ display: "flex", justifyContent: "center", gap: mob ? 18 : 24, padding: mob ? "12px 16px 4px" : "14px 16px 4px" }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: mob ? 18 : lg ? 32 : 24, padding: mob ? "12px 16px 4px" : lg ? "18px 16px 6px" : "14px 16px 4px" }}>
             {[
               { color: C.kitchen.on, label: "Küche", value: slot.k },
               { color: C.tv.on, label: "Lesezimmer", value: slot.s },
@@ -738,18 +753,18 @@
               const opacity = on ? 1 : err ? 0.8 : 0.2;
               return (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, opacity: opacity, transition: T("0.5s") }}>
-                  <div style={{ width: 16, height: 3, borderRadius: 1.5, backgroundColor: barColor, boxShadow: on ? "0 0 6px "+s.color : "none", transition: T("0.5s") }} />
-                  <span style={{ fontSize: mob ? 13 : 13, color: C.textMid, fontFamily: ff }}>{s.label}</span>
+                  <div style={{ width: lg ? 20 : 16, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: barColor, boxShadow: on ? "0 0 6px "+s.color : "none", transition: T("0.5s") }} />
+                  <span style={{ fontSize: mob ? 13 : lg ? 15 : 13, color: C.textMid, fontFamily: ff }}>{s.label}</span>
                 </div>
               );
             })}
           </div>
-          <div style={{ textAlign: "center", padding: "2px 16px 6px", fontSize: mob ? 11 : 10, color: C.textFaint, fontFamily: ff, opacity: 0.6 }}>
+          <div style={{ textAlign: "center", padding: mob ? "4px 16px 8px" : lg ? "6px 16px 12px" : "4px 16px 8px", fontSize: mob ? 12 : lg ? 13 : 12, color: C.textFaint, fontFamily: ff, opacity: 0.8 }}>
             Leuchtet bei Aktivität im Zeitfenster
           </div>
 
           {/* TIME SLOTS (Stacked Bars) */}
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 3, padding: mob ? "10px 6px 8px" : "14px 8px 10px", maxWidth: 620, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: mob ? 3 : lg ? 8 : 4, padding: mob ? "10px 6px 8px" : lg ? "16px 16px 12px" : "14px 8px 10px", maxWidth: lg ? 680 : 620, margin: "0 auto" }}>
             {SLOTS.map((name, idx) => {
               const s = day.slots[idx];
               const sel = idx === selSlot;
@@ -766,18 +781,18 @@
                   style={{
                     background: sel ? "rgba(255,255,255,0.06)" : "transparent",
                     border: sel ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
-                    borderRadius: 10, padding: mob ? "10px 4px 8px" : "10px 8px 8px", cursor: "pointer", flex: "1 1 0", minWidth: 0, transition: T("0.3s"),
+                    borderRadius: lg ? 12 : 10, padding: mob ? "10px 4px 8px" : lg ? "14px 10px 12px" : "10px 8px 8px", cursor: "pointer", flex: "1 1 0", minWidth: 0, transition: T("0.3s"),
                   }}>
-                  <div style={{ fontSize: mob ? 13 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff }}>{mob ? SLOT_SHORT[name] : name}</div>
-                  <div style={{ fontSize: mob ? 12 : 11, color: C.textFaint, marginTop: 2, fontFamily: ff }}>{SLOT_LABELS[name]}</div>
-                  <div style={{ marginTop: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "0 4px" }}>
+                  <div style={{ fontSize: mob ? 13 : lg ? 14 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff }}>{mob ? SLOT_SHORT[name] : name}</div>
+                  <div style={{ fontSize: mob ? 12 : lg ? 13 : 11, color: C.textFaint, marginTop: 2, fontFamily: ff }}>{SLOT_LABELS[name]}</div>
+                  <div style={{ marginTop: lg ? 8 : 6, display: "flex", flexDirection: "column", alignItems: "center", gap: lg ? 3 : 2, padding: "0 4px" }}>
                     {nd && slotPast ? (
-                      <div style={{ width: "100%", maxWidth: 28, height: 3, borderRadius: 1.5, backgroundColor: C.error, opacity: 0.4 }} />
+                      <div style={{ width: "100%", maxWidth: lg ? 36 : 28, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: C.error, opacity: 0.4 }} />
                     ) : nd && !slotPast ? (
-                      <div style={{ width: "100%", maxWidth: 28, height: 3, borderRadius: 1.5, backgroundColor: C.textFaint, opacity: 0.3 }} />
+                      <div style={{ width: "100%", maxWidth: lg ? 36 : 28, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: C.textFaint, opacity: 0.3 }} />
                     ) : sensors.map((d, i) => (
                       <div key={i} style={{
-                        width: "100%", maxWidth: 28, height: 3, borderRadius: 1.5,
+                        width: "100%", maxWidth: lg ? 36 : 28, height: lg ? 4 : 3, borderRadius: 2,
                         backgroundColor: isOn(d.v) ? d.c : isError(d.v) ? C.error : "#1a2030",
                         boxShadow: isOn(d.v) ? "0 0 6px "+d.c : "none", transition: T("0.3s"),
                       }} />
@@ -789,25 +804,25 @@
           </div>
 
           {/* DIVIDER */}
-          <div style={{ height: 1, margin: "14px 48px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }} />
+          <div style={{ height: 1, margin: mob ? "14px 48px" : lg ? "20px 80px" : "14px 48px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }} />
 
           {/* HISTORY GRID */}
-          <div style={{ padding: mob ? "10px 6px 8px" : "14px 16px 8px" }}>
-            <div style={{ fontSize: mob ? 11 : 11, color: C.textLo, textTransform: "uppercase", letterSpacing: 3, textAlign: "center", marginBottom: mob ? 12 : 16, fontWeight: 500 }}>
+          <div style={{ padding: mob ? "10px 6px 8px" : lg ? "20px 24px 12px" : "14px 16px 8px" }}>
+            <div style={{ fontSize: mob ? 11 : lg ? 12 : 11, color: C.textLo, textTransform: "uppercase", letterSpacing: 3, textAlign: "center", marginBottom: mob ? 12 : lg ? 20 : 16, fontWeight: 500 }}>
               Wochenverlauf
             </div>
             <div style={{
-              maxWidth: mob ? "100%" : 420, margin: "0 auto", display: "grid",
-              gridTemplateColumns: mob ? "54px repeat(6, 1fr)" : "56px repeat(6, 1fr)", gap: mob ? "4px 3px" : "4px 3px", alignItems: "center",
+              maxWidth: mob ? "100%" : lg ? 560 : 420, margin: "0 auto", display: "grid",
+              gridTemplateColumns: mob ? "54px repeat(6, 1fr)" : lg ? "64px repeat(6, 1fr)" : "56px repeat(6, 1fr)", gap: mob ? "4px 3px" : lg ? "6px 5px" : "4px 3px", alignItems: "center",
             }}>
               <div />
               {SLOTS.map(s => (
-                <div key={s} style={{ fontSize: mob ? 11 : 10, color: C.textFaint, textAlign: "center", fontFamily: ff }}>{s.slice(0, 2)}</div>
+                <div key={s} style={{ fontSize: mob ? 11 : lg ? 12 : 10, color: C.textFaint, textAlign: "center", fontFamily: ff }}>{s.slice(0, 2)}</div>
               ))}
               {history.map((d, di) => {
                 const sel = di === selDay;
                 return [
-                  <div key={"l"+di} style={{ fontSize: mob ? 12 : 11, color: sel ? C.textMid : C.textFaint, fontWeight: sel ? 500 : 400, fontFamily: ff, transition: T("0.3s") }}>
+                  <div key={"l"+di} style={{ fontSize: mob ? 12 : lg ? 13 : 11, color: sel ? C.textMid : C.textFaint, fontWeight: sel ? 500 : 400, fontFamily: ff, transition: T("0.3s") }}>
                     {wday(d.date)} {fmt(d.date)}
                   </div>,
                   ...d.slots.map((s, si) => (
@@ -817,7 +832,7 @@
                         borderRadius: 4, background: (di===selDay && si===selSlot) ? "rgba(255,255,255,0.07)" : "transparent",
                         transition: T("0.2s"),
                       }}>
-                      <MiniHouse slot={s} date={d.date} slotIdx={si} showBird={showBird} />
+                      <MiniHouse slot={s} date={d.date} slotIdx={si} showBird={showBird} lg={lg} />
                     </div>
                   ))
                 ];
@@ -826,7 +841,7 @@
           </div>
 
           {/* FOOTER */}
-          <div style={{ textAlign: "center", padding: mob ? "20px 12px 40px" : "28px 16px 40px", color: C.textFaint, fontSize: mob ? 13 : 11, letterSpacing: 1, fontFamily: ff }}>
+          <div style={{ textAlign: "center", padding: mob ? "20px 12px 40px" : lg ? "36px 16px 48px" : "28px 16px 40px", color: C.textFaint, fontSize: mob ? 13 : lg ? 13 : 12, letterSpacing: 1, fontFamily: ff }}>
             74653 &middot; Letzte Messung {timeSince(lastPoll)}
             {showBird && <div style={{ marginTop: 12 }}>
               <button onClick={onToggleBird} style={{
