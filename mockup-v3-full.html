@@ -102,20 +102,25 @@
       margin-top: 1px;
     }
     .day-tab.selected .dt-date { color: var(--textLo); }
-    .now-btn {
+    .now-tab {
       flex: 0 0 auto;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 14px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 8px 8px 0 0;
+      padding: 8px 10px 6px;
       cursor: pointer;
-      margin-left: 6px;
+      text-align: center;
     }
-    .now-btn span {
-      font-size: 12px;
+    .now-tab .dt-wd {
+      font-size: 14px;
       color: var(--textMid);
       font-weight: 500;
-      letter-spacing: 0.5px;
+    }
+    .now-tab .dt-date {
+      font-size: 12px;
+      color: var(--textFaint);
+      margin-top: 1px;
     }
 
     /* ═══ HOUSE PLACEHOLDER ═══ */
@@ -300,37 +305,40 @@
       <span class="weather-pill">Freundlich</span>
     </div>
 
-    <!-- DAY TABS -->
+    <!-- DAY TABS: Jetzt links, dann heute → Vergangenheit -->
     <div class="day-tabs">
-      <div class="day-tab">
-        <div class="dt-wd">Mi</div>
-        <div class="dt-date">01.04.</div>
+      <div class="now-tab">
+        <div class="dt-wd">Jetzt</div>
+        <div class="dt-date">&nbsp;</div>
+      </div>
+      <div class="day-tab selected">
+        <div class="dt-wd">Di</div>
+        <div class="dt-date">07.04.</div>
       </div>
       <div class="day-tab">
-        <div class="dt-wd">Do</div>
-        <div class="dt-date">02.04.</div>
-      </div>
-      <div class="day-tab">
-        <div class="dt-wd">Fr</div>
-        <div class="dt-date">03.04.</div>
-      </div>
-      <div class="day-tab">
-        <div class="dt-wd">Sa</div>
-        <div class="dt-date">04.04.</div>
+        <div class="dt-wd">Mo</div>
+        <div class="dt-date">06.04.</div>
       </div>
       <div class="day-tab">
         <div class="dt-wd">So</div>
         <div class="dt-date">05.04.</div>
       </div>
       <div class="day-tab">
-        <div class="dt-wd">Mo</div>
-        <div class="dt-date">06.04.</div>
+        <div class="dt-wd">Sa</div>
+        <div class="dt-date">04.04.</div>
       </div>
-      <div class="day-tab selected">
-        <div class="dt-wd">Di</div>
-        <div class="dt-date">07.04.</div>
+      <div class="day-tab">
+        <div class="dt-wd">Fr</div>
+        <div class="dt-date">03.04.</div>
       </div>
-      <div class="now-btn"><span>Jetzt</span></div>
+      <div class="day-tab">
+        <div class="dt-wd">Do</div>
+        <div class="dt-date">02.04.</div>
+      </div>
+      <div class="day-tab">
+        <div class="dt-wd">Mi</div>
+        <div class="dt-date">01.04.</div>
+      </div>
     </div>
 
     <!-- HOUSE -->
@@ -421,124 +429,6 @@
         <div class="wg-header">Nm</div>
         <div class="wg-header">Ab</div>
 
-        <!-- Mi 01.04. -->
-        <div class="wg-day">Mi 01.04.</div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
-            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
-            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
-          </svg>
-        </div>
-
-        <!-- Do 02.04. -->
-        <div class="wg-day">Do 02.04.</div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
-            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/>
-            <circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/>
-          </svg>
-        </div>
-        <div class="mh-cell">
-          <svg class="mini-house" viewBox="0 0 30 28" fill="none">
-            <polygon points="3,14 15,5 27,14" fill="#4a3828"/>
-            <rect x="5" y="14" width="20" height="12" fill="#2d3548"/>
-            <rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/>
-            <rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/>
-            <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
-          </svg>
-        </div>
-
         <!-- Di 07.04. (today/selected) -->
         <div class="wg-day selected">Di 07.04.</div>
         <div class="mh-cell">
@@ -597,6 +487,60 @@
             <rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/>
           </svg>
         </div>
+
+        <!-- Mo 06.04. -->
+        <div class="wg-day">Mo 06.04.</div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+
+        <!-- So 05.04. -->
+        <div class="wg-day">So 05.04.</div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+
+        <!-- Sa 04.04. -->
+        <div class="wg-day">Sa 04.04.</div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+
+        <!-- Fr 03.04. -->
+        <div class="wg-day">Fr 03.04.</div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+
+        <!-- Do 02.04. -->
+        <div class="wg-day">Do 02.04.</div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+
+        <!-- Mi 01.04. -->
+        <div class="wg-day">Mi 01.04.</div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/><circle cx="19" cy="9" r="1.5" fill="#c49bdb" opacity="0.7"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#6ba4d4" opacity="0.8"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#5a9b5e"/></svg></div>
+        <div class="mh-cell"><svg class="mini-house" viewBox="0 0 30 28" fill="none"><polygon points="3,14 15,5 27,14" fill="#4a3828"/><rect x="5" y="14" width="20" height="12" fill="#2d3548"/><rect x="7" y="16" width="6" height="4" rx="0.5" fill="#f0c45a" opacity="0.8"/><rect x="17" y="16" width="6" height="4" rx="0.5" fill="#1a2133"/><rect x="13" y="20" width="4" height="6" rx="0.5" fill="#3a3a42"/></svg></div>
       </div>
     </div>
 
