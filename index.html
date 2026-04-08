@@ -924,7 +924,7 @@
 
       if (state === "login") return <LoginScreen onSubmit={handleLogin} wrongPw={wrongPw} mob={mob} />;
       if (state === "loading") return <LoadingScreen mob={mob} />;
-      if (state === "ready" && data) return <DashboardMain history={data} lastPoll={lastPoll} showBird={showBird} onToggleBird={() => { setShowBird(false); localStorage.removeItem("wetter_mode"); }} />;
+      if (state === "ready" && data) return <DashboardMain history={data} lastPoll={lastPoll} showBird={showBird} onToggleBird={() => { setShowBird(false); localStorage.removeItem("wetter_mode"); const u = new URL(window.location); u.searchParams.delete("mode"); window.history.replaceState({}, "", u); }} />;
       return <LoadingScreen mob={mob} />;
     }
 
