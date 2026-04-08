@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Slot-Nav Details — V3 bis V6</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #080e1a;
+      color: #e8edf5;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :root {
+      --textHi: #e8edf5;
+      --textMid: #a0b0c4;
+      --textLo: #8494a7;
+      --textFaint: #5e7086;
+      --kitchen: #f0c45a;
+      --tv: #6ba4d4;
+      --door: #7bc77e;
+      --bird: #c49bdb;
+      --error: #c27a5a;
+      --dotOff: #1a2030;
+    }
+
+    .frame {
+      max-width: 390px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, #1a1830 0%, #0e1625 100%);
+      min-height: 100vh;
+    }
+
+    /* ── Section chrome ── */
+    .variant-label {
+      text-align: center;
+      padding: 36px 16px 6px;
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--textFaint);
+      font-weight: 500;
+    }
+    .variant-label:first-child { padding-top: 20px; }
+    .variant-name {
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--textHi);
+      padding: 4px 16px 2px;
+    }
+    .variant-desc {
+      text-align: center;
+      font-size: 12px;
+      color: var(--textMid);
+      padding: 2px 20px 14px;
+      line-height: 1.5;
+    }
+    .thick-divider {
+      height: 3px;
+      margin: 16px 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       SHARED: Slot row base
+       ══════════════════════════════════════════════════════════ */
+    .slot-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 6px;
+      gap: 3px;
+    }
+    .slot-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      flex: 1 1 0;
+      text-align: center;
+      min-width: 0;
+      transition: all 0.3s ease;
+    }
+    .slot-btn.selected {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .slot-name {
+      font-size: 13px;
+      color: var(--textLo);
+      font-weight: 400;
+    }
+    .slot-btn.selected .slot-name {
+      color: var(--textHi);
+      font-weight: 500;
+    }
+    .slot-time {
+      font-size: 11px;
+      color: var(--textFaint);
+      margin-top: 2px;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       HEADER VARIANTS (shared)
+       ══════════════════════════════════════════════════════════ */
+
+    /* Kompakter Header: nur "WETTERBERICHT" */
+    .header-compact {
+      text-align: center;
+      padding: 20px 12px 8px;
+    }
+    .header-compact .header-sub {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--textFaint);
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* Day-Tabs (gemeinsam) */
+    .day-tabs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      padding: 8px 4px 4px;
+      flex-wrap: wrap;
+    }
+    .day-tab {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-radius: 8px 8px 0 0;
+      padding: 8px 10px 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .day-tab.selected {
+      background: rgba(255,255,255,0.05);
+      border-bottom-color: var(--kitchen);
+    }
+    .day-tab .dt-wd {
+      font-size: 13px;
+      color: var(--textLo);
+      font-weight: 400;
+    }
+    .day-tab.selected .dt-wd {
+      color: var(--textHi);
+      font-weight: 500;
+    }
+    .day-tab .dt-date {
+      font-size: 11px;
+      color: var(--textFaint);
+      margin-top: 1px;
+    }
+    .now-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+    .now-btn span {
+      font-size: 12px;
+      color: var(--textMid);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       WEATHER BADGE VARIANTS
+       ══════════════════════════════════════════════════════════ */
+
+    /* Wetter als Inline-Badge neben Header */
+    .header-with-weather {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 12px 8px;
+    }
+    .header-with-weather .header-sub {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--textFaint);
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .weather-pill {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--kitchen);
+      padding: 3px 12px;
+      border-radius: 10px;
+      background: rgba(240,196,90,0.08);
+      border: 1px solid rgba(240,196,90,0.15);
+    }
+
+    /* Wetter als Tag im Day-Tab-Bereich */
+    .weather-tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      color: var(--kitchen);
+      padding: 4px 16px;
+      border-radius: 12px;
+      background: rgba(240,196,90,0.08);
+      border: 1px solid rgba(240,196,90,0.15);
+    }
+    .weather-row-inline {
+      text-align: center;
+      padding: 4px 0 6px;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       V3: Stacked Mini-Bars (4 übereinander)
+       Jeder Sensor = eine horizontale Linie
+       ══════════════════════════════════════════════════════════ */
+    .v3 .slot-btn { padding: 10px 4px 8px; }
+    .bars-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin-top: 6px;
+      padding: 0 4px;
+    }
+    .bar-line {
+      width: 100%;
+      max-width: 28px;
+      height: 3px;
+      border-radius: 1.5px;
+      background: var(--dotOff);
+      transition: all 0.3s ease;
+    }
+    .bar-line.on-k { background: var(--kitchen); box-shadow: 0 0 6px var(--kitchen); }
+    .bar-line.on-s { background: var(--tv); box-shadow: 0 0 6px var(--tv); }
+    .bar-line.on-e { background: var(--door); box-shadow: 0 0 6px var(--door); }
+    .bar-line.on-g { background: var(--bird); box-shadow: 0 0 6px var(--bird); }
+
+    /* ══════════════════════════════════════════════════════════
+       V4: Vertikale Dots (4 untereinander statt nebeneinander)
+       ══════════════════════════════════════════════════════════ */
+    .v4 .slot-btn { padding: 10px 4px 8px; }
+    .dots-vertical {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      margin-top: 6px;
+    }
+    .vdot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--dotOff);
+      transition: all 0.3s ease;
+    }
+    .vdot.on-k { background: var(--kitchen); box-shadow: 0 0 5px var(--kitchen); }
+    .vdot.on-s { background: var(--tv); box-shadow: 0 0 5px var(--tv); }
+    .vdot.on-e { background: var(--door); box-shadow: 0 0 5px var(--door); }
+    .vdot.on-g { background: var(--bird); box-shadow: 0 0 5px var(--bird); }
+
+    /* ══════════════════════════════════════════════════════════
+       V5: Single Activity Bar (ein Balken, Farbe = Aktivitätslevel)
+       ══════════════════════════════════════════════════════════ */
+    .v5 .slot-btn { padding: 10px 4px 8px; }
+    .activity-bar {
+      height: 4px;
+      border-radius: 2px;
+      margin: 7px auto 0;
+      width: 75%;
+      transition: all 0.3s ease;
+    }
+    .activity-bar.act-0 { background: var(--dotOff); }
+    .activity-bar.act-1 { background: var(--textLo); box-shadow: 0 0 4px rgba(132,148,167,0.3); }
+    .activity-bar.act-2 { background: var(--tv); opacity: 0.6; box-shadow: 0 0 6px rgba(107,164,212,0.3); }
+    .activity-bar.act-3 { background: var(--kitchen); opacity: 0.7; box-shadow: 0 0 6px rgba(240,196,90,0.3); }
+    .activity-bar.act-4 { background: var(--kitchen); box-shadow: 0 0 8px rgba(240,196,90,0.4); }
+
+    /* ══════════════════════════════════════════════════════════
+       V6: 2×2 Dot-Grid (4 Dots als Quadrat)
+       ══════════════════════════════════════════════════════════ */
+    .v6 .slot-btn { padding: 10px 4px 8px; }
+    .dots-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      width: 18px;
+      margin: 6px auto 0;
+    }
+    .gdot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--dotOff);
+      transition: all 0.3s ease;
+    }
+    .gdot.on-k { background: var(--kitchen); box-shadow: 0 0 5px var(--kitchen); }
+    .gdot.on-s { background: var(--tv); box-shadow: 0 0 5px var(--tv); }
+    .gdot.on-e { background: var(--door); box-shadow: 0 0 5px var(--door); }
+    .gdot.on-g { background: var(--bird); box-shadow: 0 0 5px var(--bird); }
+
+    /* ── Footer ── */
+    .mockup-footer {
+      text-align: center;
+      padding: 24px 16px 48px;
+      font-size: 11px;
+      color: var(--textFaint);
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+
+    <!-- ═══════════ V3 — Stacked Bars ═══════════ -->
+    <div class="variant-label">Variante</div>
+    <div class="variant-name">V3 — Stacked Bars</div>
+    <div class="variant-desc">
+      Header kompakt (nur „Wetterbericht"). Wetter-Badge inline daneben.<br>
+      Sensor-Aktivität als 4 gestapelte Mini-Balken mit Glow.
+    </div>
+
+    <div class="header-with-weather">
+      <span class="header-sub">Wetterbericht</span>
+      <span class="weather-pill">Freundlich</span>
+    </div>
+
+    <div class="day-tabs">
+      <div class="day-tab selected">
+        <div class="dt-wd">Di</div>
+        <div class="dt-date">07.04.</div>
+      </div>
+      <div class="now-btn"><span>Jetzt</span></div>
+    </div>
+
+    <div class="slot-row v3">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div>
+          <div class="bar-line"></div>
+          <div class="bar-line"></div>
+          <div class="bar-line"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morg.</div>
+        <div class="slot-time">04–08</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div>
+          <div class="bar-line on-s"></div>
+          <div class="bar-line"></div>
+          <div class="bar-line on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vorm.</div>
+        <div class="slot-time">08–12</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div>
+          <div class="bar-line on-s"></div>
+          <div class="bar-line on-e"></div>
+          <div class="bar-line on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div>
+          <div class="bar-line"></div>
+          <div class="bar-line on-e"></div>
+          <div class="bar-line"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachm.</div>
+        <div class="slot-time">14–18</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div>
+          <div class="bar-line on-s"></div>
+          <div class="bar-line on-e"></div>
+          <div class="bar-line"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="bars-stack">
+          <div class="bar-line on-k"></div>
+          <div class="bar-line on-s"></div>
+          <div class="bar-line"></div>
+          <div class="bar-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <!-- ═══════════ V4 — Vertical Dots ═══════════ -->
+    <div class="variant-label">Variante</div>
+    <div class="variant-name">V4 — Vertikale Dots</div>
+    <div class="variant-desc">
+      Wie V3-Header. Dots vertikal statt horizontal gestapelt.<br>
+      Spart horizontalen Platz, Glow bleibt erhalten.
+    </div>
+
+    <div class="header-with-weather">
+      <span class="header-sub">Wetterbericht</span>
+      <span class="weather-pill">Freundlich</span>
+    </div>
+
+    <div class="day-tabs">
+      <div class="day-tab selected">
+        <div class="dt-wd">Di</div>
+        <div class="dt-date">07.04.</div>
+      </div>
+      <div class="now-btn"><span>Jetzt</span></div>
+    </div>
+
+    <div class="slot-row v4">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="dots-vertical">
+          <div class="vdot on-k"></div><div class="vdot"></div><div class="vdot"></div><div class="vdot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morg.</div>
+        <div class="slot-time">04–08</div>
+        <div class="dots-vertical">
+          <div class="vdot on-k"></div><div class="vdot on-s"></div><div class="vdot"></div><div class="vdot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vorm.</div>
+        <div class="slot-time">08–12</div>
+        <div class="dots-vertical">
+          <div class="vdot on-k"></div><div class="vdot on-s"></div><div class="vdot on-e"></div><div class="vdot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="dots-vertical">
+          <div class="vdot on-k"></div><div class="vdot"></div><div class="vdot on-e"></div><div class="vdot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachm.</div>
+        <div class="slot-time">14–18</div>
+        <div class="dots-vertical">
+          <div class="vdot on-k"></div><div class="vdot on-s"></div><div class="vdot on-e"></div><div class="vdot"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="dots-vertical">
+          <div class="vdot on-k"></div><div class="vdot on-s"></div><div class="vdot"></div><div class="vdot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <!-- ═══════════ V5 — Single Activity Bar ═══════════ -->
+    <div class="variant-label">Variante</div>
+    <div class="variant-name">V5 — Activity Bar</div>
+    <div class="variant-desc">
+      Ein Balken pro Slot statt 4 Dots. Farbe &amp; Helligkeit = Aktivitätslevel.<br>
+      Wetter-Badge als Tag unter den Day-Tabs.
+    </div>
+
+    <div class="header-compact">
+      <div class="header-sub">Wetterbericht</div>
+    </div>
+
+    <div class="day-tabs">
+      <div class="day-tab selected">
+        <div class="dt-wd">Di</div>
+        <div class="dt-date">07.04.</div>
+      </div>
+      <div class="now-btn"><span>Jetzt</span></div>
+    </div>
+    <div class="weather-row-inline">
+      <span class="weather-tag">Freundlich</span>
+    </div>
+
+    <div class="slot-row v5">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="activity-bar act-1"></div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morg.</div>
+        <div class="slot-time">04–08</div>
+        <div class="activity-bar act-3"></div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vorm.</div>
+        <div class="slot-time">08–12</div>
+        <div class="activity-bar act-4"></div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="activity-bar act-2"></div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachm.</div>
+        <div class="slot-time">14–18</div>
+        <div class="activity-bar act-3"></div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="activity-bar act-2"></div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <!-- ═══════════ V6 — 2×2 Dot Grid ═══════════ -->
+    <div class="variant-label">Variante</div>
+    <div class="variant-name">V6 — 2&times;2 Dot-Grid</div>
+    <div class="variant-desc">
+      4 Dots als kompaktes Quadrat angeordnet (K/L oben, E/G unten).<br>
+      Header mit Wetter inline. Glow beibehalten.
+    </div>
+
+    <div class="header-with-weather">
+      <span class="header-sub">Wetterbericht</span>
+      <span class="weather-pill">Freundlich</span>
+    </div>
+
+    <div class="day-tabs">
+      <div class="day-tab selected">
+        <div class="dt-wd">Di</div>
+        <div class="dt-date">07.04.</div>
+      </div>
+      <div class="now-btn"><span>Jetzt</span></div>
+    </div>
+
+    <div class="slot-row v6">
+      <div class="slot-btn">
+        <div class="slot-name">Nachts</div>
+        <div class="slot-time">00–04</div>
+        <div class="dots-grid">
+          <div class="gdot on-k"></div><div class="gdot"></div>
+          <div class="gdot"></div><div class="gdot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Morg.</div>
+        <div class="slot-time">04–08</div>
+        <div class="dots-grid">
+          <div class="gdot on-k"></div><div class="gdot on-s"></div>
+          <div class="gdot"></div><div class="gdot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Vorm.</div>
+        <div class="slot-time">08–12</div>
+        <div class="dots-grid">
+          <div class="gdot on-k"></div><div class="gdot on-s"></div>
+          <div class="gdot on-e"></div><div class="gdot on-g"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Mittags</div>
+        <div class="slot-time">12–14</div>
+        <div class="dots-grid">
+          <div class="gdot on-k"></div><div class="gdot"></div>
+          <div class="gdot on-e"></div><div class="gdot"></div>
+        </div>
+      </div>
+      <div class="slot-btn">
+        <div class="slot-name">Nachm.</div>
+        <div class="slot-time">14–18</div>
+        <div class="dots-grid">
+          <div class="gdot on-k"></div><div class="gdot on-s"></div>
+          <div class="gdot on-e"></div><div class="gdot"></div>
+        </div>
+      </div>
+      <div class="slot-btn selected">
+        <div class="slot-name">Abends</div>
+        <div class="slot-time">18–24</div>
+        <div class="dots-grid">
+          <div class="gdot on-k"></div><div class="gdot on-s"></div>
+          <div class="gdot"></div><div class="gdot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="thick-divider"></div>
+
+    <div class="mockup-footer">
+      <strong style="color: var(--textMid);">Übersicht der Varianten</strong><br><br>
+      <strong>V3</strong> Stacked Bars — 4 Balken übereinander, Glow<br>
+      <strong>V4</strong> Vertical Dots — 4 Dots vertikal, Glow<br>
+      <strong>V5</strong> Activity Bar — 1 Balken, Farbe = Level<br>
+      <strong>V6</strong> 2&times;2 Dot-Grid — Dots als Quadrat, Glow<br><br>
+      Alle mit Kurzlabels (V1-Basis), kompaktem Header, Wetter inline
+    </div>
+
+  </div>
+</body>
+</html>
