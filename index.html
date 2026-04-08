@@ -705,14 +705,14 @@
         }}>
 
           {/* HEADER */}
-          <header style={{ textAlign: lg ? "left" : "center", padding: mob ? "20px 12px 6px" : lg ? "24px 32px 16px" : "28px 16px 8px", maxWidth: lg ? 1100 : undefined, margin: lg ? "0 auto" : undefined }}>
-            <div style={{ fontSize: mob ? 11 : lg ? 14 : 12, letterSpacing: mob ? 4 : 6, color: C.textLo, textTransform: "uppercase", fontWeight: 500 }}>
+          <header style={{ textAlign: "center", padding: mob ? "20px 12px 6px" : lg ? "40px 16px 12px" : "28px 16px 8px" }}>
+            <div style={{ fontSize: mob ? 11 : lg ? 18 : 12, letterSpacing: mob ? 4 : lg ? 8 : 5, color: C.textLo, textTransform: "uppercase", fontWeight: lg ? 400 : 500 }}>
               Mama Wetter
             </div>
           </header>
 
-          {/* DAY TABS — sit directly on top of content area like real tabs */}
-          <div style={{ display: "flex", justifyContent: lg ? "flex-start" : "center", alignItems: "flex-end", gap: lg ? 2 : 0, padding: mob ? "6px 4px 6px" : lg ? "0 32px 0" : "10px 8px 8px", maxWidth: lg ? 1100 : undefined, margin: lg ? "0 auto" : undefined, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+          {/* DAY TABS */}
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-end", gap: lg ? 4 : 0, padding: mob ? "6px 4px 6px" : lg ? "8px 16px 16px" : "10px 8px 8px", overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
             {[{ key: "now", label: "Jetzt" }, ...history.map((d, i) => ({ key: d.date, label: wday(d.date), sub: fmt(d.date), idx: i, problems: dayHasProblems(d) }))].map((item, arrIdx) => {
               const isNow = item.key === "now";
               const sel = !isNow && item.idx === selDay;
@@ -722,7 +722,7 @@
                     style={{
                       background: sel ? "rgba(255,255,255,0.05)" : "transparent",
                       border: "none", borderBottom: sel ? "2px solid "+C.kitchen.on : "2px solid transparent",
-                      borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : lg ? "10px 18px 8px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto",
+                      borderRadius: "8px 8px 0 0", padding: mob ? "8px 10px 6px" : lg ? "10px 20px 8px" : "8px 14px 6px", cursor: "pointer", flex: "0 0 auto",
                       textAlign: "center", transition: T("0.3s"),
                     }}>
                     <div style={{ fontSize: mob ? 14 : lg ? 15 : 13, color: sel ? C.textHi : C.textLo, fontWeight: sel ? 500 : 400, fontFamily: ff }}>{item.label}</div>
@@ -738,22 +738,22 @@
           {/* ─── TWO-COLUMN WRAPPER (lg: main left, weekly right) ─── */}
           {(() => {
             const weeklyGrid = (
-              <div style={{ padding: lg ? "12px 20px" : mob ? "10px 6px 8px" : "14px 16px 8px" }}>
-                <div style={{ fontSize: mob ? 11 : 12, color: C.textLo, textTransform: "uppercase", letterSpacing: 3, textAlign: "center", marginBottom: mob ? 12 : 16, fontWeight: 500 }}>
+              <div style={{ padding: lg ? "16px 24px" : mob ? "10px 6px 8px" : "14px 16px 8px" }}>
+                <div style={{ fontSize: mob ? 11 : lg ? 13 : 12, color: C.textLo, textTransform: "uppercase", letterSpacing: 3, textAlign: "center", marginBottom: mob ? 12 : lg ? 20 : 16, fontWeight: 500 }}>
                   Wochenverlauf
                 </div>
                 <div style={{
                   maxWidth: mob ? "100%" : 420, margin: "0 auto", display: "grid",
-                  gridTemplateColumns: mob ? "54px repeat(6, 1fr)" : "60px repeat(6, 1fr)", gap: mob ? "4px 3px" : "5px 4px", alignItems: "center",
+                  gridTemplateColumns: mob ? "54px repeat(6, 1fr)" : lg ? "64px repeat(6, 1fr)" : "60px repeat(6, 1fr)", gap: mob ? "4px 3px" : lg ? "8px 5px" : "5px 4px", alignItems: "center",
                 }}>
                   <div />
                   {SLOTS.map(s => (
-                    <div key={s} style={{ fontSize: mob ? 11 : 11, color: C.textFaint, textAlign: "center", fontFamily: ff }}>{s.slice(0, 2)}</div>
+                    <div key={s} style={{ fontSize: mob ? 11 : lg ? 12 : 11, color: C.textFaint, textAlign: "center", fontFamily: ff }}>{s.slice(0, 2)}</div>
                   ))}
                   {history.map((d, di) => {
                     const sel = di === selDay;
                     return [
-                      <div key={"l"+di} style={{ fontSize: mob ? 12 : 12, color: sel ? C.textMid : C.textFaint, fontWeight: sel ? 500 : 400, fontFamily: ff, transition: T("0.3s") }}>
+                      <div key={"l"+di} style={{ fontSize: mob ? 12 : lg ? 13 : 12, color: sel ? C.textMid : C.textFaint, fontWeight: sel ? 500 : 400, fontFamily: ff, transition: T("0.3s") }}>
                         {wday(d.date)} {fmt(d.date)}
                       </div>,
                       ...d.slots.map((s, si) => (
@@ -775,12 +775,12 @@
             const mainContent = (
               <div style={{ flex: lg ? "1 1 0" : undefined, minWidth: 0 }}>
                 {/* HOUSE */}
-                <div style={{ padding: mob ? "4px 8px 0" : lg ? "0 0 0" : "8px 20px 0" }}>
+                <div style={{ padding: mob ? "4px 8px 0" : "8px 12px 0" }}>
                   <House slot={slot} slotName={slotName} date={day.date} slotIdx={selSlot} showBird={showBird} />
                 </div>
 
                 {/* LEGEND (Bars-Zeile) */}
-                <div style={{ display: "flex", justifyContent: "center", gap: mob ? 18 : lg ? 28 : 24, padding: mob ? "12px 16px 4px" : lg ? "16px 16px 4px" : "14px 16px 4px" }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: mob ? 18 : lg ? 32 : 24, padding: mob ? "12px 16px 4px" : lg ? "20px 16px 6px" : "14px 16px 4px" }}>
                   {[
                     { color: C.kitchen.on, label: "Küche", value: slot.k },
                     { color: C.tv.on, label: "Lesezimmer", value: slot.s },
@@ -792,18 +792,18 @@
                     const opacity = on ? 1 : err ? 0.8 : 0.2;
                     return (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, opacity: opacity, transition: T("0.5s") }}>
-                        <div style={{ width: lg ? 18 : 16, height: lg ? 3 : 3, borderRadius: 2, backgroundColor: barColor, boxShadow: on ? "0 0 6px "+s.color : "none", transition: T("0.5s") }} />
-                        <span style={{ fontSize: mob ? 13 : lg ? 14 : 13, color: C.textMid, fontFamily: ff }}>{s.label}</span>
+                        <div style={{ width: lg ? 22 : 16, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: barColor, boxShadow: on ? "0 0 6px "+s.color : "none", transition: T("0.5s") }} />
+                        <span style={{ fontSize: mob ? 13 : lg ? 15 : 13, color: C.textMid, fontFamily: ff }}>{s.label}</span>
                       </div>
                     );
                   })}
                 </div>
-                <div style={{ textAlign: "center", padding: mob ? "4px 16px 8px" : "4px 16px 8px", fontSize: mob ? 12 : lg ? 13 : 12, color: C.textFaint, fontFamily: ff, opacity: 0.8 }}>
+                <div style={{ textAlign: "center", padding: mob ? "4px 16px 8px" : lg ? "6px 16px 14px" : "4px 16px 8px", fontSize: mob ? 12 : lg ? 14 : 12, color: C.textFaint, fontFamily: ff, opacity: 0.8 }}>
                   Leuchtet, sobald im Zeitfenster etwas aktiv war
                 </div>
 
                 {/* TIME SLOTS (Stacked Bars) */}
-                <div style={{ display: "flex", justifyContent: "space-between", gap: mob ? 3 : lg ? 6 : 4, padding: mob ? "10px 6px 8px" : lg ? "12px 12px 8px" : "14px 8px 10px", maxWidth: 620, margin: "0 auto" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: mob ? 3 : lg ? 8 : 4, padding: mob ? "10px 6px 8px" : lg ? "8px 12px 8px" : "14px 8px 10px", maxWidth: lg ? 660 : 620, margin: "0 auto" }}>
                   {SLOTS.map((name, idx) => {
                     const s = day.slots[idx];
                     const sel = idx === selSlot;
@@ -820,18 +820,18 @@
                         style={{
                           background: sel ? "rgba(255,255,255,0.06)" : "transparent",
                           border: sel ? "1px solid rgba(255,255,255,0.1)" : "1px solid transparent",
-                          borderRadius: 10, padding: mob ? "10px 4px 8px" : lg ? "12px 8px 10px" : "10px 8px 8px", cursor: "pointer", flex: "1 1 0", minWidth: 0, transition: T("0.3s"),
+                          borderRadius: lg ? 12 : 10, padding: mob ? "10px 4px 8px" : lg ? "14px 10px 12px" : "10px 8px 8px", cursor: "pointer", flex: "1 1 0", minWidth: 0, transition: T("0.3s"),
                         }}>
-                        <div style={{ fontSize: mob ? 13 : lg ? 13 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff }}>{SLOT_SHORT[name]}</div>
-                        <div style={{ fontSize: mob ? 12 : lg ? 12 : 11, color: C.textFaint, marginTop: 2, fontFamily: ff }}>{SLOT_LABELS[name]}</div>
-                        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "0 4px" }}>
+                        <div style={{ fontSize: mob ? 13 : lg ? 15 : 12, fontWeight: sel ? 500 : 400, color: sel ? C.textHi : C.textLo, fontFamily: ff }}>{SLOT_SHORT[name]}</div>
+                        <div style={{ fontSize: mob ? 12 : lg ? 13 : 11, color: C.textFaint, marginTop: 2, fontFamily: ff }}>{SLOT_LABELS[name]}</div>
+                        <div style={{ marginTop: lg ? 8 : 6, display: "flex", flexDirection: "column", alignItems: "center", gap: lg ? 3 : 2, padding: "0 4px" }}>
                           {nd && slotPast ? (
-                            <div style={{ width: "100%", maxWidth: 30, height: 3, borderRadius: 2, backgroundColor: C.error, opacity: 0.4 }} />
+                            <div style={{ width: "100%", maxWidth: lg ? 36 : 30, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: C.error, opacity: 0.4 }} />
                           ) : nd && !slotPast ? (
-                            <div style={{ width: "100%", maxWidth: 30, height: 3, borderRadius: 2, backgroundColor: C.textFaint, opacity: 0.3 }} />
+                            <div style={{ width: "100%", maxWidth: lg ? 36 : 30, height: lg ? 4 : 3, borderRadius: 2, backgroundColor: C.textFaint, opacity: 0.3 }} />
                           ) : sensors.map((d, i) => (
                             <div key={i} style={{
-                              width: "100%", maxWidth: 30, height: 3, borderRadius: 2,
+                              width: "100%", maxWidth: lg ? 36 : 30, height: lg ? 4 : 3, borderRadius: 2,
                               backgroundColor: isOn(d.v) ? d.c : isError(d.v) ? C.error : "#1a2030",
                               boxShadow: isOn(d.v) ? "0 0 6px "+d.c : "none", transition: T("0.3s"),
                             }} />
@@ -845,10 +845,10 @@
             );
 
             return lg ? (
-              <div style={{ display: "flex", gap: 0, padding: "0 32px", maxWidth: 1100, margin: "0 auto", alignItems: "stretch" }}>
+              <div style={{ display: "flex", gap: 0, padding: "12px 32px 0", maxWidth: 1100, margin: "0 auto", alignItems: "stretch" }}>
                 <div style={{ flex: "1 1 0", minWidth: 0 }}>{mainContent}</div>
                 <div style={{ width: 1, background: "linear-gradient(180deg, transparent, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent)", margin: "0 28px", flexShrink: 0 }} />
-                <div style={{ flex: "0 0 380px", display: "flex", flexDirection: "column", justifyContent: "center", padding: "20px 0", background: "rgba(255,255,255,0.015)", borderRadius: "0 16px 16px 0" }}>{weeklyGrid}</div>
+                <div style={{ flex: "0 0 400px", display: "flex", flexDirection: "column", justifyContent: "center", padding: "24px 0", background: "rgba(255,255,255,0.015)", borderRadius: 16 }}>{weeklyGrid}</div>
               </div>
             ) : (
               <React.Fragment>
