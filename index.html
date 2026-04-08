@@ -803,7 +803,7 @@
                 </div>
 
                 {/* TIME SLOTS (Stacked Bars) */}
-                <div style={{ display: "flex", justifyContent: "center", gap: mob ? 3 : "clamp(4px, 1vw, 8px)", padding: mob ? "10px 6px 8px" : "clamp(10px, 1.5vw, 16px) clamp(8px, 1.5vw, 16px) clamp(8px, 1vw, 12px)", maxWidth: mob ? undefined : "clamp(420px, 65vw, 660px)", margin: "0 auto" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: mob ? 3 : "clamp(3px, 0.6vw, 8px)", padding: mob ? "10px 6px 8px" : "clamp(10px, 1.5vw, 16px) 12px clamp(8px, 1vw, 12px)" }}>
                   {SLOTS.map((name, idx) => {
                     const s = day.slots[idx];
                     const sel = idx === selSlot;
