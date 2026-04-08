@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Weckrain Dashboard — Redesign Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { font-size: 16px; }
+    body {
+      background: #080e1a;
+      color: #e8edf5;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    :root {
+      --textHi: #e8edf5;
+      --textMid: #a0b0c4;
+      --textLo: #8494a7;
+      --textFaint: #5e7086;
+      --bg: #080e1a;
+      --surface: rgba(255,255,255,0.03);
+      --surfaceHover: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.06);
+      --borderActive: rgba(255,255,255,0.12);
+      --kitchen: #f0c45a;
+      --tv: #6ba4d4;
+      --door: #7bc77e;
+      --bird: #c49bdb;
+      --error: #c27a5a;
+      --dotOff: #1e2a3a;
+    }
+
+    .phone-frame {
+      max-width: 390px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #1a1830 0%, #0e1625 50%, #0a1018 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ═══════════════════════════════════════════
+       HEADER — minimal, out of the way
+       ═══════════════════════════════════════════ */
+    .header {
+      text-align: center;
+      padding: 28px 16px 12px;
+    }
+    .header-sub {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--textFaint);
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .header-title {
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--textHi);
+      letter-spacing: 1.5px;
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════
+       DAY SELECTOR — horizontal pills
+       ═══════════════════════════════════════════ */
+    .day-selector {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .day-selector::-webkit-scrollbar { display: none; }
+
+    .day-pill {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 12px 7px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      min-width: 44px;
+      transition: all 0.2s ease;
+    }
+    .day-pill:hover { background: var(--surface); }
+    .day-pill.selected {
+      background: var(--surfaceHover);
+    }
+    .day-pill .day-wd {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--textLo);
+    }
+    .day-pill.selected .day-wd { color: var(--textHi); }
+    .day-pill .day-date {
+      font-size: 11px;
+      color: var(--textFaint);
+      margin-top: 1px;
+    }
+    .day-pill.selected .day-date { color: var(--textMid); }
+    .day-pill.selected::after {
+      content: '';
+      display: block;
+      width: 16px;
+      height: 2px;
+      border-radius: 1px;
+      background: var(--kitchen);
+      margin-top: 5px;
+    }
+    .day-pill:not(.selected)::after {
+      content: '';
+      display: block;
+      width: 16px;
+      height: 2px;
+      margin-top: 5px;
+    }
+
+    .now-pill {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    .now-pill span {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--textMid);
+      letter-spacing: 0.5px;
+    }
+
+    /* ═══════════════════════════════════════════
+       WEATHER LABEL — integrated, subtle
+       ═══════════════════════════════════════════ */
+    .weather-row {
+      display: flex;
+      justify-content: center;
+      padding: 6px 16px 10px;
+    }
+    .weather-badge {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--kitchen);
+      padding: 5px 20px;
+      border-radius: 16px;
+      background: rgba(240,196,90,0.08);
+      border: 1px solid rgba(240,196,90,0.15);
+    }
+
+    /* ═══════════════════════════════════════════
+       HOUSE SVG — the hero, full width
+       ═══════════════════════════════════════════ */
+    .house-container {
+      padding: 4px 12px 0;
+    }
+    .house-placeholder {
+      width: 100%;
+      height: 210px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #1a1535 0%, #2a1d3a 40%, #1a2030 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--textFaint);
+      font-size: 14px;
+      font-style: italic;
+      position: relative;
+      overflow: hidden;
+    }
+    .house-placeholder::after {
+      content: '🏠 House SVG hier';
+      position: absolute;
+      font-style: normal;
+      font-size: 16px;
+      opacity: 0.5;
+    }
+
+    /* ═══════════════════════════════════════════
+       LEGEND — directly below house, integrated
+       Sensor status as clear labeled indicators
+       ═══════════════════════════════════════════ */
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      padding: 14px 16px 6px;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 8px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .legend-dot.active { box-shadow: 0 0 8px currentColor, 0 0 3px currentColor; }
+    .legend-dot.inactive { opacity: 0.2; }
+    .legend-label {
+      font-size: 14px;
+      color: var(--textMid);
+    }
+    .legend-label.inactive { opacity: 0.3; }
+    .legend-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--textFaint);
+      padding: 0 16px 8px;
+      opacity: 0.7;
+    }
+
+    /* ═══════════════════════════════════════════
+       SLOT SELECTOR — clean segmented control
+       No dots. Just navigation. The house shows the data.
+       ═══════════════════════════════════════════ */
+    .slot-selector {
+      display: flex;
+      margin: 10px 16px 6px;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 2px;
+    }
+    .slot-seg {
+      flex: 1 1 0;
+      text-align: center;
+      padding: 10px 2px 9px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      background: transparent;
+      min-width: 0;
+    }
+    .slot-seg.selected {
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .slot-seg .seg-label {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--textFaint);
+      display: block;
+    }
+    .slot-seg.selected .seg-label {
+      color: var(--textHi);
+      font-weight: 500;
+    }
+    .slot-seg .seg-time {
+      font-size: 10px;
+      color: var(--textFaint);
+      display: block;
+      margin-top: 2px;
+      opacity: 0;
+      height: 0;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .slot-seg.selected .seg-time {
+      opacity: 1;
+      height: auto;
+      margin-top: 3px;
+    }
+
+    /* Activity summary bar under each segment */
+    .seg-bar {
+      height: 3px;
+      border-radius: 1.5px;
+      margin: 6px auto 0;
+      width: 70%;
+      transition: all 0.3s ease;
+    }
+    .seg-bar.activity-0 { background: var(--dotOff); }
+    .seg-bar.activity-1 { background: var(--textFaint); }
+    .seg-bar.activity-2 { background: var(--tv); opacity: 0.5; }
+    .seg-bar.activity-3 { background: var(--kitchen); opacity: 0.6; }
+    .seg-bar.activity-4 { background: var(--kitchen); opacity: 0.9; }
+    .seg-bar.no-data { background: var(--error); opacity: 0.3; width: 40%; }
+
+    /* ═══════════════════════════════════════════
+       DIVIDER
+       ═══════════════════════════════════════════ */
+    .divider {
+      height: 1px;
+      margin: 14px 40px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    /* ═══════════════════════════════════════════
+       WEEKLY OVERVIEW — activity heatmap, not mini houses
+       ═══════════════════════════════════════════ */
+    .weekly-section {
+      padding: 12px 16px 8px;
+    }
+    .weekly-title {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--textFaint);
+      text-align: center;
+      font-weight: 500;
+      margin-bottom: 14px;
+    }
+    .weekly-grid {
+      display: grid;
+      grid-template-columns: 56px repeat(6, 1fr);
+      gap: 4px 3px;
+      align-items: center;
+    }
+    .wg-header {
+      font-size: 11px;
+      color: var(--textFaint);
+      text-align: center;
+      font-weight: 400;
+      padding-bottom: 4px;
+    }
+    .wg-day-label {
+      font-size: 12px;
+      color: var(--textFaint);
+      font-weight: 400;
+    }
+    .wg-day-label.selected {
+      color: var(--textMid);
+      font-weight: 500;
+    }
+
+    /* Heatmap cell — single colored block instead of mini house */
+    .heatmap-cell {
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+    .heatmap-cell.selected {
+      outline: 2px solid rgba(255,255,255,0.2);
+      outline-offset: -1px;
+    }
+
+    /* Activity-based background color intensity */
+    .heatmap-cell.act-0 { background: rgba(255,255,255,0.015); }
+    .heatmap-cell.act-1 { background: rgba(154,170,190,0.08); }
+    .heatmap-cell.act-2 { background: rgba(125,184,224,0.1); }
+    .heatmap-cell.act-3 { background: rgba(232,185,49,0.08); }
+    .heatmap-cell.act-4 { background: rgba(232,185,49,0.14); }
+    .heatmap-cell.no-data { background: rgba(194,122,90,0.06); }
+    .heatmap-cell.pending { background: rgba(255,255,255,0.01); }
+
+    /* Tiny dots inside heatmap cells */
+    .hm-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+    .hm-dot.off { background: rgba(255,255,255,0.06); }
+    .hm-dot.k { background: var(--kitchen); }
+    .hm-dot.s { background: var(--tv); }
+    .hm-dot.e { background: var(--door); }
+    .hm-dot.g { background: var(--bird); }
+
+    /* ═══════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════ */
+    .footer {
+      text-align: center;
+      padding: 24px 16px 48px;
+      font-size: 12px;
+      color: var(--textFaint);
+      letter-spacing: 0.5px;
+    }
+
+    /* ═══════════════════════════════════════════
+       COMPARISON NOTE
+       ═══════════════════════════════════════════ */
+    .note {
+      background: rgba(240,196,90,0.06);
+      border: 1px solid rgba(240,196,90,0.12);
+      border-radius: 12px;
+      margin: 16px 16px;
+      padding: 14px 16px;
+    }
+    .note-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--kitchen);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .note-text {
+      font-size: 12px;
+      color: var(--textMid);
+      line-height: 1.6;
+    }
+    .note-text strong { color: var(--textHi); font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+
+    <!-- ─── DESIGN NOTES ─── -->
+    <div class="note" style="margin-top: 20px;">
+      <div class="note-title">Redesign-Konzept</div>
+      <div class="note-text">
+        <strong>Slot-Auswahl</strong> = reine Navigation (Segmented Control), keine Dots.<br>
+        <strong>Activity-Bars</strong> unter jedem Segment zeigen Aktivitätslevel auf einen Blick.<br>
+        <strong>Legend</strong> = 2&times;2 Grid, zeigt aktuellen Slot-Zustand.<br>
+        <strong>History</strong> = Heatmap statt Mini-Houses. Farbe = Aktivitätslevel.<br>
+        <strong>Kontraste</strong> = WCAG AA durchgängig.
+      </div>
+    </div>
+
+    <!-- ─── HEADER ─── -->
+    <header class="header">
+      <div class="header-sub">Wetterbericht</div>
+      <div class="header-title">74653 Wetter</div>
+    </header>
+
+    <!-- ─── DAY SELECTOR (7 Tage) ─── -->
+    <div class="day-selector">
+      <div class="day-pill">
+        <span class="day-wd">Mi</span>
+        <span class="day-date">01.04.</span>
+      </div>
+      <div class="day-pill">
+        <span class="day-wd">Do</span>
+        <span class="day-date">02.04.</span>
+      </div>
+      <div class="day-pill">
+        <span class="day-wd">Fr</span>
+        <span class="day-date">03.04.</span>
+      </div>
+      <div class="day-pill">
+        <span class="day-wd">Sa</span>
+        <span class="day-date">04.04.</span>
+      </div>
+      <div class="day-pill">
+        <span class="day-wd">So</span>
+        <span class="day-date">05.04.</span>
+      </div>
+      <div class="day-pill">
+        <span class="day-wd">Mo</span>
+        <span class="day-date">06.04.</span>
+      </div>
+      <div class="day-pill selected">
+        <span class="day-wd">Di</span>
+        <span class="day-date">07.04.</span>
+      </div>
+      <div class="now-pill">
+        <span>Jetzt</span>
+      </div>
+    </div>
+
+    <!-- ─── WEATHER BADGE ─── -->
+    <div class="weather-row">
+      <div class="weather-badge">Freundlich</div>
+    </div>
+
+    <!-- ─── HOUSE (placeholder) ─── -->
+    <div class="house-container">
+      <div class="house-placeholder"></div>
+    </div>
+
+    <!-- ─── LEGEND: 2×2 Grid ─── -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot active" style="background: var(--kitchen); color: var(--kitchen);"></div>
+        <span class="legend-label">Küche</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot active" style="background: var(--tv); color: var(--tv);"></div>
+        <span class="legend-label">Lesezimmer</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot inactive" style="background: var(--door);"></div>
+        <span class="legend-label inactive">Eingang</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot inactive" style="background: var(--bird);"></div>
+        <span class="legend-label inactive">Gesang</span>
+      </div>
+    </div>
+    <div class="legend-hint">Leuchtet bei Aktivität im Zeitfenster</div>
+
+    <!-- ─── SLOT SELECTOR: Segmented Control ─── -->
+    <div class="slot-selector">
+      <div class="slot-seg">
+        <span class="seg-label">Nachts</span>
+        <span class="seg-time">00–04</span>
+        <div class="seg-bar activity-1"></div>
+      </div>
+      <div class="slot-seg">
+        <span class="seg-label">Morgens</span>
+        <span class="seg-time">04–08</span>
+        <div class="seg-bar activity-3"></div>
+      </div>
+      <div class="slot-seg">
+        <span class="seg-label">Vorm.</span>
+        <span class="seg-time">08–12</span>
+        <div class="seg-bar activity-4"></div>
+      </div>
+      <div class="slot-seg">
+        <span class="seg-label">Mittags</span>
+        <span class="seg-time">12–14</span>
+        <div class="seg-bar activity-2"></div>
+      </div>
+      <div class="slot-seg">
+        <span class="seg-label">Nachm.</span>
+        <span class="seg-time">14–18</span>
+        <div class="seg-bar activity-3"></div>
+      </div>
+      <div class="slot-seg selected">
+        <span class="seg-label">Abends</span>
+        <span class="seg-time">18–24</span>
+        <div class="seg-bar activity-2"></div>
+      </div>
+    </div>
+
+    <!-- ─── DIVIDER ─── -->
+    <div class="divider"></div>
+
+    <!-- ─── WEEKLY OVERVIEW: Heatmap ─── -->
+    <div class="weekly-section">
+      <div class="weekly-title">Wochenverlauf</div>
+      <div class="weekly-grid">
+        <!-- Header row -->
+        <div></div>
+        <div class="wg-header">Na</div>
+        <div class="wg-header">Mo</div>
+        <div class="wg-header">Vo</div>
+        <div class="wg-header">Mi</div>
+        <div class="wg-header">Nm</div>
+        <div class="wg-header">Ab</div>
+
+        <!-- Mi 01.04. -->
+        <div class="wg-day-label">Mi 01.04.</div>
+        <div class="heatmap-cell act-1"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-4"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-1"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+
+        <!-- Do 02.04. -->
+        <div class="wg-day-label">Do 02.04.</div>
+        <div class="heatmap-cell act-0"><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-4"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+
+        <!-- Fr 03.04. -->
+        <div class="wg-day-label">Fr 03.04.</div>
+        <div class="heatmap-cell act-0"><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-4"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-1"><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+
+        <!-- Sa 04.04. -->
+        <div class="wg-day-label">Sa 04.04.</div>
+        <div class="heatmap-cell act-1"><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-1"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+
+        <!-- So 05.04. -->
+        <div class="wg-day-label">So 05.04.</div>
+        <div class="heatmap-cell act-0"><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-1"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-1"><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell no-data"></div>
+        <div class="heatmap-cell act-1"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+
+        <!-- Mo 06.04. -->
+        <div class="wg-day-label">Mo 06.04.</div>
+        <div class="heatmap-cell act-0"><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-4"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+
+        <!-- Di 07.04. (selected/today) -->
+        <div class="wg-day-label selected">Di 07.04.</div>
+        <div class="heatmap-cell act-1"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-4"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot g"></div></div>
+        <div class="heatmap-cell act-2"><div class="hm-dot k"></div><div class="hm-dot off"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-3"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot e"></div><div class="hm-dot off"></div></div>
+        <div class="heatmap-cell act-2 selected"><div class="hm-dot k"></div><div class="hm-dot s"></div><div class="hm-dot off"></div><div class="hm-dot off"></div></div>
+      </div>
+    </div>
+
+    <!-- ─── FOOTER ─── -->
+    <div class="footer">
+      74653 &middot; Letzte Messung vor 14 Min.
+    </div>
+
+  </div>
+</body>
+</html>
