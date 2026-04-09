@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.0
+  Version: 1.0.1
   Last updated: 2026-04-09
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.0";
+    const FRONTEND_VERSION = "1.0.1";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -203,6 +203,52 @@
       }, [target, duration]);
 
       return value;
+    }
+
+    // ─── ANIMATED COLOR HOOK ─────────────────────────────────────────────
+    // Smooth RGB-Interpolation zwischen zwei Hex-Farben.
+    // Nötig für background-gradients, weil Browser linear-gradients nicht
+    // nativ über CSS `transition` animieren können (der Gradient wird
+    // beim Farbwechsel sonst hart umgeschaltet).
+    function hexToRgb(hex) {
+      var h = hex.replace("#", "");
+      if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+      var num = parseInt(h, 16);
+      return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+    }
+    function rgbToCss(rgb) {
+      return "rgb(" + Math.round(rgb[0]) + "," + Math.round(rgb[1]) + "," + Math.round(rgb[2]) + ")";
+    }
+    function useAnimatedColor(targetHex, duration) {
+      duration = duration || 1200;
+      const targetRgb = hexToRgb(targetHex);
+      const [rgb, setRgb] = useState(targetRgb);
+      const animRef = useRef(null);
+      const currentRef = useRef(targetRgb);
+
+      useEffect(() => {
+        if (animRef.current) cancelAnimationFrame(animRef.current);
+        const start = currentRef.current.slice();
+        const delta = [targetRgb[0] - start[0], targetRgb[1] - start[1], targetRgb[2] - start[2]];
+        if (Math.abs(delta[0]) < 0.5 && Math.abs(delta[1]) < 0.5 && Math.abs(delta[2]) < 0.5) {
+          setRgb(targetRgb); currentRef.current = targetRgb; return;
+        }
+        const t0 = performance.now();
+
+        function tick(now) {
+          const elapsed = now - t0;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = easeInOut(progress);
+          const v = [start[0] + delta[0] * eased, start[1] + delta[1] * eased, start[2] + delta[2] * eased];
+          currentRef.current = v;
+          setRgb(v);
+          if (progress < 1) { animRef.current = requestAnimationFrame(tick); }
+        }
+        animRef.current = requestAnimationFrame(tick);
+        return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+      }, [targetHex, duration]);
+
+      return rgbToCss(rgb);
     }
 
     // ─── HOUSE COMPONENT ─────────────────────────────────────────────────
@@ -696,8 +742,12 @@
       const slotName = SLOTS[selSlot];
 
       const isDay = ["Vormittags", "Mittags", "Nachmittags"].includes(slotName);
-      const bgTop = isDay ? "#1a2a40" : slotName === "Morgens" ? "#10141e" : slotName === "Abends" ? "#0c1018" : "#080e1a";
-      const bgBot = isDay ? "#1e3050" : "#141e30";
+      const bgTopTarget = isDay ? "#1a2a40" : slotName === "Morgens" ? "#10141e" : slotName === "Abends" ? "#0c1018" : "#080e1a";
+      const bgBotTarget = isDay ? "#1e3050" : "#141e30";
+      // JS-interpolierte Farbwerte — CSS transition kann linear-gradient
+      // nicht smooth animieren, deshalb nutzen wir den useAnimatedColor-Hook.
+      const bgTop = useAnimatedColor(bgTopTarget, 1200);
+      const bgBot = useAnimatedColor(bgBotTarget, 1200);
 
       const handleNow = useCallback(() => {
         setSelDay(0);

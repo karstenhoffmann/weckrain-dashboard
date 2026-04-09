@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-09 — index.html 1.0.1 (Background-Gradient Smooth-Transition)
+
+### index.html 1.0.1
+- **Fix:** Beim Wechsel zwischen Zeitfenstern (Nachts → Morgens → …) schaltete der Body-Hintergrund-Gradient hart um, während das House-SVG smooth animierte. Ursache: CSS `transition` kann `linear-gradient` nicht nativ interpolieren — Browser interpolieren nur einzelne Farbwerte, nicht Gradient-Strings.
+- **Lösung:** Neuer Hook `useAnimatedColor(targetHex, duration)` interpoliert RGB-Komponenten JS-seitig via `requestAnimationFrame`, analog zum bestehenden `useAnimatedValue`. Der Hintergrund-Gradient in `DashboardMain` verwendet jetzt zwei animierte Farbwerte (`bgTop`, `bgBot`) statt der statischen Hex-Strings. Übergang dauert 1200ms mit derselben `easeInOut`-Kurve wie die Sonne-Position und die SVG-Properties.
+- **Bump-Typ: PATCH (1.0.0 → 1.0.1)** — UX-Verbesserung ohne API-Änderung, kein Verhaltens-Impact außer smootherer Optik.
+
+---
+
 ## 2026-04-09 — backend/Code.gs 4.0.1 (Gesang-Fix)
 
 ### backend/Code.gs 4.0.1
