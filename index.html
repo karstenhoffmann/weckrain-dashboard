@@ -774,13 +774,15 @@
 
             const mainContent = (
               <div style={{ flex: lg ? "1 1 0" : undefined, minWidth: 0 }}>
+                {/* Shared width container — all children share the same left/right edges */}
+                <div style={{ maxWidth: 604, margin: "0 auto", padding: mob ? "0 8px" : "0 12px" }}>
                 {/* HOUSE */}
-                <div style={{ padding: mob ? "4px 8px 0" : "8px 12px 0" }}>
+                <div style={{ paddingTop: mob ? 4 : 8 }}>
                   <House slot={slot} slotName={slotName} date={day.date} slotIdx={selSlot} showBird={showBird} />
                 </div>
 
                 {/* LEGEND (Bars-Zeile) */}
-                <div style={{ display: "flex", justifyContent: "center", gap: mob ? 18 : lg ? 32 : 24, padding: mob ? "12px 16px 4px" : lg ? "20px 16px 6px" : "14px 16px 4px" }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: mob ? 18 : lg ? 32 : 24, padding: mob ? "12px 0 4px" : lg ? "20px 0 6px" : "14px 0 4px" }}>
                   {[
                     { color: C.kitchen.on, label: "Küche", value: slot.k },
                     { color: C.tv.on, label: "Lesezimmer", value: slot.s },
@@ -798,12 +800,12 @@
                     );
                   })}
                 </div>
-                <div style={{ textAlign: "center", padding: mob ? "4px 16px 8px" : lg ? "6px 16px 14px" : "4px 16px 8px", fontSize: mob ? 12 : lg ? 14 : 12, color: C.textFaint, fontFamily: ff, opacity: 0.8 }}>
+                <div style={{ textAlign: "center", padding: mob ? "4px 0 8px" : lg ? "6px 0 14px" : "4px 0 8px", fontSize: mob ? 12 : lg ? 14 : 12, color: C.textFaint, fontFamily: ff, opacity: 0.8 }}>
                   Leuchtet, sobald im Zeitfenster etwas aktiv war
                 </div>
 
                 {/* TIME SLOTS (Stacked Bars) */}
-                <div style={{ display: "flex", justifyContent: "space-between", gap: mob ? 3 : "clamp(3px, 0.6vw, 8px)", padding: mob ? "10px 6px 8px" : "clamp(10px, 1.5vw, 16px) 12px clamp(8px, 1vw, 12px)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: mob ? 3 : "clamp(3px, 0.6vw, 8px)", padding: mob ? "10px 0 8px" : "clamp(10px, 1.5vw, 16px) 0 clamp(8px, 1vw, 12px)" }}>
                   {SLOTS.map((name, idx) => {
                     const s = day.slots[idx];
                     const sel = idx === selSlot;
@@ -841,6 +843,7 @@
                     );
                   })}
                 </div>
+                </div>{/* end shared width container */}
               </div>
             );
 
