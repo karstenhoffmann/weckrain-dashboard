@@ -13,6 +13,23 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-09 — index.html 1.0.2 (Schönerer Singvogel)
+
+### index.html 1.0.2
+- **Verbesserung:** Der Singvogel im House-SVG (nur im `?mode=karsten`-Modus sichtbar) war bisher aus ein paar Ellipsen und Kreisen zusammengesetzt, wirkte klobig und war klein. Neu:
+  - Tropfenförmiger Körper via `<path>`, organische Form
+  - Gefalteter Flügel mit zusätzlicher Feder-Linie
+  - Größerer Kopf (r=6 statt r=4.5)
+  - Auge mit Highlight (weißer Glanzpunkt)
+  - Zweiteiliger Schnabel (Ober-/Unterschnabel, leicht geöffnet = singt)
+  - Zwei Schwanzfedern statt einer Kurve
+  - Bauch-Highlight (dezenter weißer Schimmer)
+  - Position verschoben: Vogel sitzt jetzt auf der linken Dachschräge (`translate(180, 75)` innerhalb der HOUSE-Gruppe) statt frei im Himmel zu schweben. Verankert, natürlicher.
+  - Drei schwebende Musiknoten (♪ ♫ ♬) die jetzt nicht nur opacity pulsen, sondern tatsächlich nach oben schweben und währenddessen faden (staffelweise zeitversetzt für natürliches Gefühl).
+- **Bump-Typ: PATCH (1.0.1 → 1.0.2)** — visuelle Verbesserung, kein API-Impact, nur sichtbar im Karsten-Modus.
+
+---
+
 ## 2026-04-09 — index.html 1.0.1 (Background-Gradient Smooth-Transition)
 
 ### index.html 1.0.1

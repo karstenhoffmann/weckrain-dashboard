@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.1
+  Version: 1.0.2
   Last updated: 2026-04-09
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.1";
+    const FRONTEND_VERSION = "1.0.2";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -418,19 +418,55 @@
                 {eErr && <g><circle cx="216" cy="222" r="6" fill="rgba(20,20,30,0.8)" /><text x="216" y="226" textAnchor="middle" fontSize="10" fill={isFehler(slot.e)?C.error:C.offline} fontFamily={ff} fontWeight="700">!</text></g>}
               </g>
 
-              {/* BIRD (only in extended mode) */}
-              {showBird && gOn && <g transform="translate(150, 100)" style={{ transition: trans }}>
-                <ellipse cx="0" cy="0" rx="7" ry="5.5" fill={C.bird.on} opacity="0.85" />
-                <circle cx="-6" cy="-3" r="4.5" fill={C.bird.on} opacity="0.9" />
-                <circle cx="-7" cy="-4" r="1.2" fill="#1a1a2e" /><circle cx="-6.6" cy="-4.3" r="0.4" fill="#fff" opacity="0.7" />
-                <polygon points="-10,-3 -14,-4.5 -10,-4" fill="#dda15e" />
-                <path d="M7,-1 Q12,-4 14,-1" fill={C.bird.on} opacity="0.7" />
-                <line x1="-2" y1="5" x2="-3" y2="9" stroke="#8a7a6a" strokeWidth="0.8" />
-                <line x1="2" y1="5" x2="1" y2="9" stroke="#8a7a6a" strokeWidth="0.8" />
-                <text x="8" y="-8" fontSize="11" fill={C.bird.on} opacity="0.5" fontFamily="serif"><animate attributeName="opacity" values="0.3;0.6;0.3" dur="2.5s" repeatCount="indefinite" />{"♪"}</text>
-                <text x="18" y="-14" fontSize="9" fill={C.bird.on} opacity="0.3" fontFamily="serif"><animate attributeName="opacity" values="0.2;0.5;0.2" dur="3.2s" repeatCount="indefinite" />{"♫"}</text>
+              {/* BIRD (only in extended mode) — sitzt auf dem Dach und singt */}
+              {showBird && gOn && <g transform="translate(180, 75)" style={{ transition: trans }}>
+                {/* Schwanzgefieder (nach hinten/links herausstehend) */}
+                <path d="M -7,-7 L -18,-12 L -13,-6 Z" fill={C.bird.on} opacity="0.7" />
+                <path d="M -7,-5 L -17,-2 L -12,-1 Z" fill={C.bird.on} opacity="0.55" />
+
+                {/* Körper — tropfenförmig, nach rechts blickend */}
+                <path d="M -5,-14 C -1,-19 11,-18 15,-12 C 18,-6 13,0 6,0 C -2,0 -8,-5 -6,-11 C -6,-13 -6,-14 -5,-14 Z"
+                      fill={C.bird.on} opacity="0.92" />
+
+                {/* Bauch-Highlight (leichter Schimmer) */}
+                <ellipse cx="5" cy="-4" rx="6" ry="2.5" fill="#fff" opacity="0.1" />
+
+                {/* Gefalteter Flügel */}
+                <path d="M -1,-11 C 3,-15 12,-12 12,-4 C 8,-2 1,-6 -1,-11 Z"
+                      fill={C.bird.on} opacity="0.55" />
+                <path d="M 1,-11 C 5,-13 10,-11 11,-7" stroke={C.bird.on} strokeWidth="0.6" fill="none" opacity="0.7" />
+
+                {/* Kopf */}
+                <circle cx="12" cy="-17" r="6" fill={C.bird.on} opacity="0.95" />
+
+                {/* Schnabel — spitz, leicht geöffnet (singt!) */}
+                <path d="M 17,-18 L 24,-19 L 17,-17 Z" fill="#f4a261" />
+                <path d="M 17,-16.5 L 24,-17 L 17,-15.5 Z" fill="#c76d3e" opacity="0.7" />
+
+                {/* Auge mit Highlight */}
+                <circle cx="13" cy="-18" r="1.7" fill="#1a1a2e" />
+                <circle cx="13.6" cy="-18.4" r="0.6" fill="#fff" opacity="0.9" />
+
+                {/* Musiknoten schweben nach oben und verblassen */}
+                <g fontFamily="serif" fill={C.bird.on}>
+                  <text x="27" y="-22" fontSize="15">
+                    <animate attributeName="opacity" values="0;0.9;0.9;0" dur="3s" repeatCount="indefinite" />
+                    <animate attributeName="y" values="-22;-28;-34;-40" dur="3s" repeatCount="indefinite" />
+                    {"♪"}
+                  </text>
+                  <text x="33" y="-26" fontSize="12">
+                    <animate attributeName="opacity" values="0;0;0.8;0.8;0" dur="3.6s" repeatCount="indefinite" />
+                    <animate attributeName="y" values="-26;-26;-32;-38;-44" dur="3.6s" repeatCount="indefinite" />
+                    {"♫"}
+                  </text>
+                  <text x="23" y="-28" fontSize="11">
+                    <animate attributeName="opacity" values="0;0;0;0.7;0.7;0" dur="4.2s" repeatCount="indefinite" />
+                    <animate attributeName="y" values="-28;-28;-28;-34;-40;-46" dur="4.2s" repeatCount="indefinite" />
+                    {"♬"}
+                  </text>
+                </g>
               </g>}
-              {showBird && gErr && !gOn && <g transform="translate(150, 100)"><circle cx="0" cy="0" r="6" fill="rgba(20,20,30,0.8)" /><text x="0" y="4" textAnchor="middle" fontSize="10" fill={isFehler(slot.g)?C.error:C.offline} fontFamily={ff} fontWeight="700">!</text></g>}
+              {showBird && gErr && !gOn && <g transform="translate(180, 75)"><circle cx="0" cy="0" r="6" fill="rgba(20,20,30,0.8)" /><text x="0" y="4" textAnchor="middle" fontSize="10" fill={isFehler(slot.g)?C.error:C.offline} fontFamily={ff} fontWeight="700">!</text></g>}
 
               {/* GARDEN */}
               <path d="M200,280 Q195,290 188,305 Q200,308 212,305 Q205,290 200,280" fill={groundColor} opacity="0.6" style={{ transition: trans }} />
