@@ -156,7 +156,9 @@ GitHub Pages deployt automatisch. Live in ~1-2 Minuten unter `weckrain.derkarste
 ### Pflicht-Workflow für Claude Code bei jedem Commit
 
 1. **Identifiziere** alle geänderten Komponenten
-2. **Entscheide** pro Komponente den Bump-Typ (PATCH/MINOR/MAJOR) — im Zweifel nachfragen
+2. **Entscheide** pro Komponente den Bump-Typ (PATCH/MINOR/MAJOR). Autonomie-Regel:
+   - **Eindeutig → autonom entscheiden:** Bugfix ohne Verhaltensänderung nach außen → PATCH. Neues Feature oder neues optionales API-Feld → MINOR. Dokumentiertes Breaking (API-Feld entfernt/umbenannt, Config-Key entfernt, Frontend muss zwingend angepasst werden) → MAJOR.
+   - **Unklar → bei Karsten nachfragen.** Typische Grauzonen: Refactoring mit Verhaltens-Subtilitäten (PATCH oder MINOR?), neues Feld, das alte Clients ignorieren können, aber neue Clients brauchen (MINOR oder MAJOR?), interne Umbauten, die theoretisch Side-Effects haben könnten.
 3. **Aktualisiere `VERSIONS.json`** (neue `version`, neues `last_updated`)
 4. **Aktualisiere den Version-Header-Kommentar** in der geänderten Datei
 5. **Aktualisiere die hardcodete Konstante**, die der Footer/die JSON-Response rendert (`CODE_GS_VERSION`, `FRONTEND_VERSION`, etc.)
@@ -217,3 +219,9 @@ Falls eine Stelle abweicht → stop, korrigieren, dann committen.
 **`VERSIONS.json` wird nicht manuell von Karsten editiert.** Claude Code verwaltet das. Wenn Karsten eine Version sehen will, schaut er in den Footer, in `VERSIONS.json` oder ins `Systemlog`.
 
 **Bei Unsicherheit (PATCH vs. MINOR, MINOR vs. MAJOR) wird Karsten gefragt, nicht geraten.**
+
+**Initialer Stand (2026-04-09):**
+- `backend/Code.gs` startet bei 4.0.0 mit voller Version-Infrastruktur (Header-Kommentar, `CODE_GS_VERSION`-Konstante, `version`-Feld in JSON-API, Systemlog-Heartbeat einmal pro Tag).
+- `backend/Dashboard.html` startet bei 1.0.0 mit Header-Kommentar und Footer-Anzeige (liest Backend-Version aus `SERVER_DATA.version`).
+- `index.html` wurde beim Handover mit Header-Kommentar, `FRONTEND_VERSION`-Konstante und erweitertem Footer nachgerüstet — siehe `CHANGELOG.md` Eintrag zum 2026-04-09.
+- `backend/appsscript.json` wird nur in `VERSIONS.json` und `CHANGELOG.md` getrackt (JSON erlaubt keine Kommentare).

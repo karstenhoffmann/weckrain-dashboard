@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!--
+  Weckrain Frontend — index.html
+  Version: 1.0.0
+  Last updated: 2026-04-09
+  Source of truth: /VERSIONS.json
+-->
 <html lang="de">
 <head>
   <meta charset="utf-8">
@@ -32,6 +38,9 @@
     // ═══ KONFIGURATION ═══════════════════════════════════════════════════
     // Deine Google Apps Script Web-App URL (aus Deploy → Manage deployments)
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
+
+    // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
+    const FRONTEND_VERSION = "1.0.0";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -663,7 +672,7 @@
     }
 
     // ─── MAIN DASHBOARD ──────────────────────────────────────────────────
-    function DashboardMain({ history, lastPoll, showBird, onToggleBird }) {
+    function DashboardMain({ history, lastPoll, backendVersion, showBird, onToggleBird }) {
       const [selDay, setSelDay] = useState(0);
       const [selSlot, setSelSlot] = useState(getNowSlot());
       const mob = useIsMobile();
@@ -866,6 +875,9 @@
           {/* FOOTER */}
           <div style={{ textAlign: "center", padding: mob ? "20px 12px 40px" : lg ? "32px 16px 48px" : "28px 16px 40px", color: C.textFaint, fontSize: mob ? 13 : lg ? 13 : 12, letterSpacing: 1, fontFamily: ff }}>
             74653 &middot; Letzte Messung {timeSince(lastPoll)}
+            <div style={{ fontSize: mob ? 10 : 9, marginTop: 4, opacity: 0.6, letterSpacing: 0.5 }}>
+              Frontend v{FRONTEND_VERSION}{backendVersion ? " · Backend v" + backendVersion : ""}
+            </div>
             {showBird && <div style={{ marginTop: 12 }}>
               <button onClick={onToggleBird} style={{
                 background: "none", border: "none", cursor: "pointer",
@@ -883,6 +895,7 @@
       const [state, setState] = useState("loading"); // "loading" | "login" | "error" | "ready"
       const [data, setData] = useState(null);
       const [lastPoll, setLastPoll] = useState(null);
+      const [backendVersion, setBackendVersion] = useState(null);
       const [pw, setPw] = useState(() => {
         const urlPw = new URLSearchParams(window.location.search).get("pw");
         if (urlPw) { localStorage.setItem("wetter_pw", urlPw); return urlPw; }
@@ -907,6 +920,7 @@
             if (c.history) {
               setData(c.history);
               setLastPoll(c.lastPoll || null);
+              setBackendVersion(c.version || null);
               setState("ready");
             }
           } catch(e) {}
@@ -920,8 +934,9 @@
             if (json && json.history) {
               setData(json.history);
               setLastPoll(json.lastPoll || null);
+              setBackendVersion(json.version || null);
               localStorage.setItem("wetter_pw", password);
-              localStorage.setItem("wetter_cache", JSON.stringify({ history: json.history, lastPoll: json.lastPoll }));
+              localStorage.setItem("wetter_cache", JSON.stringify({ history: json.history, lastPoll: json.lastPoll, version: json.version || null }));
               setPw(password);
               setWrongPw(false);
               setState("ready");
@@ -962,7 +977,7 @@
 
       if (state === "login") return <LoginScreen onSubmit={handleLogin} wrongPw={wrongPw} mob={mob} />;
       if (state === "loading") return <LoadingScreen mob={mob} />;
-      if (state === "ready" && data) return <DashboardMain history={data} lastPoll={lastPoll} showBird={showBird} onToggleBird={() => { setShowBird(false); localStorage.removeItem("wetter_mode"); const u = new URL(window.location); u.searchParams.delete("mode"); window.history.replaceState({}, "", u); }} />;
+      if (state === "ready" && data) return <DashboardMain history={data} lastPoll={lastPoll} backendVersion={backendVersion} showBird={showBird} onToggleBird={() => { setShowBird(false); localStorage.removeItem("wetter_mode"); const u = new URL(window.location); u.searchParams.delete("mode"); window.history.replaceState({}, "", u); }} />;
       return <LoadingScreen mob={mob} />;
     }
 
