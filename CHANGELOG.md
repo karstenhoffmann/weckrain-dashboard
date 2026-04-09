@@ -13,6 +13,21 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-09 — index.html 1.0.4 (Bambi: größer, süßer, tageszeit-adaptiv)
+
+### index.html 1.0.4
+- **Größer:** Reh-Proportionen um ca. 40% hochgezogen. Körper `rx=17 ry=8` (vorher 13/6), Kopf `r=7` (vorher 5), Schatten `rx=19` (vorher 14), Beine dicker (`width=2.6` statt 1.8) und länger (13 statt 10), Ohren größer, Hals kräftiger. Position leicht verschoben auf `translate(65, 293)` damit es nicht aus dem Frame ragt.
+- **Süßer:** Kopf ist jetzt ein echter Kreis statt einer flachen Ellipse (wirkt rundlicher, kindlicher). Auge deutlich vergrößert (`rx=1.6 ry=2`), mit zwei Reflex-Punkten statt einem (großer Highlight + zweiter kleiner Reflex — gibt mehr Leben im Blick). Mini-Nasen-Highlight dazu. Ohren stärker gewinkelt, inneres Ohr heller (`#e0a88a` statt `#d89b7a`). Vier statt nur sieben Bambi-Flecken auf dem Rücken. Kleine dunkle Hufe an den Beinen (Ellipsen am Bein-Ende).
+- **Tageszeit-adaptive Sichtbarkeit:** Der Helligkeits-Bug („nachts am hellsten") war ein Kontrast-Problem: Das warme Braun leuchtet auf dem dunklen Nacht-Untergrund stark heraus, während es auf dem helleren Tag-Untergrund mit dem Grün verschmilzt. Fix: CSS `filter: brightness() saturate()` auf der gesamten Reh-Group, abhängig von `isDay`/`isDawn`/`isDusk`:
+  - **Tag**: `brightness(1.15) saturate(1.05)` — heller und satter, sticht vom hellen Grund ab
+  - **Morgen**: `brightness(0.9) saturate(0.95)` — warmer Morgenton
+  - **Abend**: `brightness(0.72) saturate(0.9)` — gedämpfter Abendton
+  - **Nacht**: `brightness(0.55) saturate(0.75)` — deutlich gedeckter, „leuchtet" nicht mehr
+  - CSS `transition: filter 1.2s cubic-bezier(...)` sorgt für smoothe Übergänge beim Zeitfenster-Wechsel, synchron zur Hintergrund-Animation.
+- **Bump-Typ: PATCH (1.0.3 → 1.0.4)** — visuelles Refinement.
+
+---
+
 ## 2026-04-09 — index.html 1.0.3 (Süßes Bambi im Garten)
 
 ### index.html 1.0.3
