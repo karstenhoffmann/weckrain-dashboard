@@ -1,0 +1,30 @@
+{
+  "schema_version": "1",
+  "release": {
+    "tag": "2026-04-09-initial-handover",
+    "date": "2026-04-09",
+    "notes": "Initialer Handover von Cowork in dieses Repo als Single Source of Truth für Frontend, Backend und Dokumentation. backend/Code.gs startet bei 4.0.0 (respektiert die V4.0-Historie aus der Pre-Repo-Zeit), alle anderen Komponenten starten bei 1.0.0."
+  },
+  "components": {
+    "index.html": {
+      "version": "1.0.0",
+      "last_updated": "2026-04-09",
+      "role": "Frontend-Dashboard (GitHub Pages, weckrain.derkarsten.de)"
+    },
+    "backend/Code.gs": {
+      "version": "4.0.0",
+      "last_updated": "2026-04-09",
+      "role": "Google Apps Script — Polling, Logging, JSON-API, Alerts"
+    },
+    "backend/Dashboard.html": {
+      "version": "1.0.0",
+      "last_updated": "2026-04-09",
+      "role": "GAS-gehostetes Dashboard-Template (Legacy Desktop-Fallback)"
+    },
+    "backend/appsscript.json": {
+      "version": "1.0.0",
+      "last_updated": "2026-04-09",
+      "role": "Google Apps Script Manifest"
+    }
+  }
+}
