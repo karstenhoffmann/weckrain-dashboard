@@ -13,6 +13,20 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-09 — index.html 1.0.3 (Süßes Bambi im Garten)
+
+### index.html 1.0.3
+- **Experimentelles Feature:** Ein süßes grasendes Bambi lebt jetzt im linken Garten zwischen den Blumen. Immer sichtbar, unabhängig vom `?mode=karsten`. Zusätzliche Deko, kein Sensor-Indikator.
+- **Anatomie:** Tropfenförmiger brauner Körper mit weißem Bauch, fünf weißen Bambi-Flecken auf dem Rücken, vier dünnen Beinen mit Schatten darunter, kurzem weißem Schwanz, Hals-Kopf-Einheit mit zwei unterschiedlich gerichteten Ohren (vorderes in Fellfarbe, hinteres dunkler für Tiefe), großem süßem schwarzen Auge mit weißem Glanzpunkt und zarter Schnauze mit Nase.
+- **Animationen:**
+  - **Grasen-Zyklus (16s)**: Hals + Kopf rotieren alle 16 Sekunden nach unten (Grasen ~3s) und wieder hoch, mit smoother Cubic-Bezier-Easing. Dazwischen steht es einfach lieb da und „schaut in die Kamera".
+  - **Blinzeln**: Zwei Mal pro 7-Sekunden-Zyklus, jeweils ~35ms kurz — unregelmäßig genug um natürlich zu wirken.
+  - **Schwanz-Wackeln**: Kurze Wackel-Sequenz einmal pro 6s, sonst ruhig.
+- **Position:** `translate(50, 290)` innerhalb der HOUSE-Gruppe — links neben dem Haus, zwischen/zwischen den Blumen, nicht vor den Wänden (damit das Haus nicht verdeckt wird).
+- **Bump-Typ: PATCH (1.0.2 → 1.0.3)** — visuelles Feature, rein dekorativ, kein Verhaltens- oder API-Impact.
+
+---
+
 ## 2026-04-09 — index.html 1.0.2 (Schönerer Singvogel)
 
 ### index.html 1.0.2
