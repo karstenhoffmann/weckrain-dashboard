@@ -1,6 +1,6 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.0.0
+// Version: 4.0.1
 // Last updated: 2026-04-09
 // Source of truth: /VERSIONS.json
 // ============================================================================
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.0.0";
+var CODE_GS_VERSION = "4.0.1";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -510,16 +510,66 @@ function checkPhoneActivity(sid) {
       ? new Date(lastPollStr)
       : new Date(Date.now() - 30 * 60 * 1000);
 
-    // CSV parsen (erste 2 Zeilen sind Header)
-    // Format: Typ;Datum;Name;Rufnummer;Nebenstelle;Eigene Rufnummer;Dauer
-    for (var i = 2; i < lines.length; i++) {
+    // ── Separator auto-detection via "sep=<char>" Präambel ──
+    // Fritz!OS liefert den Web-UI-Export mit Semikolon (sep=;), manche
+    // Versionen mit Tab. Defensiv: den Separator aus der ersten Zeile
+    // lesen statt hartkodieren.
+    var separator = ";";
+    var dataStart = 1;
+    if (lines.length > 0 && lines[0].indexOf("sep=") === 0) {
+      var sepChar = lines[0].substring(4).trim();
+      if (sepChar === "\\t") separator = "\t";
+      else if (sepChar && sepChar.length === 1) separator = sepChar;
+      dataStart = 2;
+    }
+
+    // ── CSV-Datenzeilen verarbeiten ──
+    // Spalten-Layout (Fritz!OS 8.x):
+    //   0: Typ
+    //   1: Datum (DD.MM.YY HH:MM)
+    //   2: Name
+    //   3: Rufnummer
+    //   4: Landes-/Ortsnetzbereich
+    //   5: Nebenstelle
+    //   6: Eigene Rufnummer
+    //   7: Dauer (H:MM, minuten-aufgerundet)
+    //
+    // Typ-Codes bei foncalls_list.lua?csv= (Web-UI-URL, NICHT TR-064!):
+    //   1 = CALLIN   — eingehend angenommen (Hörer wurde abgenommen)
+    //   2 = CALLFAIL — nicht zustande gekommen (verpasst, abgelehnt,
+    //                  ausgehend ohne Antwort) → niemals zählen
+    //   4 = CALLOUT  — ausgehend erfolgreich verbunden
+    //
+    // Filter-Kriterium: Nur angenommene Gespräche (Typ 1 oder 4) UND
+    // Dauer ≥ 1 Minute (CSV "0:01"). Jeder Typ-1/4-Eintrag ist per
+    // Definition eine menschliche Handlung — die Mutter hat den Hörer
+    // aktiv abgehoben bzw. einen Anruf erfolgreich aufgebaut. Kein
+    // Anrufbeantworter im Einsatz → kein AB-Noise-Risiko, jede
+    // Hörer-Abnahme ist ein eindeutiges Lebenszeichen.
+    //
+    // Die Fritz!Box speichert Dauern minuten-genau und rundet auf die
+    // nächste volle Minute auf (keine Sekunden-Auflösung im CSV).
+    // "0:00" bedeutet nur bei Typ 2 (CALLFAIL) — bei Typ 1/4 ist
+    // der Mindestwert "0:01". Der Dauer-Check dient als Safety-Net
+    // gegen etwaige Fritz!OS-Edge-Cases.
+    //
+    // Siehe docs/KNOWN_ISSUES.md Issue 1 für die Hintergrund-Recherche
+    // (TR-064-Spec, Community-Quellen, empirische Verifikation).
+    var TYPES_ANSWERED = ["1", "4"];
+    var MIN_DURATION_MINUTES = 1;
+
+    for (var i = dataStart; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line) continue;
-      var fields = line.split(";");
-      if (fields.length < 7) continue;
+      var fields = line.split(separator);
+      if (fields.length < 8) continue;
 
       var typ = fields[0].trim();
-      if (typ !== "1" && typ !== "3") continue; // Nur angenommen + ausgehend
+      if (TYPES_ANSWERED.indexOf(typ) === -1) continue;
+
+      var dauerStr = fields[7].trim();
+      var dauerMinuten = parseDurationMinutes(dauerStr);
+      if (dauerMinuten < MIN_DURATION_MINUTES) continue;
 
       var callDate = parseFritzDate(fields[1].trim());
       if (!callDate) continue;
@@ -560,6 +610,32 @@ function parseFritzDate(str) {
   } catch (e) {
     return null;
   }
+}
+
+/**
+ * Parst die Dauer-Spalte der Fritz!Box-Anrufliste ("H:MM"-Format mit
+ * Minuten-Aufrundung) und gibt die Dauer in Minuten zurück.
+ *
+ * AVM-Semantik (TR-064 + foncalls_list.lua?csv=, Fritz!OS 8.x):
+ *   "0:00" = Anruf kam nicht zustande (CALLFAIL)           →   0 Minuten
+ *   "0:01" = Anruf < 1 Minute ("< 1 Min" in Web-UI)        →   1 Minute
+ *   "0:50" = 50 Minuten                                    →  50 Minuten
+ *   "1:35" = 1 Stunde 35 Minuten                           →  95 Minuten
+ *
+ * Das CSV-Feld enthält grundsätzlich NUR Stunden und Minuten — keine
+ * Sekunden-Auflösung. Sehr kurze Anrufe werden als "0:01" abgespeichert.
+ *
+ * Quelle: AVM TR-064 Spec (X_AVM-DE_OnTel Calllist) und Community-
+ * Verifikation — siehe docs/KNOWN_ISSUES.md Issue 1.
+ */
+function parseDurationMinutes(str) {
+  if (!str) return 0;
+  var parts = String(str).split(":");
+  if (parts.length !== 2) return 0;
+  var hours = parseInt(parts[0], 10);
+  var minutes = parseInt(parts[1], 10);
+  if (isNaN(hours) || isNaN(minutes)) return 0;
+  return hours * 60 + minutes;
 }
 
 // ─── GOOGLE SHEET LOGGING ───────────────────────────────────────────────────

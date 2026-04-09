@@ -13,6 +13,35 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-09 — backend/Code.gs 4.0.1 (Gesang-Fix)
+
+### backend/Code.gs 4.0.1
+- **Fix:** Gesang/Telefon-Aktivitätserkennung in `checkPhoneActivity()` war in 4.0.0 fehlerhaft. Siehe `docs/KNOWN_ISSUES.md` Issue 1 für die vollständige Analyse.
+- **Ursache:** Der Code filterte auf `typ === "1" || typ === "3"` mit dem Kommentar „Nur angenommen + ausgehend". Das stimmt aber nicht mit der Semantik des tatsächlich genutzten Endpoints (`foncalls_list.lua?csv=`, die Web-UI-URL) überein. In Fritz!OS 8.x bedeuten die Typ-Codes dort: `1 = CALLIN` (eingehend angenommen), `2 = CALLFAIL` (nicht zustande gekommen), `4 = CALLOUT` (ausgehend erfolgreich). Der alte Filter zählte also fälschlich `3` (unbekannte Semantik bei dieser URL) und ignorierte `4` (die ausgehenden Anrufe).
+- **Zusätzlich:** Keine Dauer-Filterung; Separator hartkodiert auf `;`; Spalten-Offset-Kommentar war inkorrekt (7 Spalten statt realer 8).
+- **Fix:**
+  - Separator-Auto-Detection via `sep=<char>`-Präambel (Semikolon bei Web-UI-URL, Tab bei manuellem Web-UI-Export).
+  - Spalten-Offset korrigiert: Dauer = `fields[7]`, Plausi-Check `fields.length >= 8`.
+  - Neuer Helper `parseDurationMinutes()` für AVM-`H:MM`-Format mit Minuten-Aufrundung.
+  - Filter: `typ ∈ {"1", "4"}` AND `dauerMinuten >= 1`.
+  - Ausführliche Inline-Kommentare mit Rationale und Verweis auf Recherche-Quellen.
+- **Filter-Schwelle begründet:** Die Mutter nutzt keinen Anrufbeantworter. Deshalb ist jeder Typ-1-Eintrag zu 100% eine menschliche Hörer-Abnahme und damit ein eindeutiges Lebenszeichen — auch bei sehr kurzen Gesprächen. Primärziel des Systems („lebt die Mutter, ist sie handlungsfähig?") rechtfertigt eine liberale Filterung.
+- **Verifikation:** Gegen realen CSV-Export mit 20 Zeilen abgeglichen. Alle echten Gespräche (Schrozberg 50 Min, Langenau 95 Min, Weinheim 9 Min, Künzelsau 12 Min, sowie mehrere kurze) werden korrekt gezählt. Alle CALLFAIL-Einträge (insbesondere die vielen verpassten „Karsten (mobil)"-Versuche) werden korrekt verworfen.
+- **Bump-Typ: PATCH (4.0.0 → 4.0.1)** — Bugfix ohne API-Änderung, kein Frontend-Impact.
+- **Deploy erforderlich:** Backend-Datei muss manuell im GAS-Editor aktualisiert und neu deployed werden (siehe `docs/DEPLOYMENT.md`). Nach dem ersten Poll im Google Sheet `Systemlog`-Tab nach `HEARTBEAT: Code.gs v4.0.1 läuft` prüfen.
+
+### docs/KNOWN_ISSUES.md
+- Issue 1 auf „gelöst in Version 4.0.1" gesetzt.
+- Typ-Code-Tabelle vollständig korrigiert (TR-064 vs. Web-UI-URL-Drift dokumentiert).
+- Dauer-Format-Eigenheiten (Minuten-Aufrundung, keine Sekunden-Auflösung) erklärt.
+- Produktentscheidung zur Filter-Schwelle dokumentiert (kein AB → liberaler Filter).
+- Quellen-Verweise (AVM TR-064 Spec, Community-Recherche, empirische Verifikation).
+
+### VERSIONS.json
+- `backend/Code.gs` von `4.0.0` auf `4.0.1` gebumpt.
+
+---
+
 ## 2026-04-09 — 2026-04-09-initial-handover
 
 ### repo-bootstrap

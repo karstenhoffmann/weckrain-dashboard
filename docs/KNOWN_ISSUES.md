@@ -4,71 +4,66 @@ Offene und bekannte Probleme, die beim nächsten Iterationsschritt angegangen we
 
 ## Issue 1 — Gesang / Telefon-Aktivität nicht zuverlässig erkannt
 
-**Status:** offen (Version 4.0.0)
-**Betroffen:** `checkPhoneActivity()` in `backend/Code.gs`, Sensor-Key `g`
-**Symptom:** Im Dashboard wird der Gesang-Slot häufig als inaktiv angezeigt, obwohl in der Fritz!Box-Anrufliste sehr wohl ein geführtes Telefonat im Zeitraum steht.
+**Status:** gelöst in Version 4.0.1
+**Betroffen (pre-fix):** `checkPhoneActivity()` in `backend/Code.gs`, Sensor-Key `g`
+**Symptom:** Im Dashboard wurde der Gesang-Slot häufig als inaktiv angezeigt, obwohl in der Fritz!Box-Anrufliste sehr wohl ein geführtes Telefonat im Zeitraum stand. Gleichzeitig wurden sehr kurze Klingel-Anrufe (ein paar Sekunden) fälschlich als Aktivität gewertet.
 
-### Analyse
+### Ursachen-Analyse (nach vollständiger Recherche)
 
-Der Code holt die Anrufliste via `foncalls_list.lua?csv` als CSV und filtert auf „geführtes Telefonat". Das Filter-Kriterium in Version 4.0.0 ist zu naiv: Es prüft nur auf bestimmte Typ-Codes in der ersten CSV-Spalte, ignoriert aber die Dauer und behandelt verschiedene Fritz!OS-Versionen unterschiedlich.
+Drei unabhängige Fehler lagen vor:
 
-Die Fritz!Box liefert in der CSV eine Spalte `Typ` mit diesen Werten (Fritz!OS 8.x, empirisch):
+1. **Falsche Typ-Code-Annahme.** Der Code in 4.0.0 filterte auf `typ === "1" || typ === "3"` mit dem Kommentar „Nur angenommen + ausgehend". Das ist für den Endpoint, den der Code tatsächlich aufruft (`foncalls_list.lua?csv=`, die **Web-UI-URL**, nicht TR-064), falsch.
+2. **Keine Dauer-Filterung.** Klingelversuche (Anruf ≤ 1 Sekunde angenommen, dann sofort wieder aufgelegt) wurden als „echtes Gespräch" gewertet.
+3. **Falscher Spalten-Offset-Kommentar.** Der Code-Kommentar behauptete `Format: Typ;Datum;Name;Rufnummer;Nebenstelle;Eigene Rufnummer;Dauer` (7 Spalten). Tatsächlich sind es 8 Spalten — die Spalte `Landes-/Ortsnetzbereich` zwischen `Rufnummer` und `Nebenstelle` fehlte. Dauer liegt in `fields[7]`, nicht `fields[6]`. Da der alte Code die Dauer gar nicht gelesen hat, war das kein aktiver Bug — aber eine Zeitbombe für den Fix.
+
+### Verifizierte Semantik (Quellen siehe unten)
+
+**Typ-Codes bei `foncalls_list.lua?csv=` (Web-UI-URL, Fritz!OS 8.x):**
 
 | Code | Bedeutung |
 |---|---|
-| `1` | Ankommender Anruf (angenommen) |
-| `2` | Abgehender Anruf |
-| `3` | Ankommender Anruf (entgangen / nicht angenommen) |
-| `4` | Ankommender Anruf aktiv (während der Erfassung noch laufend) |
-| `10` | Blockierter Anruf (Rufsperre) |
-| `11` | Aktiver abgehender Anruf (während der Erfassung noch laufend) |
+| `1` | **CALLIN** — eingehend angenommen (inkl. durch Anrufbeantworter) |
+| `2` | **CALLFAIL** — nicht zustande gekommen (verpasst eingehend *oder* ausgehend ohne Antwort) |
+| `4` | **CALLOUT** — ausgehend erfolgreich verbunden |
 
-Aktueller Code zählt `1` und `2` als „geführt", ignoriert aber die Spalte `Dauer`. Dadurch werden sehr kurze Klingel-Anrufe (angenommen und nach 1 Sekunde aufgelegt) als Aktivität gewertet — und umgekehrt werden Typ `4`/`11` (Anruf läuft gerade) nicht erkannt, was besonders während lang laufender Gespräche zu Fehlalarmen „keine Aktivität" führt.
+**Wichtig:** Das ist NICHT die TR-064-Semantik! TR-064 definiert `3 = outgoing`. Die Web-UI-URL hat aber in neueren Firmware-Versionen auf `4 = outgoing` gewechselt. Das ist der zentrale Fehler den der Original-Code gemacht hat (Mischung aus beiden Schemas).
 
-Außerdem: In einigen Fritz!OS-Versionen wird die Dauer als `HH:MM` formatiert, in anderen als `MM:SS` — das `parseDuration()`-Helfer-Stub existiert im Code, behandelt aber beide Formate nicht korrekt.
+**Dauer-Format:** `H:MM` (Stunden:Minuten) mit **Minuten-Aufrundung, keine Sekunden-Auflösung**.
 
-### Verifikations-Schritt (bevor gepatcht wird)
+| CSV-Wert | Bedeutung |
+|---|---|
+| `0:00` | Anruf kam nicht zustande (CALLFAIL) |
+| `0:01` | Anruf < 1 Minute — AVM-Minimalwert, UI-Anzeige „< 1 Min" |
+| `0:50` | 50 Minuten |
+| `1:35` | 1 Stunde 35 Minuten = 95 Minuten |
 
-Vor einem Patch sollte empirisch geprüft werden, welche Typ-Codes die Live-Fritz!Box tatsächlich liefert. Vorgehen:
+AVM speichert **keine Sekunden** im Export. Kurze Anrufe (1-59 Sekunden) werden grundsätzlich als `0:01` abgelegt.
 
-1. Im Monitoring-Account `testPoll()` ausführen und das Raw-CSV aus `checkPhoneActivity()` ins Execution Log dumpen (temporäres `Logger.log(csvContent)`).
-2. Einen eindeutigen Test-Anruf von einem bekannten Gerät führen (angenommen + kurz gesprochen).
-3. Erneut `testPoll()` und das CSV der neuen Zeile anschauen.
-4. Vergleichen: Welcher Typ-Code, welches Dauerformat? Die obige Tabelle verifizieren oder korrigieren.
+### Produktentscheidung: Filter-Schwelle
 
-### Lösungsskizze
+Die ursprüngliche Anforderung war „nur Anrufe länger als 1 Minute zählen" — begründet mit der Sorge, dass kurze Klingelversuche als Aktivität gewertet werden. Die Recherche hat jedoch gezeigt, dass **kurze Klingelversuche von der Fritz!Box bereits als Typ 2 (CALLFAIL) klassifiziert werden**, nicht als Typ 1 oder 4. Die einzige Restsorge wäre der Anrufbeantworter gewesen (der AB-Antworten als Typ 1 loggt).
 
-```javascript
-// In checkPhoneActivity(), Filterlogik:
-const TYPES_COUNTING = ['1', '2', '4', '11']; // angenommen, abgehend, laufend
-const MIN_DURATION_SECONDS = 5; // Klingel-Anrufe filtern
+**Situation:** Die Mutter hat **keinen aktiven Anrufbeantworter** — weder in der Fritz!Box noch auf einem der DECT-Telefone. Sie will auch keinen haben („wer mich erreichen will, soll nochmal anrufen"). Damit ist jeder Typ-1-Eintrag zu 100% eine menschliche Hörer-Abnahme durch die Mutter selbst.
 
-const isLivePhoneActivity = row => {
-  if (!TYPES_COUNTING.includes(row.typ)) return false;
-  const seconds = parseDuration(row.dauer);
-  return seconds >= MIN_DURATION_SECONDS;
-};
-```
+**Konsequenz:** Wir zählen **jede angenommene oder erfolgreich aufgebaute Verbindung**, unabhängig von der Gesprächsdauer. Ein 5-Sekunden-Gespräch ist trotzdem ein eindeutiges Lebenszeichen (Hörer wurde aktiv in die Hand genommen). Primärziel des Systems ist „lebt die Mutter, ist sie handlungsfähig?" — da ist eine liberale Filterung der konservativen vorzuziehen.
 
-Und `parseDuration()` so, dass beide Formate akzeptiert werden:
+### Fix in 4.0.1
 
-```javascript
-function parseDuration(s) {
-  if (!s) return 0;
-  const parts = s.split(':').map(n => parseInt(n, 10));
-  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]; // HH:MM:SS
-  if (parts.length === 2) {
-    // Mehrdeutig: HH:MM oder MM:SS. Heuristik: wenn erste Zahl < 24, ist HH:MM.
-    // Besser: aus dem Fritz!OS-Version-Check ableiten.
-    return parts[0] * 60 + parts[1]; // MM:SS als Default
-  }
-  return 0;
-}
-```
+1. Separator auto-detection über `sep=<char>`-Präambel (Semikolon im Web-UI-URL-Export, Tab im manuellen Web-UI-Export).
+2. Spalten-Offset korrigiert: Dauer ist `fields[7]`, Plausi-Check `fields.length >= 8`.
+3. Neuer Helper `parseDurationMinutes()` für das `H:MM`-Format.
+4. Filter: `typ ∈ {"1", "4"}` AND `dauerMinuten >= 1`. Der Dauer-Check dient als Safety-Net — Typ 1/4 mit Dauer 0 sollte laut AVM-Spec nie vorkommen, wir fangen es trotzdem defensiv ab.
+5. Typ-Codes und Rationale ausführlich im Code kommentiert.
 
-### Workaround in der Zwischenzeit
+Verifiziert gegen einen realen CSV-Export mit 20 Zeilen: Keine false positives (alle `CALLFAIL`-Einträge werden korrekt verworfen), keine false negatives (alle Typ-1- und Typ-4-Einträge mit Dauer > 0 werden gezählt — inklusive des 50-Minuten-Schrozberg-Gesprächs, des 95-Minuten-Langenau-Gesprächs und der kurzen Gespräche).
 
-Kein Workaround — der Sensor ist weiter im Log, aber wird beim Aggregieren als zweitrangig behandelt. Im Frontend ist der Sensor zudem im Normalmodus dezent versteckt und nur im `?mode=karsten`-Modus voll sichtbar (siehe `docs/API.md`, Abschnitt „Gesang-Modus"), damit eine laienhafte Betrachterin nicht durch Fehlalarme verunsichert wird.
+**Falls die Mutter doch irgendwann einen Anrufbeantworter aktivieren will:** Die Filter-Schwelle muss dann auf `MIN_DURATION_MINUTES = 2` angehoben werden, um AB-Antworten auszuschließen. Alternativ kann die `Nebenstelle`-Spalte (`fields[5]`) auf AB-Bezeichner geprüft werden — siehe Hintergrund-Diskussion in dieser Doku-Historie.
+
+### Quellen
+
+- **AVM TR-064 Spec — X_AVM-DE_OnTel Calllist:** Dauerformat `hh:mm (minutes rounded up)`, Typ-Codes `1=incoming, 2=missed, 3=outgoing, 9=active incoming, 10=rejected incoming, 11=active outgoing`. Das ist die **TR-064-Semantik** — gilt NICHT für die Web-UI-URL!
+- **Community-Recherche (ip-phone-forum.de u.a.) zur Web-UI-URL-Semantik:** Bestätigt den Drift von `3=outgoing` (alte Firmware) auf `4=CALLOUT` (neuere Firmware). Typ `2` heißt in beiden Varianten „nicht zustande gekommen".
+- **Empirisch verifiziert mit realem CSV-Export** aus Fritz!OS 8.21 am 2026-04-09: Alle Typ-1 und Typ-4 Einträge haben Dauer > 0, alle Typ-2 Einträge haben Dauer 0:00. Kein Widerspruch.
 
 ## Issue 2 — Google-IP-Rotation bricht Fritz!Box-Session
 
