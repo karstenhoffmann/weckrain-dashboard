@@ -35,4 +35,15 @@ Format pro Eintrag:
 - Startversion im Repo. GAS-Manifest-Snapshot: V8-Runtime, Europe/Berlin, Web-App mit `USER_DEPLOYING` + `ANYONE_ANONYMOUS`.
 
 ### backend/Dashboard.html 1.0.0
-- Startversion im Repo. Legacy Desktop-Fallback. Datei selbst wird im nächsten Handover-Schritt von Cowork übertragen.
+- Startversion im Repo. Legacy Desktop-Fallback, server-gerendert von `Code.gs` → `doGet()` via `HtmlService.createTemplateFromFile('Dashboard')`.
+- Repo-Metriken: 2189 Zeilen, sha256 `27cb1344de17377569ed489af1e6e7cfd1ce912f0995da9631226c89fd31fb1f`.
+- **Offene Abweichung vom Cowork-Prompt:** Datei enthält keinen Version-Header-Kommentar nach `<!doctype html>` und keine `DASHBOARD_HTML_VERSION`-JS-Konstante. Die Version wird derzeit ausschließlich über `VERSIONS.json` und `CHANGELOG.md` getrackt. Das Nachrüsten ist ein kleiner Patch — wird bei der nächsten Iteration dieser Datei mit-erledigt (dann Bump auf 1.0.1 mit Header + Konstante + Footer-Anzeige).
+
+### docs (Runde 2)
+- `docs/HARDWARE.md` (78 Zeilen) — Fritz!Box-Modell, DECT-Zuordnung, Sensor→Hardware→Dashboard-Label-Mapping.
+- `docs/API.md` (168 Zeilen) — vollständige `doGet()`-Spec inkl. JSON-Schema, Sensor-Werte, Beispiel-Response, Error-Cases, `?mode=karsten`-Abschnitt.
+- `docs/GOOGLE_SHEET.md` (90 Zeilen) — Tab-Struktur (Log/Systemlog/Config), Rotation, Zugriff.
+- `docs/CONFIG.md` (85 Zeilen) — tabellarische Config-Key-Referenz mit Typen und Defaults, Script-Properties-Abschnitt für `FRITZBOX_PASS`.
+- `docs/DEPLOYMENT.md` (114 Zeilen) — Frontend/Backend-Deploy-Pfade, clasp-Workflow, Post-Deploy-Checks, Rollback.
+- `docs/MONITORING.md` (95 Zeilen) — Inaktivitäts-/Ausfallalarme, Entwarnungen, Kontext-Historie, Healthchecks.io-Dead-Man's-Switch, Diagnose-Reihenfolge.
+- `docs/KNOWN_ISSUES.md` (138 Zeilen) — Issue 1: Gesang/Telefon-Erkennung (offen, Patch-Skizze, Verifikations-Schritt); Issue 2: IP-Rotation (gelöst); ggf. weitere.
