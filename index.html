@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.11
+  Version: 1.0.12
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.11";
+    const FRONTEND_VERSION = "1.0.12";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -516,11 +516,11 @@
                 {/* Spiegel & Wedel — Ricke, Seitenansicht.
                     Spiegel: ovale weiße Fläche auf dem Hinterlauf (wie man ihn von der Seite sieht).
                     Wedel: kleines Büschel oben am Spiegel, wedelt mit 11s-Zyklus (asynchron zu 16s-Grasen). */}
-                {/* Spiegel (statisch) */}
-                <ellipse cx="-14" cy="-5" rx="2.5" ry="3.5" fill="#fff" opacity="0.95" />
+                {/* Spiegel (statisch) — sitzt am Hinterlauf (Körper-Rückrand x≈-19, Spiegel-Zentrum x=-17) */}
+                <ellipse cx="-17" cy="-4" rx="2.5" ry="3.5" fill="#fff" opacity="0.95" />
 
-                {/* Wedel — Pivot oben am Spiegel, Schweifform als kompakte Tränenform */}
-                <g transform="translate(-14, -9)">
+                {/* Wedel — Pivot oben am Spiegel, direkt am Rumpf-Rückrand */}
+                <g transform="translate(-17, -8)">
                   <animateTransform
                     attributeName="transform"
                     type="rotate"

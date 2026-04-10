@@ -13,6 +13,14 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.12 (Reh: Spiegel + Wedel an Hinterlauf verschoben)
+
+### index.html 1.0.12
+- **Position korrigiert:** Spiegel und Wedel saßen bei cx=−14 (Körpermitte). Körper-Rückrand liegt bei x≈−19 (Körper cx=−2, rx=17). Verschoben auf cx=−17 → Spiegel sitzt jetzt korrekt am hinteren Rumpf.
+- **Bump-Typ: PATCH (1.0.11 → 1.0.12)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.11 (Reh: Spiegel + Wedel Seitenansicht korrigiert)
 
 ### index.html 1.0.11
