@@ -13,6 +13,22 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.19 (Reh schlafend: Animation für Nachts-Slot)
+
+### index.html 1.0.19
+- **Neues Feature: Schlaf-Animation für den Nachts-Slot.** Das Reh legt sich sanft schlafen, wenn `slotName === "Nachts"` aktiv ist.
+- **Technische Umsetzung:** `useAnimatedValue(deerSleeping ? 1 : 0, 1800)` liefert `sleepP` (0=wach, 1=schläft). Alle Transformationen werden aus `sleepP` abgeleitet — rein über SVG-`transform`-Attribute (keine CSS-px-Einheiten-Probleme).
+- **Follow-Through-Prinzip:** Beine retrahieren zuerst (`legScale`, fertig bei 75% des Übergangs), Körper sinkt leicht verzögert (`bodyShift`, fertig bei 90%), Kopf legt sich zuletzt (`headAngle`, startet bei 12%).
+- **Beine:** `translate(0,2) scale(1, legScale) translate(0,-2)` — SVG-Skalierung um die Bein-Oberkante (y=2). Bei sleepP=1 verschwinden Beine hinter dem Körper.
+- **Körper + Kopf:** Gemeinsame `translate(0, bodyShift)`-Gruppe — Körper-Unterkante (y=5) erreicht Bodenniveau (y=15).
+- **Kopf-Rotation:** `rotate(headAngle, 11, -3)` — dreht Kopf+Hals 45° um Hals-Pivot; Nase legt sich auf Körperhöhe.
+- **Grasen/Zucken-Animationen:** `deerFullyAwake = sleepP < 0.05` steuert alle SMIL-Animationen (Grasen, Ohr-Zucken, Wedel-Wackeln) — laufen nur wenn Reh voll wach.
+- **Auge:** Offenes Auge blendet über äußere Opacity-Gruppe aus (`1 - sleepP`); geschlossenes Schlaf-Auge (SVG-Bogen) blendet mit `sleepP` ein.
+- **Schatten:** Opacity sinkt von 0.28 auf 0.15.
+- **Bump-Typ: MINOR (1.0.18 → 1.0.19)** — neues Feature, rückwärtskompatibel.
+
+---
+
 ## 2026-04-10 — index.html 1.0.18 (Reh: Ohr tiefer, braune Schweifkappe entfernt)
 
 ### index.html 1.0.18

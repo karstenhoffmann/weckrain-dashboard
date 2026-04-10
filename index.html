@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.18
+  Version: 1.0.19
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.18";
+    const FRONTEND_VERSION = "1.0.19";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -266,6 +266,15 @@
       const isDawn = slotName === "Morgens";
       const isDusk = slotName === "Abends";
 
+      // Schlafendes Reh bei Nachts-Slot
+      const deerSleeping = slotName === "Nachts";
+      const sleepP = useAnimatedValue(deerSleeping ? 1 : 0, 1800);
+      const deerFullyAwake = sleepP < 0.05;
+      // Follow-Through: Beine zuerst, dann Körper, Kopf zuletzt
+      const legScale   = 1 - Math.min(sleepP / 0.75, 1);
+      const bodyShift  = Math.min(sleepP / 0.90, 1) * 10;
+      const headAngle  = Math.max((sleepP - 0.12) / 0.88, 0) * 45;
+
       const animAngle = useAnimatedValue(sky.sunAngle, 1200);
       const sun = sunPos(animAngle);
 
@@ -480,147 +489,158 @@
               <rect x="340" y="258" width="3" height="22" fill="#4a4a55" />
               <rect x="335" y="253" width="14" height="10" rx="2" fill="#4a4a55" />
 
-              {/* REH — süßes Bambi im linken Garten, steht zwischen den Blumen */}
-              {/* Filter passt Helligkeit/Sättigung an die Tageszeit an, damit
-                  das warme Braun bei Nacht nicht "leuchtet" und bei Tag nicht
-                  mit dem Hintergrund verschmilzt. */}
+              {/* REH — süßes Bambi im linken Garten, steht zwischen den Blumen.
+                  Bei Nachts-Slot: schläft (Körper sinkt, Beine retrahieren, Kopf legt sich vor den Körper).
+                  sleepP=0 (wach) → sleepP=1 (schläft), animiert via useAnimatedValue (1800ms).
+                  Follow-Through: Beine zuerst, Körper leicht verzögert, Kopf zuletzt. */}
               <g transform="translate(65, 293)" style={{ filter: isDay ? "brightness(1.15) saturate(1.05)" : isDawn ? "brightness(0.9) saturate(0.95)" : isDusk ? "brightness(0.72) saturate(0.9)" : "brightness(0.55) saturate(0.75)", transition: "filter 1.2s cubic-bezier(0.4, 0, 0.2, 1)" }}>
-                {/* Schatten unter dem Reh */}
-                <ellipse cx="-2" cy="15" rx="19" ry="2.2" fill="#000" opacity="0.28" />
 
-                {/* Hintere Beine (dicker, süßer) */}
-                <rect x="-14" y="2" width="2.6" height="13" rx="1.3" fill="#8b5a3c" />
-                <ellipse cx="-12.7" cy="15" rx="1.6" ry="0.9" fill="#3a2416" />
-                <rect x="-9.5" y="2" width="2.6" height="13" rx="1.3" fill="#8b5a3c" />
-                <ellipse cx="-8.2" cy="15" rx="1.6" ry="0.9" fill="#3a2416" />
-                {/* Vordere Beine */}
-                <rect x="6" y="2" width="2.6" height="13" rx="1.3" fill="#8b5a3c" />
-                <ellipse cx="7.3" cy="15" rx="1.6" ry="0.9" fill="#3a2416" />
-                <rect x="10.5" y="2" width="2.6" height="13" rx="1.3" fill="#8b5a3c" />
-                <ellipse cx="11.8" cy="15" rx="1.6" ry="0.9" fill="#3a2416" />
+                {/* Schatten — etwas schwächer wenn schlafend */}
+                <ellipse cx="-2" cy="15" rx="19" ry="2.2" fill="#000" opacity={0.28 - sleepP * 0.13} />
 
-                {/* Körper — warmes Braun, deutlich größer */}
-                <ellipse cx="-2" cy="-3" rx="17" ry="8" fill="#a6724a" />
-                {/* Weiße Bauchunterseite */}
-                <ellipse cx="-2" cy="3" rx="13" ry="3.5" fill="#f5e6c4" opacity="0.9" />
-
-                {/* Bambi-Flecken auf dem Rücken */}
-                <circle cx="-10" cy="-7" r="1.4" fill="#fff" opacity="0.75" />
-                <circle cx="-5" cy="-9" r="1.2" fill="#fff" opacity="0.7" />
-                <circle cx="0" cy="-7.5" r="1.3" fill="#fff" opacity="0.75" />
-                <circle cx="5" cy="-9" r="1.2" fill="#fff" opacity="0.65" />
-                <circle cx="9" cy="-5" r="1" fill="#fff" opacity="0.6" />
-                <circle cx="-13" cy="-4" r="0.9" fill="#fff" opacity="0.55" />
-                <circle cx="-7" cy="-4" r="0.8" fill="#fff" opacity="0.5" />
-
-                {/* Spiegel & Wedel — Ricke, Seitenansicht.
-                    Spiegel: leicht transparent (0.80) damit der wedelnde Wedel mehr Fokus bekommt.
-                    Wedel: größer + länger, animiert mit schnellen Zuckungen (calcMode=linear).
-                    14s-Zyklus asynchron zu 16s-Grasen. */}
-                {/* Spiegel (statisch, leicht transparent) */}
-                <ellipse cx="-17" cy="-4" rx="2.5" ry="3.5" fill="#fff" opacity="0.80" />
-
-                {/* Wedel — Pivot oben am Spiegel. Schnelle Zuckungen, calcMode=linear für
-                    scharfe/crisp Bewegung. Mehrere kurze Flick-Bursts über 14s verteilt:
-                    Burst 1: ~0.18s (1×), Burst 2: ~0.32s (3×), Burst 3: ~0.18s (1×), Burst 4: ~0.24s (2×) */}
-                <g transform="translate(-17, -8)">
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    values="0;0;-22;0;0;-25;18;-15;0;0;-22;0;0;-20;15;0;0"
-                    keyTimes="0;0.414;0.421;0.427;0.593;0.599;0.604;0.610;0.616;0.764;0.770;0.776;0.893;0.899;0.904;0.910;1"
-                    calcMode="linear"
-                    dur="14s"
-                    repeatCount="indefinite"
-                    additive="sum"
-                  />
-                  {/* Schweifbüschel: Tränenform nach oben — größer und gestreckter */}
-                  <path d="M 0,0 C -2,-0.5 -2,-5.5 0,-5.5 C 2,-5.5 2,-0.5 0,0 Z" fill="#fff" />
+                {/* BEINE — schrumpfen von unten nach oben (Pivot y=2, Oberkante der Beine).
+                    SVG-Transform: translate(0,2) scale(1,Y) translate(0,-2) hält y=2 fest
+                    und zieht Hufe (y=15) nach oben. Bei sleepP=1: Beine komplett hinter Körper. */}
+                <g transform={`translate(0, 2) scale(1, ${legScale}) translate(0, -2)`}>
+                  <rect x="-14" y="2" width="2.6" height="13" rx="1.3" fill="#8b5a3c" />
+                  <ellipse cx="-12.7" cy="15" rx="1.6" ry="0.9" fill="#3a2416" />
+                  <rect x="-9.5" y="2" width="2.6" height="13" rx="1.3" fill="#8b5a3c" />
+                  <ellipse cx="-8.2" cy="15" rx="1.6" ry="0.9" fill="#3a2416" />
+                  <rect x="6" y="2" width="2.6" height="13" rx="1.3" fill="#8b5a3c" />
+                  <ellipse cx="7.3" cy="15" rx="1.6" ry="0.9" fill="#3a2416" />
+                  <rect x="10.5" y="2" width="2.6" height="13" rx="1.3" fill="#8b5a3c" />
+                  <ellipse cx="11.8" cy="15" rx="1.6" ry="0.9" fill="#3a2416" />
                 </g>
 
-                {/* Kopf + Hals — Grasen-Animation: Rotation um Hals-Pivot (11,-3).
-                    Physikalisch korrekt: Winkel-Oszillation erzeugt automatisch
-                    die richtige Auf-Ab + leicht-seitliche Bogenbeweg. der Kreisbahn.
-                    Biss-Tiefen variieren subtil (63°–69°) für Natürlichkeit. */}
-                <g>
-                  <animateTransform
-                    attributeName="transform"
-                    attributeType="XML"
-                    type="rotate"
-                    values="0 11 -3; 0 11 -3; 65 11 -3; 68 11 -3; 63 11 -3; 67 11 -3; 64 11 -3; 69 11 -3; 63 11 -3; 65 11 -3; 0 11 -3; 0 11 -3"
-                    keyTimes="0; 0.4; 0.47; 0.505; 0.535; 0.565; 0.59; 0.622; 0.652; 0.68; 0.75; 1"
-                    dur="16s"
-                    repeatCount="indefinite"
-                    calcMode="spline"
-                    keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.6 0 0.2 1; 0.2 0 0.6 1; 0.6 0 0.2 1; 0.2 0 0.5 1; 0.6 0 0.2 1; 0.2 0 0.6 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
-                  />
+                {/* KÖRPER + KOPF — sinken gemeinsam auf den Boden ab (bodyShift: 0→10 SVG-Einheiten).
+                    Körper-Unterkante (y=5) erreicht Bodenniveau (y=15) wenn sleepP=1. */}
+                <g transform={`translate(0, ${bodyShift})`}>
 
-                  {/* Hals */}
-                  <path d="M 8,-6 Q 13,-11 17,-13 L 21,-11 Q 16,-6 11,-3 Z" fill="#a6724a" />
+                  {/* Körper — warmes Braun */}
+                  <ellipse cx="-2" cy="-3" rx="17" ry="8" fill="#a6724a" />
+                  {/* Weiße Bauchunterseite */}
+                  <ellipse cx="-2" cy="3" rx="13" ry="3.5" fill="#f5e6c4" opacity="0.9" />
 
-                  {/* Kopf — Reh-Form mit Stupsnase (Schädel + Schnauzenbereich als Profil-Pfad) */}
-                  <path d="M 14,-22 Q 20,-26 25,-22 Q 29,-18 29,-13 Q 28,-9 24,-9 Q 19,-10 15,-12 Q 12,-15 13,-20 Z" fill="#a6724a" />
-                  {/* Wange-Highlight */}
-                  <ellipse cx="19" cy="-14" rx="2.5" ry="2" fill="#c2875f" opacity="0.55" />
+                  {/* Bambi-Flecken auf dem Rücken */}
+                  <circle cx="-10" cy="-7" r="1.4" fill="#fff" opacity="0.75" />
+                  <circle cx="-5" cy="-9" r="1.2" fill="#fff" opacity="0.7" />
+                  <circle cx="0" cy="-7.5" r="1.3" fill="#fff" opacity="0.75" />
+                  <circle cx="5" cy="-9" r="1.2" fill="#fff" opacity="0.65" />
+                  <circle cx="9" cy="-5" r="1" fill="#fff" opacity="0.6" />
+                  <circle cx="-13" cy="-4" r="0.9" fill="#fff" opacity="0.55" />
+                  <circle cx="-7" cy="-4" r="0.8" fill="#fff" opacity="0.5" />
 
-                  {/* Schnauzenbereich (Stupsnase — heller, klar vom Kopf abgesetzt) */}
-                  <ellipse cx="27" cy="-12.5" rx="3.2" ry="2.4" fill="#c9956b" />
-                  {/* Nase */}
-                  <ellipse cx="28.5" cy="-12.2" rx="1" ry="0.8" fill="#1a1a1a" />
-                  {/* Nasen-Highlight */}
-                  <circle cx="28.7" cy="-12.5" r="0.32" fill="#fff" opacity="0.6" />
+                  {/* Spiegel (statisch, leicht transparent) */}
+                  <ellipse cx="-17" cy="-4" rx="2.5" ry="3.5" fill="#fff" opacity="0.80" />
 
-                  {/* Süßes großes Auge mit Blinzeln */}
-                  <g>
-                    <animate
-                      attributeName="opacity"
-                      values="1;1;1;1;0;1;1;1;1;0;1;1"
-                      keyTimes="0;0.15;0.17;0.18;0.185;0.19;0.5;0.52;0.53;0.535;0.54;1"
-                      dur="7s"
+                  {/* Wedel — kein Zucken wenn schlafend */}
+                  <g transform="translate(-17, -8)">
+                    {deerFullyAwake && <animateTransform
+                      attributeName="transform"
+                      type="rotate"
+                      values="0;0;-22;0;0;-25;18;-15;0;0;-22;0;0;-20;15;0;0"
+                      keyTimes="0;0.414;0.421;0.427;0.593;0.599;0.604;0.610;0.616;0.764;0.770;0.776;0.893;0.899;0.904;0.910;1"
+                      calcMode="linear"
+                      dur="14s"
                       repeatCount="indefinite"
-                    />
-                    <ellipse cx="21" cy="-16.5" rx="1.6" ry="2" fill="#1a1a1a" />
-                    <circle cx="21.5" cy="-17.1" r="0.65" fill="#fff" />
-                    <circle cx="21" cy="-15.8" r="0.28" fill="#fff" opacity="0.8" />
+                      additive="sum"
+                    />}
+                    <path d="M 0,0 C -2,-0.5 -2,-5.5 0,-5.5 C 2,-5.5 2,-0.5 0,0 Z" fill="#fff" />
                   </g>
 
-                  {/* Ohren — dicht übereinander gestapelt wie in Reh-Illustrationen.
-                      Beide fast am selben x (17/19) oberhalb des Auges (x=21).
-                      Hinteres zuerst → vorderes überlappt und verdeckt teilweise = klassischer Cartoon-Look. */}
-
-                  {/* Hinteres Ohr — leicht links vom vorderen, lugt dahinter hervor */}
-                  <g transform="translate(17, -24)">
+                  {/* KOPF-WRAPPER — Schlaf-Rotation um Hals-Pivot (11,-3).
+                      headAngle: 0° (wach, Kopf oben) → 45° (schlafend, Kopf vor Körper gelegt).
+                      SVG rotate(angle, cx, cy) nutzt SVG-Koordinaten direkt — kein px/CSS-Problem.
+                      Grasen-SMIL nur aktiv wenn deerFullyAwake (sleepP < 0.05). */}
+                  <g transform={`rotate(${headAngle}, 11, -3)`}>
                     <g>
-                      <animateTransform
+                      {deerFullyAwake && <animateTransform
                         attributeName="transform"
+                        attributeType="XML"
                         type="rotate"
-                        values="0;0;-16;0;0;-18;12;-12;0;0;0;0;-14;0;0"
-                        keyTimes="0;0.150;0.155;0.160;0.325;0.330;0.335;0.340;0.345;0.400;0.750;0.900;0.905;0.910;1"
-                        calcMode="linear"
+                        values="0 11 -3; 0 11 -3; 65 11 -3; 68 11 -3; 63 11 -3; 67 11 -3; 64 11 -3; 69 11 -3; 63 11 -3; 65 11 -3; 0 11 -3; 0 11 -3"
+                        keyTimes="0; 0.4; 0.47; 0.505; 0.535; 0.565; 0.59; 0.622; 0.652; 0.68; 0.75; 1"
                         dur="16s"
                         repeatCount="indefinite"
+                        calcMode="spline"
+                        keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.6 0 0.2 1; 0.2 0 0.6 1; 0.6 0 0.2 1; 0.2 0 0.5 1; 0.6 0 0.2 1; 0.2 0 0.6 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
+                      />}
+
+                      {/* Hals */}
+                      <path d="M 8,-6 Q 13,-11 17,-13 L 21,-11 Q 16,-6 11,-3 Z" fill="#a6724a" />
+
+                      {/* Kopf */}
+                      <path d="M 14,-22 Q 20,-26 25,-22 Q 29,-18 29,-13 Q 28,-9 24,-9 Q 19,-10 15,-12 Q 12,-15 13,-20 Z" fill="#a6724a" />
+                      {/* Wange-Highlight */}
+                      <ellipse cx="19" cy="-14" rx="2.5" ry="2" fill="#c2875f" opacity="0.55" />
+
+                      {/* Schnauzenbereich */}
+                      <ellipse cx="27" cy="-12.5" rx="3.2" ry="2.4" fill="#c9956b" />
+                      <ellipse cx="28.5" cy="-12.2" rx="1" ry="0.8" fill="#1a1a1a" />
+                      <circle cx="28.7" cy="-12.5" r="0.32" fill="#fff" opacity="0.6" />
+
+                      {/* Offenes Auge (blinzeln) — äußere Gruppe regelt Schlaf-Fade,
+                          innere Gruppe animiert Blinzeln. Opazitäten multiplizieren sich. */}
+                      <g opacity={1 - sleepP}>
+                        <g>
+                          <animate
+                            attributeName="opacity"
+                            values="1;1;1;1;0;1;1;1;1;0;1;1"
+                            keyTimes="0;0.15;0.17;0.18;0.185;0.19;0.5;0.52;0.53;0.535;0.54;1"
+                            dur="7s"
+                            repeatCount="indefinite"
+                          />
+                          <ellipse cx="21" cy="-16.5" rx="1.6" ry="2" fill="#1a1a1a" />
+                          <circle cx="21.5" cy="-17.1" r="0.65" fill="#fff" />
+                          <circle cx="21" cy="-15.8" r="0.28" fill="#fff" opacity="0.8" />
+                        </g>
+                      </g>
+
+                      {/* Geschlossenes Schlaf-Auge — einfacher Bogen, blendet mit sleepP ein */}
+                      <path
+                        d="M 19.2,-16.5 Q 21,-14.8 22.8,-16.5"
+                        stroke="#1a1a1a"
+                        strokeWidth="1.3"
+                        fill="none"
+                        strokeLinecap="round"
+                        opacity={sleepP}
                       />
-                      <ellipse cx="0" cy="-4.5" rx="1.8" ry="4.5" fill="#8b5a3c" />
-                      <ellipse cx="0" cy="-4" rx="1" ry="3.2" fill="#c2875f" opacity="0.9" />
+
+                      {/* Ohren — kein Zucken wenn schlafend */}
+                      <g transform="translate(17, -24)">
+                        <g>
+                          {deerFullyAwake && <animateTransform
+                            attributeName="transform"
+                            type="rotate"
+                            values="0;0;-16;0;0;-18;12;-12;0;0;0;0;-14;0;0"
+                            keyTimes="0;0.150;0.155;0.160;0.325;0.330;0.335;0.340;0.345;0.400;0.750;0.900;0.905;0.910;1"
+                            calcMode="linear"
+                            dur="16s"
+                            repeatCount="indefinite"
+                          />}
+                          <ellipse cx="0" cy="-4.5" rx="1.8" ry="4.5" fill="#8b5a3c" />
+                          <ellipse cx="0" cy="-4" rx="1" ry="3.2" fill="#c2875f" opacity="0.9" />
+                        </g>
+                      </g>
+
+                      <g transform="translate(19, -22)">
+                        <g>
+                          {deerFullyAwake && <animateTransform
+                            attributeName="transform"
+                            type="rotate"
+                            values="3;3;-14;3;3;-12;18;-6;3;3;3;3;-10;3;3"
+                            keyTimes="0;0.100;0.105;0.110;0.250;0.255;0.260;0.265;0.270;0.400;0.750;0.850;0.855;0.860;1"
+                            calcMode="linear"
+                            dur="16s"
+                            repeatCount="indefinite"
+                          />}
+                          <ellipse cx="0" cy="-6.5" rx="2.3" ry="6.5" fill="#a6724a" />
+                          <ellipse cx="0" cy="-6" rx="1.4" ry="4.8" fill="#e0a88a" />
+                        </g>
+                      </g>
                     </g>
                   </g>
 
-                  {/* Vorderes Ohr — Hauptohr, überlappt das hintere, ragt klar über Kopf */}
-                  <g transform="translate(19, -22)">
-                    <g>
-                      <animateTransform
-                        attributeName="transform"
-                        type="rotate"
-                        values="3;3;-14;3;3;-12;18;-6;3;3;3;3;-10;3;3"
-                        keyTimes="0;0.100;0.105;0.110;0.250;0.255;0.260;0.265;0.270;0.400;0.750;0.850;0.855;0.860;1"
-                        calcMode="linear"
-                        dur="16s"
-                        repeatCount="indefinite"
-                      />
-                      <ellipse cx="0" cy="-6.5" rx="2.3" ry="6.5" fill="#a6724a" />
-                      <ellipse cx="0" cy="-6" rx="1.4" ry="4.8" fill="#e0a88a" />
-                    </g>
-                  </g>
                 </g>
               </g>
             </g>
