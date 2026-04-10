@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.7 (Versionsanzeige auf Login-Screen)
+
+### index.html 1.0.7
+- `LoginScreen` zeigt jetzt unten mittig `Frontend v{FRONTEND_VERSION}` — identischer Style wie der Footer im Dashboard (fontSize 9/10, `C.textFaint`, opacity 0.6, letterSpacing 0.5). Da auf dem Login-Screen noch keine Backend-Version bekannt ist, entfällt der `· Backend v...`-Teil.
+- Positionierung via `position: absolute; bottom: 20px` innerhalb des `minHeight: 100vh`-Containers (dafür `position: relative` ergänzt).
+- **Bump-Typ: PATCH (1.0.6 → 1.0.7)** — rein visuell, kein Logik-Change.
+
+---
+
 ## 2026-04-10 — index.html 1.0.6 (Passwort case-insensitive)
 
 ### index.html 1.0.6
