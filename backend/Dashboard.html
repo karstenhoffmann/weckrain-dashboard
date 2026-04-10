@@ -1,0 +1,2189 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html {
+        font-size: 16px;
+      }
+      body {
+        background: #080e1a;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root {
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+      button {
+        -webkit-appearance: none;
+        border: none;
+        background: none;
+        cursor: pointer;
+      }
+
+      /* Mobile-first responsive scaling */
+      @media (max-width: 520px) {
+        html {
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Daten vom Server (injected by Google Apps Script template) -->
+    <script>
+      var SERVER_DATA = <?!= dashboardData ?>;
+      var DASHBOARD_PW = "<?!= pw ?>";
+    </script>
+
+    <!-- React + Babel von CDN -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/@babel/standalone/babel.min.js"
+    ></script>
+
+    <script type="text/babel">
+      const { useState, useCallback, useEffect, useRef } = React;
+
+      // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
+      function useIsMobile() {
+        const [mobile, setMobile] = useState(window.innerWidth < 520);
+        useEffect(() => {
+          const onResize = () => setMobile(window.innerWidth < 520);
+          window.addEventListener("resize", onResize);
+          return () => window.removeEventListener("resize", onResize);
+        }, []);
+        return mobile;
+      }
+
+      // ─── CONFIG ──────────────────────────────────────────────────────────
+      const SLOTS = [
+        "Nachts",
+        "Morgens",
+        "Vormittags",
+        "Mittags",
+        "Nachmittags",
+        "Abends",
+      ];
+      const SLOT_LABELS = {
+        Nachts: "00–04",
+        Morgens: "04–08",
+        Vormittags: "08–12",
+        Mittags: "12–14",
+        Nachmittags: "14–18",
+        Abends: "18–24",
+      };
+      const WDAYS = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+      const ff = "'Inter', system-ui, -apple-system, sans-serif";
+      const ffSerif = "'Georgia', 'Times New Roman', serif";
+
+      // ─── SUN ARC ─────────────────────────────────────────────────────────
+      const SUN_ARC = { cx: 260, cy: 288, r: 252 };
+      function sunPos(angleDeg) {
+        const rad = (angleDeg * Math.PI) / 180;
+        return {
+          x: SUN_ARC.cx - SUN_ARC.r * Math.cos(rad),
+          y: SUN_ARC.cy - SUN_ARC.r * Math.sin(rad),
+        };
+      }
+
+      // ─── TIME-OF-DAY THEMES ──────────────────────────────────────────────
+      const SKY = {
+        Nachts: {
+          top: "#050a14",
+          bot: "#0c1525",
+          stars: 0.9,
+          moonOp: 0.15,
+          sunAngle: -15,
+          sunOp: 0,
+          sunColor: "#f5c842",
+          horizonOp: 0,
+          horizonColor: "#1a1020",
+          wallLight: 0,
+        },
+        Morgens: {
+          top: "#1a1535",
+          bot: "#4a2a45",
+          stars: 0.15,
+          moonOp: 0,
+          sunAngle: 15,
+          sunOp: 0.9,
+          sunColor: "#f5a623",
+          horizonOp: 0.4,
+          horizonColor: "#d46a3a",
+          wallLight: 0.08,
+        },
+        Vormittags: {
+          top: "#2a4a7a",
+          bot: "#5a8ab8",
+          stars: 0,
+          moonOp: 0,
+          sunAngle: 55,
+          sunOp: 1,
+          sunColor: "#f8d84a",
+          horizonOp: 0.1,
+          horizonColor: "#7aaad4",
+          wallLight: 0.18,
+        },
+        Mittags: {
+          top: "#3a6aa0",
+          bot: "#7ab4d8",
+          stars: 0,
+          moonOp: 0,
+          sunAngle: 90,
+          sunOp: 1,
+          sunColor: "#fff4b0",
+          horizonOp: 0.05,
+          horizonColor: "#8ac4e0",
+          wallLight: 0.25,
+        },
+        Nachmittags: {
+          top: "#3a5a88",
+          bot: "#6a9ac0",
+          stars: 0,
+          moonOp: 0,
+          sunAngle: 125,
+          sunOp: 1,
+          sunColor: "#f5c040",
+          horizonOp: 0.15,
+          horizonColor: "#c8a060",
+          wallLight: 0.15,
+        },
+        Abends: {
+          top: "#1a1830",
+          bot: "#3a2035",
+          stars: 0.4,
+          moonOp: 0.06,
+          sunAngle: 165,
+          sunOp: 0.6,
+          sunColor: "#e07030",
+          horizonOp: 0.5,
+          horizonColor: "#b04828",
+          wallLight: 0.04,
+        },
+      };
+
+      // ─── LIVE DATA ───────────────────────────────────────────────────────
+      // Falls keine Server-Daten vorhanden (lokaler Test), Fallback auf leeres Array
+      const LIVE_HISTORY =
+        typeof SERVER_DATA !== "undefined" && SERVER_DATA.history
+          ? SERVER_DATA.history
+          : [];
+      const LAST_POLL =
+        typeof SERVER_DATA !== "undefined" && SERVER_DATA.lastPoll
+          ? SERVER_DATA.lastPoll
+          : null;
+
+      // ─── HELPERS ─────────────────────────────────────────────────────────
+      const fmt = (d) => {
+        const p = d.split("-");
+        return p[2] + "." + p[1] + ".";
+      };
+      const wday = (d) => WDAYS[new Date(d + "T12:00:00").getDay()];
+      const isOn = (v) => v === true;
+      const isError = (v) => v === "offline" || v === "fehler";
+      const isFehler = (v) => v === "fehler";
+      const isNoData = (v) => v === null;
+      const actCount = (s) =>
+        [s.k, s.s, s.e, s.g].filter((v) => v === true).length;
+      const errCount = (s) =>
+        [s.k, s.s, s.e, s.g].filter((v) => isError(v)).length;
+      const noDataCount = (s) =>
+        [s.k, s.s, s.e, s.g].filter((v) => v === null).length;
+      const dayAct = (d) => d.slots.reduce((a, s) => a + actCount(s), 0);
+      const dayHasProblems = (d) =>
+        d.slots.some(
+          (s, idx) =>
+            errCount(s) > 0 ||
+            (noDataCount(s) === 4 && isSlotPast(d.date, idx)),
+        );
+
+      function getNowSlot() {
+        const h = new Date().getHours();
+        if (h < 4) return 0;
+        if (h < 8) return 1;
+        if (h < 12) return 2;
+        if (h < 14) return 3;
+        if (h < 18) return 4;
+        return 5;
+      }
+
+      // Prüft ob ein Zeitfenster bereits vollständig vergangen ist.
+      // Nur vergangene Slots ohne Daten = echtes Verbindungsproblem.
+      // Aktuelle/zukünftige Slots ohne Daten = einfach noch nicht erfasst.
+      const SLOT_END_HOURS = [4, 8, 12, 14, 18, 24];
+      function isSlotPast(dateStr, slotIdx) {
+        const now = new Date();
+        const today =
+          now.getFullYear() +
+          "-" +
+          String(now.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(now.getDate()).padStart(2, "0");
+        if (dateStr < today) return true; // vergangener Tag → alle Slots vorbei
+        if (dateStr > today) return false; // zukünftiger Tag → kein Slot vorbei
+        return now.getHours() >= SLOT_END_HOURS[slotIdx]; // heute → Stunde prüfen
+      }
+
+      function getWeather(day) {
+        const act = dayAct(day);
+        const pastSlots = day.slots.filter((s, idx) =>
+          isSlotPast(day.date, idx),
+        );
+        const allNull =
+          pastSlots.length > 0 && pastSlots.every((s) => noDataCount(s) === 4);
+        if (allNull)
+          return {
+            label: "Keine Verbindung",
+            color: "#d4916a",
+            bg: "rgba(212,145,106,0.1)",
+          };
+        if (act >= 8)
+          return {
+            label: "Freundlich",
+            color: "#e8b931",
+            bg: "rgba(232,185,49,0.1)",
+          };
+        if (act >= 4)
+          return {
+            label: "Heiter",
+            color: "#7db8e0",
+            bg: "rgba(125,184,224,0.08)",
+          };
+        if (act >= 1)
+          return {
+            label: "Ruhig",
+            color: "#9aaabe",
+            bg: "rgba(154,170,190,0.08)",
+          };
+        return {
+          label: "Neblig",
+          color: "#6a7a90",
+          bg: "rgba(106,122,144,0.08)",
+        };
+      }
+
+      function timeSince(isoStr) {
+        if (!isoStr) return "unbekannt";
+        const diff = Math.floor(
+          (Date.now() - new Date(isoStr).getTime()) / 60000,
+        );
+        if (diff < 1) return "gerade eben";
+        if (diff < 60) return "vor " + diff + " Min.";
+        const h = Math.floor(diff / 60);
+        if (h < 24) return "vor " + h + " Std.";
+        return "vor " + Math.floor(h / 24) + " Tag(en)";
+      }
+
+      // ─── COLORS ──────────────────────────────────────────────────────────
+      const C = {
+        kitchen: { on: "#f0c45a", off: "#1a2133" },
+        tv: { on: "#6ba4d4", off: "#1a2133" },
+        door: { on: "#7bc77e", off: "#4a4a50" },
+        bird: { on: "#c49bdb" },
+        error: "#c27a5a",
+        offline: "#8a7050",
+        noData: "#3a3545",
+        textHi: "#e8edf5",
+        textMid: "#9aabbe",
+        textLo: "#5a6a80",
+        textFaint: "#3d4d60",
+      };
+
+      function winColor(val, palette) {
+        if (isOn(val)) return palette.on;
+        if (val === "offline") return C.offline;
+        if (val === "fehler") return C.error;
+        if (val === null) return C.noData;
+        return palette.off;
+      }
+
+      const T = (dur = "0.8s") =>
+        "all " + dur + " cubic-bezier(0.4, 0, 0.2, 1)";
+
+      function easeInOut(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      // ─── ANIMATED VALUE HOOK ─────────────────────────────────────────────
+      function useAnimatedValue(target, duration) {
+        duration = duration || 1200;
+        const [value, setValue] = useState(target);
+        const animRef = useRef(null);
+        const currentRef = useRef(target);
+
+        useEffect(() => {
+          if (animRef.current) cancelAnimationFrame(animRef.current);
+          const start = currentRef.current;
+          const delta = target - start;
+          if (Math.abs(delta) < 0.1) {
+            setValue(target);
+            currentRef.current = target;
+            return;
+          }
+          const t0 = performance.now();
+
+          function tick(now) {
+            const elapsed = now - t0;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = easeInOut(progress);
+            const v = start + delta * eased;
+            currentRef.current = v;
+            setValue(v);
+            if (progress < 1) {
+              animRef.current = requestAnimationFrame(tick);
+            }
+          }
+          animRef.current = requestAnimationFrame(tick);
+          return () => {
+            if (animRef.current) cancelAnimationFrame(animRef.current);
+          };
+        }, [target, duration]);
+
+        return value;
+      }
+
+      // ─── HOUSE COMPONENT ─────────────────────────────────────────────────
+      function House({ slot, slotName, date, slotIdx }) {
+        const sky = SKY[slotName];
+        const kOn = isOn(slot.k),
+          sOn = isOn(slot.s),
+          eOn = isOn(slot.e),
+          gOn = isOn(slot.g);
+        const kErr = isError(slot.k),
+          sErr = isError(slot.s),
+          eErr = isError(slot.e),
+          gErr = isError(slot.g);
+        const allNull = noDataCount(slot) === 4;
+        const past = isSlotPast(date, slotIdx);
+        const showFog = allNull && past; // Keine Verbindung: vergangener Slot ohne Daten
+        const showPending = allNull && !past; // Noch keine Daten: aktueller/zukünftiger Slot
+        const kFill = winColor(slot.k, C.kitchen);
+        const sFill = winColor(slot.s, C.tv);
+        const isDay = ["Vormittags", "Mittags", "Nachmittags"].includes(
+          slotName,
+        );
+        const isDawn = slotName === "Morgens";
+        const isDusk = slotName === "Abends";
+
+        const animAngle = useAnimatedValue(sky.sunAngle, 1200);
+        const sun = sunPos(animAngle);
+
+        const wallBase = isDay
+          ? [62, 72, 100]
+          : isDawn
+            ? [52, 58, 78]
+            : isDusk
+              ? [48, 52, 70]
+              : [45, 50, 65];
+        const wallColor =
+          "rgb(" + wallBase[0] + ", " + wallBase[1] + ", " + wallBase[2] + ")";
+        const roofBase = isDay
+          ? [110, 85, 60]
+          : isDawn
+            ? [95, 70, 52]
+            : [80, 62, 48];
+        const roofColor =
+          "rgb(" + roofBase[0] + ", " + roofBase[1] + ", " + roofBase[2] + ")";
+        const roofEdge =
+          "rgb(" +
+          (roofBase[0] + 20) +
+          ", " +
+          (roofBase[1] + 15) +
+          ", " +
+          (roofBase[2] + 12) +
+          ")";
+        const groundBase = isDay
+          ? [35, 65, 40]
+          : isDawn
+            ? [28, 50, 30]
+            : isDusk
+              ? [25, 42, 28]
+              : [18, 32, 20];
+        const groundColor =
+          "rgb(" +
+          groundBase[0] +
+          ", " +
+          groundBase[1] +
+          ", " +
+          groundBase[2] +
+          ")";
+        const frameBright = isDay ? "#7a8a9a" : isDawn ? "#6a7585" : "#5a6578";
+        const darkWin = isDay ? "#2a3548" : "#1a2133";
+        const kOffFill = kOn ? kFill : isDay ? "#2a3548" : darkWin;
+        const sOffFill = sOn ? sFill : isDay ? "#2a3548" : darkWin;
+        const trans = T("0.9s");
+
+        return (
+          <svg
+            viewBox="0 0 520 320"
+            fill="none"
+            style={{
+              width: "100%",
+              maxWidth: 580,
+              display: "block",
+              margin: "0 auto",
+            }}
+          >
+            <defs>
+              <radialGradient id="gK" cx="0.35" cy="0.55" r="0.45">
+                <stop
+                  offset="0%"
+                  stopColor={C.kitchen.on}
+                  stopOpacity={isDay ? "0.2" : "0.35"}
+                />
+                <stop offset="100%" stopColor={C.kitchen.on} stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id="gS" cx="0.65" cy="0.55" r="0.45">
+                <stop
+                  offset="0%"
+                  stopColor={C.tv.on}
+                  stopOpacity={isDay ? "0.15" : "0.25"}
+                />
+                <stop offset="100%" stopColor={C.tv.on} stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={sky.sunColor} stopOpacity="0.6" />
+                <stop
+                  offset="50%"
+                  stopColor={sky.sunColor}
+                  stopOpacity="0.15"
+                />
+                <stop offset="100%" stopColor={sky.sunColor} stopOpacity="0" />
+              </radialGradient>
+              <filter id="softGlow">
+                <feGaussianBlur stdDeviation="3" />
+              </filter>
+              <filter id="wideGlow">
+                <feGaussianBlur stdDeviation="12" />
+              </filter>
+              <filter id="sunBlur">
+                <feGaussianBlur stdDeviation="6" />
+              </filter>
+              <clipPath id="sceneClip">
+                <rect width="520" height="320" rx="16" />
+              </clipPath>
+            </defs>
+
+            <g clipPath="url(#sceneClip)">
+              {/* SKY */}
+              <rect
+                width="520"
+                height="320"
+                fill={sky.bot}
+                style={{ transition: T("1.2s") }}
+              />
+              <rect
+                width="520"
+                height="200"
+                fill={sky.top}
+                opacity="0.8"
+                style={{ transition: T("1.2s") }}
+              />
+              <ellipse
+                cx="260"
+                cy="290"
+                rx="300"
+                ry="80"
+                fill={sky.horizonColor}
+                opacity={sky.horizonOp}
+                style={{ transition: T("1s") }}
+              />
+
+              {/* STARS */}
+              <g style={{ opacity: sky.stars, transition: T("1.2s") }}>
+                {[
+                  [35, 22, 1.1],
+                  [78, 38, 0.7],
+                  [125, 15, 0.9],
+                  [180, 28, 0.6],
+                  [290, 12, 1.0],
+                  [345, 35, 0.8],
+                  [440, 20, 0.7],
+                  [52, 55, 0.5],
+                  [410, 50, 0.6],
+                  [155, 45, 0.4],
+                  [475, 42, 0.8],
+                  [20, 48, 0.6],
+                  [500, 8, 0.6],
+                  [360, 52, 0.9],
+                  [490, 28, 0.5],
+                ].map(([cx, cy, r], i) => (
+                  <circle
+                    key={i}
+                    cx={cx}
+                    cy={cy}
+                    r={r}
+                    fill="#d0d8e8"
+                    opacity={0.3 + (i % 4) * 0.15}
+                  >
+                    <animate
+                      attributeName="opacity"
+                      values={
+                        0.2 +
+                        (i % 3) * 0.15 +
+                        ";" +
+                        (0.5 + (i % 3) * 0.1) +
+                        ";" +
+                        (0.2 + (i % 3) * 0.15)
+                      }
+                      dur={3 + i * 0.5 + "s"}
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                ))}
+              </g>
+
+              {/* MOON */}
+              <g style={{ opacity: sky.moonOp, transition: T("1s") }}>
+                <circle cx="440" cy="48" r="18" fill="#d4dbe8" />
+                <circle cx="446" cy="44" r="16" fill={sky.top} />
+              </g>
+
+              {/* SUN (circular arc) */}
+              <g
+                style={{
+                  opacity: sky.sunOp,
+                  transition: "opacity 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              >
+                <circle cx={sun.x} cy={sun.y} r="50" fill="url(#sunGlow)" />
+                <circle
+                  cx={sun.x}
+                  cy={sun.y}
+                  r="16"
+                  fill={sky.sunColor}
+                  style={{ transition: "fill 1s" }}
+                />
+                <circle
+                  cx={sun.x}
+                  cy={sun.y}
+                  r="24"
+                  fill={sky.sunColor}
+                  opacity="0.12"
+                  filter="url(#sunBlur)"
+                  style={{ transition: "fill 1s" }}
+                />
+              </g>
+
+              {/* GROUND */}
+              <ellipse
+                cx="260"
+                cy="305"
+                rx="280"
+                ry="30"
+                fill={groundColor}
+                opacity="0.8"
+                style={{ transition: T("1s") }}
+              />
+
+              {/* HOUSE GROUP (centered +60px) */}
+              <g transform="translate(60, 0)">
+                {kOn && (
+                  <ellipse
+                    cx="135"
+                    cy="200"
+                    rx="80"
+                    ry="70"
+                    fill="url(#gK)"
+                    filter="url(#wideGlow)"
+                  />
+                )}
+                {sOn && (
+                  <ellipse
+                    cx="265"
+                    cy="200"
+                    rx="80"
+                    ry="70"
+                    fill="url(#gS)"
+                    filter="url(#wideGlow)"
+                  />
+                )}
+                {kOn && !isDay && (
+                  <ellipse
+                    cx="130"
+                    cy="288"
+                    rx="35"
+                    ry="6"
+                    fill={C.kitchen.on}
+                    opacity="0.08"
+                  />
+                )}
+                {sOn && !isDay && (
+                  <ellipse
+                    cx="270"
+                    cy="288"
+                    rx="35"
+                    ry="6"
+                    fill={C.tv.on}
+                    opacity="0.06"
+                  />
+                )}
+                {eOn && !isDay && (
+                  <ellipse
+                    cx="200"
+                    cy="292"
+                    rx="20"
+                    ry="5"
+                    fill={C.door.on}
+                    opacity="0.1"
+                  />
+                )}
+
+                {/* CHIMNEY */}
+                <rect
+                  x="275"
+                  y="88"
+                  width="20"
+                  height="45"
+                  rx="2"
+                  fill="#4a4a55"
+                  style={{ transition: trans }}
+                />
+                <rect
+                  x="272"
+                  y="84"
+                  width="26"
+                  height="7"
+                  rx="2"
+                  fill="#5a5a62"
+                />
+                {kOn &&
+                  [0, 1, 2].map((i) => (
+                    <circle
+                      key={i}
+                      cx={285 + i * 3}
+                      cy={75}
+                      r={3 + i}
+                      fill={isDay ? "#a0a8b8" : "#8090a8"}
+                      opacity={isDay ? 0.12 : 0.08}
+                    >
+                      <animate
+                        attributeName="cy"
+                        values={
+                          75 - i * 5 + ";" + (50 - i * 8) + ";" + (25 - i * 10)
+                        }
+                        dur={4 + i + "s"}
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="opacity"
+                        values={
+                          (isDay ? 0.12 : 0.1) +
+                          ";" +
+                          (isDay ? 0.06 : 0.05) +
+                          ";0"
+                        }
+                        dur={4 + i + "s"}
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="r"
+                        values={3 + i + ";" + (5 + i * 1.5) + ";" + (8 + i * 2)}
+                        dur={4 + i + "s"}
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  ))}
+
+                {/* ROOF */}
+                <polygon
+                  points="55,148 200,62 345,148"
+                  fill={roofColor}
+                  style={{ transition: trans }}
+                />
+                <polygon
+                  points="55,148 200,62 345,148"
+                  fill="none"
+                  stroke={roofEdge}
+                  strokeWidth="1"
+                  strokeLinejoin="round"
+                  style={{ transition: trans }}
+                />
+
+                {/* WALLS */}
+                <rect
+                  x="75"
+                  y="148"
+                  width="250"
+                  height="130"
+                  fill={wallColor}
+                  style={{ transition: trans }}
+                />
+                <rect
+                  x="75"
+                  y="148"
+                  width="250"
+                  height="130"
+                  fill="none"
+                  stroke={"rgba(255,255,255," + (isDay ? 0.08 : 0.04) + ")"}
+                  strokeWidth="0.8"
+                />
+                {[168, 188, 208, 228, 248].map((y, i) => (
+                  <line
+                    key={i}
+                    x1="80"
+                    y1={y}
+                    x2="320"
+                    y2={y}
+                    stroke={"rgba(255,255,255," + (isDay ? 0.04 : 0.02) + ")"}
+                    strokeWidth="0.3"
+                  />
+                ))}
+
+                {/* KITCHEN WINDOW */}
+                <g>
+                  <rect
+                    x="100"
+                    y="165"
+                    width="60"
+                    height="48"
+                    rx="2"
+                    fill={isDay ? "#1e2a3e" : "#1a2030"}
+                  />
+                  <rect
+                    x="96"
+                    y="213"
+                    width="68"
+                    height="5"
+                    rx="1.5"
+                    fill={frameBright}
+                    style={{ transition: trans }}
+                  />
+                  <rect
+                    x="96"
+                    y="212"
+                    width="68"
+                    height="2"
+                    rx="1"
+                    fill={frameBright}
+                    style={{ transition: trans }}
+                  />
+                  {[
+                    [102, 167, 26, 21, 0.85],
+                    [132, 167, 26, 21, 0.75],
+                    [102, 191, 26, 20, 0.7],
+                    [132, 191, 26, 20, 0.8],
+                  ].map(([x, y, w, h, op], i) => (
+                    <rect
+                      key={i}
+                      x={x}
+                      y={y}
+                      width={w}
+                      height={h}
+                      rx="1"
+                      fill={kOn ? kFill : kOffFill}
+                      opacity={kOn ? op : 1}
+                      style={{ transition: T("0.6s") }}
+                    />
+                  ))}
+                  <rect
+                    x="100"
+                    y="165"
+                    width="60"
+                    height="48"
+                    rx="2"
+                    fill="none"
+                    stroke={frameBright}
+                    strokeWidth="1.5"
+                    style={{ transition: trans }}
+                  />
+                  <line
+                    x1="130"
+                    y1="165"
+                    x2="130"
+                    y2="213"
+                    stroke={frameBright}
+                    strokeWidth="1.5"
+                    style={{ transition: trans }}
+                  />
+                  <line
+                    x1="100"
+                    y1="189"
+                    x2="160"
+                    y2="189"
+                    stroke={frameBright}
+                    strokeWidth="1.5"
+                    style={{ transition: trans }}
+                  />
+                  {kOn && (
+                    <rect
+                      x="100"
+                      y="165"
+                      width="60"
+                      height="48"
+                      rx="2"
+                      fill={C.kitchen.on}
+                      opacity={isDay ? 0.08 : 0.15}
+                      filter="url(#softGlow)"
+                    >
+                      <animate
+                        attributeName="opacity"
+                        values={
+                          (isDay ? 0.05 : 0.1) +
+                          ";" +
+                          (isDay ? 0.12 : 0.2) +
+                          ";" +
+                          (isDay ? 0.05 : 0.1)
+                        }
+                        dur="5s"
+                        repeatCount="indefinite"
+                      />
+                    </rect>
+                  )}
+                  <path
+                    d="M102,167 Q108,175 102,189"
+                    stroke={frameBright}
+                    strokeWidth="0.4"
+                    fill="none"
+                    opacity="0.2"
+                    style={{ transition: trans }}
+                  />
+                  <path
+                    d="M158,167 Q152,175 158,189"
+                    stroke={frameBright}
+                    strokeWidth="0.4"
+                    fill="none"
+                    opacity="0.2"
+                    style={{ transition: trans }}
+                  />
+                  {isDay && !kOn && (
+                    <rect
+                      x="103"
+                      y="168"
+                      width="8"
+                      height="10"
+                      rx="1"
+                      fill="white"
+                      opacity="0.06"
+                    />
+                  )}
+                  {kErr && (
+                    <g>
+                      <circle
+                        cx="157"
+                        cy="168"
+                        r="6"
+                        fill="rgba(20,20,30,0.8)"
+                      />
+                      <text
+                        x="157"
+                        y="172"
+                        textAnchor="middle"
+                        fontSize="10"
+                        fill={isFehler(slot.k) ? C.error : C.offline}
+                        fontFamily={ff}
+                        fontWeight="700"
+                      >
+                        !
+                      </text>
+                    </g>
+                  )}
+                </g>
+
+                {/* TV WINDOW */}
+                <g>
+                  <rect
+                    x="240"
+                    y="165"
+                    width="60"
+                    height="48"
+                    rx="2"
+                    fill={isDay ? "#1e2a3e" : "#1a2030"}
+                  />
+                  <rect
+                    x="236"
+                    y="213"
+                    width="68"
+                    height="5"
+                    rx="1.5"
+                    fill={frameBright}
+                    style={{ transition: trans }}
+                  />
+                  <rect
+                    x="236"
+                    y="212"
+                    width="68"
+                    height="2"
+                    rx="1"
+                    fill={frameBright}
+                    style={{ transition: trans }}
+                  />
+                  {[
+                    [242, 167, 26, 21, 0.75],
+                    [272, 167, 26, 21, 0.85],
+                    [242, 191, 26, 20, 0.8],
+                    [272, 191, 26, 20, 0.7],
+                  ].map(([x, y, w, h, op], i) => (
+                    <rect
+                      key={i}
+                      x={x}
+                      y={y}
+                      width={w}
+                      height={h}
+                      rx="1"
+                      fill={sOn ? sFill : sOffFill}
+                      opacity={sOn ? op : 1}
+                      style={{ transition: T("0.6s") }}
+                    />
+                  ))}
+                  <rect
+                    x="240"
+                    y="165"
+                    width="60"
+                    height="48"
+                    rx="2"
+                    fill="none"
+                    stroke={frameBright}
+                    strokeWidth="1.5"
+                    style={{ transition: trans }}
+                  />
+                  <line
+                    x1="270"
+                    y1="165"
+                    x2="270"
+                    y2="213"
+                    stroke={frameBright}
+                    strokeWidth="1.5"
+                    style={{ transition: trans }}
+                  />
+                  <line
+                    x1="240"
+                    y1="189"
+                    x2="300"
+                    y2="189"
+                    stroke={frameBright}
+                    strokeWidth="1.5"
+                    style={{ transition: trans }}
+                  />
+                  {sOn && (
+                    <rect
+                      x="240"
+                      y="165"
+                      width="60"
+                      height="48"
+                      rx="2"
+                      fill={C.tv.on}
+                      opacity={isDay ? 0.06 : 0.12}
+                      filter="url(#softGlow)"
+                    >
+                      <animate
+                        attributeName="opacity"
+                        values={
+                          (isDay ? 0.04 : 0.08) +
+                          ";" +
+                          (isDay ? 0.1 : 0.18) +
+                          ";" +
+                          (isDay ? 0.03 : 0.06) +
+                          ";" +
+                          (isDay ? 0.08 : 0.14) +
+                          ";" +
+                          (isDay ? 0.04 : 0.08)
+                        }
+                        dur="3s"
+                        repeatCount="indefinite"
+                      />
+                    </rect>
+                  )}
+                  <path
+                    d="M242,167 Q248,175 242,189"
+                    stroke={frameBright}
+                    strokeWidth="0.4"
+                    fill="none"
+                    opacity="0.2"
+                  />
+                  <path
+                    d="M298,167 Q292,175 298,189"
+                    stroke={frameBright}
+                    strokeWidth="0.4"
+                    fill="none"
+                    opacity="0.2"
+                  />
+                  {isDay && !sOn && (
+                    <rect
+                      x="243"
+                      y="168"
+                      width="8"
+                      height="10"
+                      rx="1"
+                      fill="white"
+                      opacity="0.06"
+                    />
+                  )}
+                  {sErr && (
+                    <g>
+                      <circle
+                        cx="297"
+                        cy="168"
+                        r="6"
+                        fill="rgba(20,20,30,0.8)"
+                      />
+                      <text
+                        x="297"
+                        y="172"
+                        textAnchor="middle"
+                        fontSize="10"
+                        fill={isFehler(slot.s) ? C.error : C.offline}
+                        fontFamily={ff}
+                        fontWeight="700"
+                      >
+                        !
+                      </text>
+                    </g>
+                  )}
+                </g>
+
+                {/* DOOR */}
+                <g>
+                  <rect
+                    x="181"
+                    y="218"
+                    width="38"
+                    height="60"
+                    rx="2"
+                    fill="#3a3a42"
+                  />
+                  <rect
+                    x="183"
+                    y="220"
+                    width="34"
+                    height="56"
+                    rx="1.5"
+                    fill={
+                      eOn
+                        ? "#5a9b5e"
+                        : eErr
+                          ? isFehler(slot.e)
+                            ? "#7a4a3a"
+                            : "#5a4a30"
+                          : "#4a4a52"
+                    }
+                    style={{ transition: T("0.6s") }}
+                  />
+                  <rect
+                    x="187"
+                    y="224"
+                    width="26"
+                    height="18"
+                    rx="1"
+                    fill={eOn ? "#4d8a50" : "#3e3e46"}
+                    stroke={eOn ? "#6aaa6e" : "#555"}
+                    strokeWidth="0.5"
+                    style={{ transition: T("0.6s") }}
+                  />
+                  <rect
+                    x="187"
+                    y="248"
+                    width="26"
+                    height="20"
+                    rx="1"
+                    fill={eOn ? "#4d8a50" : "#3e3e46"}
+                    stroke={eOn ? "#6aaa6e" : "#555"}
+                    strokeWidth="0.5"
+                    style={{ transition: T("0.6s") }}
+                  />
+                  <circle
+                    cx={eOn ? 191 : 209}
+                    cy="252"
+                    r="2"
+                    fill={eOn ? "#a0d0a2" : "#888"}
+                    style={{ transition: T("0.4s") }}
+                  />
+                  {eOn && (
+                    <React.Fragment>
+                      <rect
+                        x="183"
+                        y="220"
+                        width="10"
+                        height="56"
+                        rx="1"
+                        fill="#8fce92"
+                        opacity="0.3"
+                      />
+                      <path
+                        d="M183,276 L170,290 L196,290 Z"
+                        fill={C.door.on}
+                        opacity="0.06"
+                      />
+                    </React.Fragment>
+                  )}
+                  <rect
+                    x="178"
+                    y="276"
+                    width="44"
+                    height="4"
+                    rx="1"
+                    fill={frameBright}
+                    style={{ transition: trans }}
+                  />
+                  <path
+                    d="M176,218 Q200,210 224,218"
+                    fill="none"
+                    stroke={roofEdge}
+                    strokeWidth="1.5"
+                    style={{ transition: trans }}
+                  />
+                  {eErr && (
+                    <g>
+                      <circle
+                        cx="216"
+                        cy="222"
+                        r="6"
+                        fill="rgba(20,20,30,0.8)"
+                      />
+                      <text
+                        x="216"
+                        y="226"
+                        textAnchor="middle"
+                        fontSize="10"
+                        fill={isFehler(slot.e) ? C.error : C.offline}
+                        fontFamily={ff}
+                        fontWeight="700"
+                      >
+                        !
+                      </text>
+                    </g>
+                  )}
+                </g>
+
+                {/* BIRD */}
+                {gOn && (
+                  <g
+                    transform="translate(150, 100)"
+                    style={{ transition: trans }}
+                  >
+                    <ellipse
+                      cx="0"
+                      cy="0"
+                      rx="7"
+                      ry="5.5"
+                      fill={C.bird.on}
+                      opacity="0.85"
+                    />
+                    <circle
+                      cx="-6"
+                      cy="-3"
+                      r="4.5"
+                      fill={C.bird.on}
+                      opacity="0.9"
+                    />
+                    <circle cx="-7" cy="-4" r="1.2" fill="#1a1a2e" />
+                    <circle
+                      cx="-6.6"
+                      cy="-4.3"
+                      r="0.4"
+                      fill="#fff"
+                      opacity="0.7"
+                    />
+                    <polygon points="-10,-3 -14,-4.5 -10,-4" fill="#dda15e" />
+                    <path
+                      d="M7,-1 Q12,-4 14,-1"
+                      fill={C.bird.on}
+                      opacity="0.7"
+                    />
+                    <line
+                      x1="-2"
+                      y1="5"
+                      x2="-3"
+                      y2="9"
+                      stroke="#8a7a6a"
+                      strokeWidth="0.8"
+                    />
+                    <line
+                      x1="2"
+                      y1="5"
+                      x2="1"
+                      y2="9"
+                      stroke="#8a7a6a"
+                      strokeWidth="0.8"
+                    />
+                    <text
+                      x="8"
+                      y="-8"
+                      fontSize="11"
+                      fill={C.bird.on}
+                      opacity="0.5"
+                      fontFamily="serif"
+                    >
+                      <animate
+                        attributeName="opacity"
+                        values="0.3;0.6;0.3"
+                        dur="2.5s"
+                        repeatCount="indefinite"
+                      />
+                      {"♪"}
+                    </text>
+                    <text
+                      x="18"
+                      y="-14"
+                      fontSize="9"
+                      fill={C.bird.on}
+                      opacity="0.3"
+                      fontFamily="serif"
+                    >
+                      <animate
+                        attributeName="opacity"
+                        values="0.2;0.5;0.2"
+                        dur="3.2s"
+                        repeatCount="indefinite"
+                      />
+                      {"♫"}
+                    </text>
+                  </g>
+                )}
+                {gErr && !gOn && (
+                  <g transform="translate(150, 100)">
+                    <circle cx="0" cy="0" r="6" fill="rgba(20,20,30,0.8)" />
+                    <text
+                      x="0"
+                      y="4"
+                      textAnchor="middle"
+                      fontSize="10"
+                      fill={isFehler(slot.g) ? C.error : C.offline}
+                      fontFamily={ff}
+                      fontWeight="700"
+                    >
+                      !
+                    </text>
+                  </g>
+                )}
+
+                {/* GARDEN */}
+                <path
+                  d="M200,280 Q195,290 188,305 Q200,308 212,305 Q205,290 200,280"
+                  fill={groundColor}
+                  opacity="0.6"
+                  style={{ transition: trans }}
+                />
+                {[35, 48, 61, 74].map((x) => (
+                  <g key={"fl" + x}>
+                    <rect
+                      x={x}
+                      y="268"
+                      width="3"
+                      height="16"
+                      rx="0.5"
+                      fill={roofColor}
+                      style={{ transition: trans }}
+                    />
+                    <circle
+                      cx={x + 1.5}
+                      cy="268"
+                      r="2"
+                      fill={roofColor}
+                      style={{ transition: trans }}
+                    />
+                  </g>
+                ))}
+                <rect
+                  x="35"
+                  y="273"
+                  width="42"
+                  height="2.5"
+                  rx="1"
+                  fill={roofColor}
+                  style={{ transition: trans }}
+                />
+                {[326, 339, 352, 365].map((x) => (
+                  <g key={"fr" + x}>
+                    <rect
+                      x={x}
+                      y="268"
+                      width="3"
+                      height="16"
+                      rx="0.5"
+                      fill={roofColor}
+                      style={{ transition: trans }}
+                    />
+                    <circle
+                      cx={x + 1.5}
+                      cy="268"
+                      r="2"
+                      fill={roofColor}
+                      style={{ transition: trans }}
+                    />
+                  </g>
+                ))}
+                <rect
+                  x="326"
+                  y="273"
+                  width="42"
+                  height="2.5"
+                  rx="1"
+                  fill={roofColor}
+                  style={{ transition: trans }}
+                />
+                {[
+                  [90, 276, 18, 10],
+                  [80, 278, 12, 7],
+                  [310, 276, 18, 10],
+                  [320, 278, 12, 7],
+                ].map(([cx, cy, rx, ry], i) => (
+                  <ellipse
+                    key={i}
+                    cx={cx}
+                    cy={cy}
+                    rx={rx}
+                    ry={ry}
+                    fill={groundColor}
+                    opacity={0.8 - i * 0.05}
+                    style={{ transition: trans }}
+                  />
+                ))}
+                <rect x="340" y="258" width="3" height="22" fill="#4a4a55" />
+                <rect
+                  x="335"
+                  y="253"
+                  width="14"
+                  height="10"
+                  rx="2"
+                  fill="#4a4a55"
+                />
+              </g>
+
+              {/* FOG OVERLAY — nur bei vergangenen Slots ohne Daten */}
+              {showFog && (
+                <React.Fragment>
+                  <rect
+                    width="520"
+                    height="320"
+                    fill={sky.top}
+                    opacity="0.6"
+                    style={{ transition: trans }}
+                  />
+                  <ellipse
+                    cx="260"
+                    cy="210"
+                    rx="180"
+                    ry="90"
+                    fill="rgba(60,60,80,0.3)"
+                  />
+                  <text
+                    x="260"
+                    y="195"
+                    textAnchor="middle"
+                    fontSize="15"
+                    fill={C.error}
+                    fontFamily={ffSerif}
+                    fontStyle="italic"
+                    opacity="0.9"
+                  >
+                    Keine Verbindung
+                  </text>
+                  <text
+                    x="260"
+                    y="215"
+                    textAnchor="middle"
+                    fontSize="11"
+                    fill={C.textLo}
+                    fontFamily={ff}
+                  >
+                    Wetterstation nicht erreichbar
+                  </text>
+                </React.Fragment>
+              )}
+              {/* PENDING OVERLAY — aktuelle/zukünftige Slots ohne Daten */}
+              {showPending && (
+                <React.Fragment>
+                  <rect
+                    width="520"
+                    height="320"
+                    fill={sky.top}
+                    opacity="0.4"
+                    style={{ transition: trans }}
+                  />
+                  <text
+                    x="260"
+                    y="200"
+                    textAnchor="middle"
+                    fontSize="14"
+                    fill={C.textLo}
+                    fontFamily={ffSerif}
+                    fontStyle="italic"
+                    opacity="0.8"
+                  >
+                    Noch keine Daten
+                  </text>
+                  <text
+                    x="260"
+                    y="220"
+                    textAnchor="middle"
+                    fontSize="11"
+                    fill={C.textFaint}
+                    fontFamily={ff}
+                  >
+                    Nächste Messung in Kürze
+                  </text>
+                </React.Fragment>
+              )}
+            </g>
+          </svg>
+        );
+      }
+
+      // ─── MINI HOUSE ──────────────────────────────────────────────────────
+      function MiniHouse({ slot, date, slotIdx }) {
+        const allNull = noDataCount(slot) === 4;
+        const past = isSlotPast(date, slotIdx);
+        const noConnection = allNull && past;
+        const pending = allNull && !past;
+        return (
+          <svg
+            viewBox="0 0 30 28"
+            fill="none"
+            style={{ width: 30, height: 28 }}
+          >
+            <polygon points="3,14 15,5 27,14" fill="#4a3828" />
+            <rect x="5" y="14" width="20" height="12" fill="#2d3548" />
+            {noConnection ? (
+              <React.Fragment>
+                <rect
+                  x="5"
+                  y="14"
+                  width="20"
+                  height="12"
+                  fill="#2a2a35"
+                  opacity="0.7"
+                />
+                <line
+                  x1="10"
+                  y1="19"
+                  x2="20"
+                  y2="19"
+                  stroke={C.error}
+                  strokeWidth="0.8"
+                  opacity="0.5"
+                />
+              </React.Fragment>
+            ) : pending ? (
+              <React.Fragment>
+                <rect
+                  x="5"
+                  y="14"
+                  width="20"
+                  height="12"
+                  fill="#2a2a35"
+                  opacity="0.4"
+                />
+                <text
+                  x="15"
+                  y="22"
+                  textAnchor="middle"
+                  fontSize="5"
+                  fill={C.textFaint}
+                >
+                  ···
+                </text>
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <rect
+                  x="7"
+                  y="16"
+                  width="6"
+                  height="4"
+                  rx="0.5"
+                  fill={winColor(slot.k, C.kitchen)}
+                  opacity={isOn(slot.k) ? 0.8 : 1}
+                />
+                <rect
+                  x="17"
+                  y="16"
+                  width="6"
+                  height="4"
+                  rx="0.5"
+                  fill={winColor(slot.s, C.tv)}
+                  opacity={isOn(slot.s) ? 0.8 : 1}
+                />
+                <rect
+                  x="13"
+                  y="20"
+                  width="4"
+                  height="6"
+                  rx="0.5"
+                  fill={
+                    isOn(slot.e)
+                      ? "#5a9b5e"
+                      : isError(slot.e)
+                        ? "#7a4a3a"
+                        : "#3a3a42"
+                  }
+                />
+                {isOn(slot.g) && (
+                  <circle
+                    cx="19"
+                    cy="9"
+                    r="1.5"
+                    fill={C.bird.on}
+                    opacity="0.7"
+                  />
+                )}
+              </React.Fragment>
+            )}
+          </svg>
+        );
+      }
+
+      // ─── LEGEND DOT ──────────────────────────────────────────────────────
+      function LegendDot({ color, label, value, mob }) {
+        const on = isOn(value);
+        const err = isError(value);
+        const nd = isNoData(value);
+        const dotColor = err ? (isFehler(value) ? C.error : C.offline) : color;
+        const opacity = on ? 1 : err ? 0.8 : nd ? 0.15 : 0.25;
+        return (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: mob ? 10 : 8,
+              opacity: opacity,
+              transition: T("0.5s"),
+            }}
+          >
+            <div style={{ position: "relative" }}>
+              <div
+                style={{
+                  width: mob ? 12 : 10,
+                  height: mob ? 12 : 10,
+                  borderRadius: "50%",
+                  backgroundColor: dotColor,
+                  boxShadow: on
+                    ? "0 0 10px " + color + ", 0 0 3px " + color
+                    : err
+                      ? "0 0 6px " + dotColor
+                      : "none",
+                  transition: T("0.5s"),
+                }}
+              />
+              {err && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: -3,
+                    right: -4,
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(20,20,30,0.85)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 7,
+                    fontWeight: 700,
+                    color: dotColor,
+                    fontFamily: ff,
+                  }}
+                >
+                  !
+                </div>
+              )}
+            </div>
+            <span
+              style={{
+                fontSize: mob ? 16 : 15,
+                color: C.textMid,
+                letterSpacing: 0.5,
+                fontFamily: ff,
+              }}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      }
+
+      // ─── EMPTY STATE ─────────────────────────────────────────────────────
+      function EmptyState() {
+        return (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "80px 20px",
+              color: C.textLo,
+              fontFamily: ff,
+            }}
+          >
+            <div style={{ fontSize: 48, marginBottom: 20, opacity: 0.3 }}>
+              {"☁️"}
+            </div>
+            <div style={{ fontSize: 18, marginBottom: 8 }}>
+              Noch keine Wetterdaten
+            </div>
+            <div style={{ fontSize: 13, color: C.textFaint }}>
+              Die Wetterstation sammelt Daten. Schau in 30 Minuten nochmal
+              vorbei.
+            </div>
+          </div>
+        );
+      }
+
+      // ─── MAIN DASHBOARD ──────────────────────────────────────────────────
+      function Dashboard() {
+        const [selDay, setSelDay] = useState(0);
+        const [selSlot, setSelSlot] = useState(getNowSlot());
+        const history = LIVE_HISTORY;
+        const mob = useIsMobile();
+
+        // Auto-refresh: Seite alle 10 Minuten neu laden
+        useEffect(() => {
+          const timer = setTimeout(
+            () => {
+              window.top.location.reload();
+            },
+            10 * 60 * 1000,
+          );
+          return () => clearTimeout(timer);
+        }, []);
+
+        // Empty state
+        if (!history || history.length === 0) {
+          return (
+            <div
+              style={{
+                minHeight: "100vh",
+                background: "linear-gradient(180deg, #080e1a 0%, #141e30 100%)",
+                color: C.textHi,
+                fontFamily: ff,
+              }}
+            >
+              <header style={{ textAlign: "center", padding: "40px 16px 6px" }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    letterSpacing: 4,
+                    color: C.textLo,
+                    textTransform: "uppercase",
+                    fontWeight: 500,
+                  }}
+                >
+                  Wetterbericht
+                </div>
+                <h1
+                  style={{
+                    fontSize: 34,
+                    fontWeight: 300,
+                    margin: "8px 0 0",
+                    color: C.textHi,
+                    letterSpacing: 2,
+                    fontFamily: ffSerif,
+                  }}
+                >
+                  74653 Wetter
+                </h1>
+              </header>
+              <EmptyState />
+            </div>
+          );
+        }
+
+        const day = history[selDay] || history[0];
+        const slot = day.slots[selSlot];
+        const slotName = SLOTS[selSlot];
+        const weather = getWeather(day);
+
+        const isDay = ["Vormittags", "Mittags", "Nachmittags"].includes(
+          slotName,
+        );
+        const bgTop = isDay
+          ? "#1a2a40"
+          : slotName === "Morgens"
+            ? "#10141e"
+            : slotName === "Abends"
+              ? "#0c1018"
+              : "#080e1a";
+        const bgBot = isDay ? "#1e3050" : "#141e30";
+
+        const handleNow = useCallback(() => {
+          setSelDay(0);
+          setSelSlot(getNowSlot());
+        }, []);
+
+        return (
+          <div
+            style={{
+              minHeight: "100vh",
+              background:
+                "linear-gradient(180deg, " + bgTop + " 0%, " + bgBot + " 100%)",
+              color: C.textHi,
+              fontFamily: ff,
+              padding: 0,
+              margin: 0,
+              overflowX: "hidden",
+              transition: T("1.2s"),
+            }}
+          >
+            {/* HEADER */}
+            <header
+              style={{
+                textAlign: "center",
+                padding: mob ? "28px 12px 4px" : "40px 16px 6px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: mob ? 11 : 12,
+                  letterSpacing: 4,
+                  color: C.textLo,
+                  textTransform: "uppercase",
+                  fontWeight: 500,
+                }}
+              >
+                Wetterbericht
+              </div>
+              <h1
+                style={{
+                  fontSize: mob ? 28 : 34,
+                  fontWeight: 300,
+                  margin: "8px 0 0",
+                  color: C.textHi,
+                  letterSpacing: 2,
+                  fontFamily: ffSerif,
+                }}
+              >
+                74653 Wetter
+              </h1>
+            </header>
+
+            {/* DAY TABS + NOW */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: mob ? 0 : 2,
+                padding: mob ? "14px 4px 8px" : "20px 8px 10px",
+                flexWrap: "wrap",
+              }}
+            >
+              {history.map((d, i) => {
+                const sel = i === selDay;
+                const w = getWeather(d);
+                return (
+                  <button
+                    key={d.date}
+                    onClick={() => {
+                      setSelDay(i);
+                      setSelSlot(0);
+                    }}
+                    style={{
+                      background: sel
+                        ? "rgba(255,255,255,0.05)"
+                        : "transparent",
+                      border: "none",
+                      borderBottom: sel
+                        ? "2px solid " + w.color
+                        : "2px solid transparent",
+                      borderRadius: "8px 8px 0 0",
+                      padding: mob ? "10px 10px 8px" : "10px 14px 8px",
+                      cursor: "pointer",
+                      transition: T("0.3s"),
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: mob ? 14 : 13,
+                        color: sel ? C.textHi : C.textLo,
+                        fontWeight: sel ? 500 : 400,
+                        fontFamily: ff,
+                      }}
+                    >
+                      {wday(d.date)}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: mob ? 11 : 11,
+                        color: C.textFaint,
+                        fontFamily: ff,
+                        marginTop: 1,
+                      }}
+                    >
+                      {fmt(d.date)}
+                    </div>
+                    {dayHasProblems(d) && (
+                      <div
+                        style={{
+                          width: 4,
+                          height: 4,
+                          borderRadius: "50%",
+                          backgroundColor: C.error,
+                          margin: "4px auto 0",
+                          opacity: 0.7,
+                        }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+              <button
+                onClick={handleNow}
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 8,
+                  padding: mob ? "10px 14px" : "8px 12px",
+                  cursor: "pointer",
+                  marginLeft: 8,
+                  transition: T("0.3s"),
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: mob ? 12 : 11,
+                    color: C.textMid,
+                    fontFamily: ff,
+                    fontWeight: 500,
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  Jetzt
+                </div>
+              </button>
+            </div>
+
+            {/* WEATHER LABEL */}
+            <div
+              style={{
+                textAlign: "center",
+                padding: mob ? "10px 0 8px" : "14px 0 10px",
+              }}
+            >
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: mob ? "8px 28px" : "6px 24px",
+                  borderRadius: 20,
+                  background: weather.bg,
+                  border: "1px solid " + weather.color + "33",
+                  transition: T("0.6s"),
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: mob ? 18 : 16,
+                    color: weather.color,
+                    fontWeight: 400,
+                    letterSpacing: 1,
+                    fontFamily: ffSerif,
+                    fontStyle: "italic",
+                    transition: T("0.6s"),
+                  }}
+                >
+                  {weather.label}
+                </span>
+              </div>
+            </div>
+
+            {/* HOUSE */}
+            <div style={{ padding: mob ? "4px 8px 0" : "8px 20px 0" }}>
+              <House
+                slot={slot}
+                slotName={slotName}
+                date={day.date}
+                slotIdx={selSlot}
+              />
+            </div>
+
+            {/* LEGEND */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: mob ? 20 : 28,
+                padding: mob ? "14px 12px 4px" : "18px 16px 6px",
+                flexWrap: "wrap",
+              }}
+            >
+              <LegendDot
+                color={C.kitchen.on}
+                label="Küche"
+                value={slot.k}
+                mob={mob}
+              />
+              <LegendDot
+                color={C.tv.on}
+                label="Lesezimmer"
+                value={slot.s}
+                mob={mob}
+              />
+              <LegendDot
+                color={C.door.on}
+                label="Eingang"
+                value={slot.e}
+                mob={mob}
+              />
+              <LegendDot
+                color={C.bird.on}
+                label="Gesang"
+                value={slot.g}
+                mob={mob}
+              />
+            </div>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "2px 16px 6px",
+                fontSize: mob ? 11 : 10,
+                color: C.textFaint,
+                fontFamily: ff,
+                fontStyle: "italic",
+                opacity: 0.6,
+              }}
+            >
+              Leuchtet, wenn im Zeitfenster Aktivität war
+            </div>
+
+            {/* TIME SLOTS */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: mob ? "space-between" : "center",
+                gap: mob ? 1 : 3,
+                padding: mob ? "14px 4px 8px" : "18px 8px 10px",
+                flexWrap: "nowrap",
+                overflowX: "auto",
+              }}
+            >
+              {SLOTS.map((name, idx) => {
+                const s = day.slots[idx];
+                const sel = idx === selSlot;
+                const nd = noDataCount(s) === 4;
+                const slotPast = isSlotPast(day.date, idx);
+                return (
+                  <button
+                    key={name}
+                    onClick={() => setSelSlot(idx)}
+                    style={{
+                      background: sel
+                        ? "rgba(255,255,255,0.06)"
+                        : "transparent",
+                      border: sel
+                        ? "1px solid rgba(255,255,255,0.1)"
+                        : "1px solid transparent",
+                      borderRadius: 10,
+                      padding: mob ? "14px 6px 12px" : "12px 10px 10px",
+                      cursor: "pointer",
+                      minWidth: mob ? 52 : 68,
+                      flex: mob ? "1 1 0" : "0 0 auto",
+                      transition: T("0.3s"),
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: mob ? 13 : 12,
+                        fontWeight: sel ? 500 : 400,
+                        color: sel ? C.textHi : C.textLo,
+                        fontFamily: ff,
+                      }}
+                    >
+                      {name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: mob ? 11 : 10,
+                        color: C.textFaint,
+                        marginTop: 3,
+                        fontFamily: ff,
+                      }}
+                    >
+                      {SLOT_LABELS[name]}
+                    </div>
+                    <div
+                      style={{
+                        marginTop: 7,
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: mob ? 5 : 4,
+                      }}
+                    >
+                      {nd && slotPast ? (
+                        <div
+                          style={{
+                            width: 18,
+                            height: 2,
+                            borderRadius: 1,
+                            backgroundColor: C.error,
+                            opacity: 0.4,
+                          }}
+                        />
+                      ) : nd && !slotPast ? (
+                        <div
+                          style={{
+                            width: 18,
+                            height: 2,
+                            borderRadius: 1,
+                            backgroundColor: C.textFaint,
+                            opacity: 0.3,
+                          }}
+                        />
+                      ) : (
+                        [
+                          { v: s.k, c: C.kitchen.on },
+                          { v: s.s, c: C.tv.on },
+                          { v: s.e, c: C.door.on },
+                          { v: s.g, c: C.bird.on },
+                        ].map((d, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: mob ? 7 : 6,
+                              height: mob ? 7 : 6,
+                              borderRadius: "50%",
+                              backgroundColor: isOn(d.v)
+                                ? d.c
+                                : isError(d.v)
+                                  ? C.error
+                                  : "#1a2030",
+                              boxShadow: isOn(d.v) ? "0 0 4px " + d.c : "none",
+                              transition: T("0.3s"),
+                            }}
+                          />
+                        ))
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* DIVIDER */}
+            <div
+              style={{
+                height: 1,
+                margin: "14px 48px",
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)",
+              }}
+            />
+
+            {/* HISTORY GRID */}
+            <div style={{ padding: mob ? "10px 6px 8px" : "14px 16px 8px" }}>
+              <div
+                style={{
+                  fontSize: mob ? 11 : 11,
+                  color: C.textLo,
+                  textTransform: "uppercase",
+                  letterSpacing: 3,
+                  textAlign: "center",
+                  marginBottom: mob ? 12 : 16,
+                  fontWeight: 500,
+                }}
+              >
+                Wochenverlauf
+              </div>
+              <div
+                style={{
+                  maxWidth: mob ? "100%" : 420,
+                  margin: "0 auto",
+                  display: "grid",
+                  gridTemplateColumns: mob
+                    ? "48px repeat(6, 1fr)"
+                    : "56px repeat(6, 1fr)",
+                  gap: mob ? "3px 2px" : "4px 3px",
+                  alignItems: "center",
+                }}
+              >
+                <div />
+                {SLOTS.map((s) => (
+                  <div
+                    key={s}
+                    style={{
+                      fontSize: mob ? 9 : 10,
+                      color: C.textFaint,
+                      textAlign: "center",
+                      fontFamily: ff,
+                    }}
+                  >
+                    {s.slice(0, 2)}
+                  </div>
+                ))}
+                {history.map((d, di) => {
+                  const sel = di === selDay;
+                  return [
+                    <div
+                      key={"l" + di}
+                      style={{
+                        fontSize: mob ? 10 : 11,
+                        color: sel ? C.textMid : C.textFaint,
+                        fontWeight: sel ? 500 : 400,
+                        fontFamily: ff,
+                        transition: T("0.3s"),
+                      }}
+                    >
+                      {wday(d.date)} {fmt(d.date)}
+                    </div>,
+                    ...d.slots.map((s, si) => (
+                      <div
+                        key={di + "-" + si}
+                        onClick={() => {
+                          setSelDay(di);
+                          setSelSlot(si);
+                        }}
+                        style={{
+                          cursor: "pointer",
+                          display: "flex",
+                          justifyContent: "center",
+                          padding: mob ? "4px 0" : "3px 0",
+                          borderRadius: 4,
+                          background:
+                            di === selDay && si === selSlot
+                              ? "rgba(255,255,255,0.07)"
+                              : "transparent",
+                          transition: T("0.2s"),
+                        }}
+                      >
+                        <MiniHouse slot={s} date={d.date} slotIdx={si} />
+                      </div>
+                    )),
+                  ];
+                })}
+              </div>
+            </div>
+
+            {/* FOOTER */}
+            <div
+              style={{
+                textAlign: "center",
+                padding: mob ? "20px 12px 40px" : "28px 16px 40px",
+                color: C.textFaint,
+                fontSize: mob ? 13 : 11,
+                letterSpacing: 1,
+                fontFamily: ff,
+              }}
+            >
+              74653 &middot; Letzte Messung {timeSince(LAST_POLL)}
+            </div>
+          </div>
+        );
+      }
+
+      // ─── RENDER ──────────────────────────────────────────────────────────
+      ReactDOM.createRoot(document.getElementById("root")).render(
+        <Dashboard />,
+      );
+    </script>
+  </body>
+</html>
