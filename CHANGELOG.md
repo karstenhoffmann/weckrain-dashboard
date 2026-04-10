@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.15 (Reh-Ohren: Größenverhältnis korrigiert)
+
+### index.html 1.0.15
+- **Hinteres Ohr kleiner:** rx=1.8/ry=4.5 → rx=1.3/ry=3 (deutlich kleiner, Perspektive der Rückseite). Lean-Richtung korrigiert: −8° statt +10° (Spitze jetzt weg vom Maul = rückwärts geneigt, korrekt für Rückseiten-Ohr).
+- **Vorderes Ohr größer:** rx=2.5/ry=5.5 → rx=2.8/ry=6 (etwas größer, dominant). Lean-Richtung korrigiert: +5° statt −8° (Spitze jetzt leicht zum Maul = vorwärts geneigt, korrekt für Vorderseiten-Ohr).
+- **Bump-Typ: PATCH (1.0.14 → 1.0.15)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.14 (Reh: Ohren neu — korrekte Seitenprofilposition + Zuckanimation)
 
 ### index.html 1.0.14
