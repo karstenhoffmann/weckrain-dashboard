@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.5
+  Version: 1.0.6
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.5";
+    const FRONTEND_VERSION = "1.0.6";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -1090,7 +1090,7 @@
       const [backendVersion, setBackendVersion] = useState(null);
       const [pw, setPw] = useState(() => {
         const urlPw = new URLSearchParams(window.location.search).get("pw");
-        if (urlPw) { localStorage.setItem("wetter_pw", urlPw); return urlPw; }
+        if (urlPw) { const lc = urlPw.toLowerCase(); localStorage.setItem("wetter_pw", lc); return lc; }
         return localStorage.getItem("wetter_pw") || "";
       });
       const [showBird, setShowBird] = useState(() => {
@@ -1160,7 +1160,7 @@
 
       const handleLogin = useCallback((password) => {
         if (password.trim()) {
-          fetchData(password.trim());
+          fetchData(password.trim().toLowerCase());
         }
       }, [fetchData]);
 

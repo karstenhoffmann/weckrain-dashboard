@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.6 (Passwort case-insensitive)
+
+### index.html 1.0.6
+- Passwort-Eingabe wird vor dem API-Aufruf `.toLowerCase()` normalisiert — "Weckrain", "WECKRAIN" und "weckrain" sind damit gleichwertig. Kein Backend-Change nötig, solange das gespeicherte Passwort in `DASHBOARD_PW` lowercase ist.
+- Gleiches Normalisierung für `?pw=`-URL-Parameter: wird beim Einlesen sofort lowercased und so in `localStorage` gespeichert.
+- **Bump-Typ: PATCH (1.0.5 → 1.0.6)** — kein Breaking Change, nur Eingabe-Normalisierung.
+
+---
+
 ## 2026-04-10 — index.html 1.0.5 (fix: Login-Submit funktionslos)
 
 ### index.html 1.0.5
