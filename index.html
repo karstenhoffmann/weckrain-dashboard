@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.16
+  Version: 1.0.17
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.16";
+    const FRONTEND_VERSION = "1.0.17";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -557,25 +557,6 @@
                     keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.6 0 0.2 1; 0.2 0 0.6 1; 0.6 0 0.2 1; 0.2 0 0.5 1; 0.6 0 0.2 1; 0.2 0 0.6 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
                   />
 
-                  {/* Hinteres Ohr — liegt HINTER Kopf (vor Hals/Kopf gerendert → Kopfpfad überdeckt Ohrbasis).
-                      x=15: ganz am Hinterkopf (Hinterrand x=14), klein, nur die Spitze ragt raus.
-                      Zuckt unabhängig, nur wenn Kopf oben (dur=16s, kein Zucken 0.40–0.75). */}
-                  <g transform="translate(15, -22)">
-                    <g>
-                      <animateTransform
-                        attributeName="transform"
-                        type="rotate"
-                        values="-8;-8;-24;-8;-8;-26;4;-18;-8;-8;-8;-8;-24;-8;-8"
-                        keyTimes="0;0.150;0.155;0.160;0.325;0.330;0.335;0.340;0.345;0.400;0.750;0.900;0.905;0.910;1"
-                        calcMode="linear"
-                        dur="16s"
-                        repeatCount="indefinite"
-                      />
-                      <ellipse cx="0" cy="-2.5" rx="1.1" ry="2.5" fill="#8b5a3c" />
-                      <ellipse cx="0" cy="-2.2" rx="0.6" ry="1.7" fill="#c2875f" opacity="0.9" />
-                    </g>
-                  </g>
-
                   {/* Hals */}
                   <path d="M 8,-6 Q 13,-11 17,-13 L 21,-11 Q 16,-6 11,-3 Z" fill="#a6724a" />
 
@@ -605,23 +586,41 @@
                     <circle cx="21" cy="-15.8" r="0.28" fill="#fff" opacity="0.8" />
                   </g>
 
-                  {/* Vorderes Ohr — liegt VOR Kopf (nach Auge gerendert → komplett sichtbar, ragt über Kopfsilhouette).
-                      x=23: klar in der vorderen Schädelhälfte (Scheitel x=20, Nase x=29), sichtbar als
-                      eigenständige Form. Stroke definiert Kontur gegen Himmel und Kopffarbe.
-                      Zuckt unabhängig, nur wenn Kopf oben (dur=16s, kein Zucken 0.40–0.75). */}
-                  <g transform="translate(23, -24)">
+                  {/* Ohren — dicht übereinander gestapelt wie in Reh-Illustrationen.
+                      Beide fast am selben x (17/19) oberhalb des Auges (x=21).
+                      Hinteres zuerst → vorderes überlappt und verdeckt teilweise = klassischer Cartoon-Look. */}
+
+                  {/* Hinteres Ohr — leicht links vom vorderen, lugt dahinter hervor */}
+                  <g transform="translate(17, -24)">
                     <g>
                       <animateTransform
                         attributeName="transform"
                         type="rotate"
-                        values="5;5;-13;5;5;-15;19;-7;5;5;5;5;-11;5;5"
+                        values="0;0;-16;0;0;-18;12;-12;0;0;0;0;-14;0;0"
+                        keyTimes="0;0.150;0.155;0.160;0.325;0.330;0.335;0.340;0.345;0.400;0.750;0.900;0.905;0.910;1"
+                        calcMode="linear"
+                        dur="16s"
+                        repeatCount="indefinite"
+                      />
+                      <ellipse cx="0" cy="-4.5" rx="1.8" ry="4.5" fill="#8b5a3c" />
+                      <ellipse cx="0" cy="-4" rx="1" ry="3.2" fill="#c2875f" opacity="0.9" />
+                    </g>
+                  </g>
+
+                  {/* Vorderes Ohr — Hauptohr, überlappt das hintere, ragt klar über Kopf */}
+                  <g transform="translate(19, -25)">
+                    <g>
+                      <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        values="3;3;-14;3;3;-12;18;-6;3;3;3;3;-10;3;3"
                         keyTimes="0;0.100;0.105;0.110;0.250;0.255;0.260;0.265;0.270;0.400;0.750;0.850;0.855;0.860;1"
                         calcMode="linear"
                         dur="16s"
                         repeatCount="indefinite"
                       />
-                      <ellipse cx="0" cy="-6.5" rx="2.8" ry="6.5" fill="#a6724a" stroke="#7a4a2a" strokeWidth="0.4" />
-                      <ellipse cx="0" cy="-6" rx="1.6" ry="5" fill="#e0a88a" />
+                      <ellipse cx="0" cy="-6.5" rx="2.3" ry="6.5" fill="#a6724a" />
+                      <ellipse cx="0" cy="-6" rx="1.4" ry="4.8" fill="#e0a88a" />
                     </g>
                   </g>
                 </g>

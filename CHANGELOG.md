@@ -13,6 +13,18 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.17 (Reh-Ohren: Konzept korrigiert — gestapelt statt nebeneinander)
+
+### index.html 1.0.17
+- **Kern-Missverständnis behoben:** Ohren waren bei x=15 und x=23 (8 Einheiten auseinander). In echten Reh-Illustrationen liegen beide Ohren fast am gleichen Punkt übereinander — das weit entfernte lugt kaum hinter dem nahen hervor, sie sind nicht nebeneinander platziert.
+- **Neue Positionen:** Hinteres bei (17,−24), vorderes bei (19,−25). Beide direkt über dem Auge (Auge bei cx=21). Abstand nur 2 Einheiten → gestapelter Look.
+- **Rendering-Reihenfolge:** Beide Ohren NACH dem Kopfpfad gerendert (auf Kopf sichtbar). Hinteres zuerst → vorderes überlappt es teilweise = klassischer Cartoon-Ohr-Look.
+- **Vorderes Ohr** (Hauptohr): rx=2.3, ry=6.5 — klar dominant.
+- **Hinteres Ohr:** rx=1.8, ry=4.5 — kleiner, lugt links vom vorderen hervor.
+- **Bump-Typ: PATCH (1.0.16 → 1.0.17)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.16 (Reh-Ohren: Positionen korrigiert + Stroke für Vorderes Ohr)
 
 ### index.html 1.0.16
