@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.11 (Reh: Spiegel + Wedel Seitenansicht korrigiert)
+
+### index.html 1.0.11
+- **Spiegel Seitenansicht:** Herzform (Rückansicht) durch eine einfache ovale Ellipse ersetzt, die korrekt als weißer Rumpffleck in der Seitenansicht des Rehs lesbar ist.
+- **Wedel Seitenansicht:** Zwei überlagerte Ellipsen (erzeugte versehentlich anatomisch unerwünschte Silhouette) durch eine einzelne Tränenform-Path ersetzt (`C`-Bézierkurve, kompaktes Büschel nach oben). Braune Kappe oben trennt Schweif vom Spiegel.
+- **Bump-Typ: PATCH (1.0.10 → 1.0.11)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.10 (Reh: subtileres Grasen + Ricke-Wedel mit Spiegel)
 
 ### index.html 1.0.10

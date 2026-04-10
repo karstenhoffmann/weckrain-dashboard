@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.10
+  Version: 1.0.11
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.10";
+    const FRONTEND_VERSION = "1.0.11";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -513,29 +513,27 @@
                 <circle cx="-13" cy="-4" r="0.9" fill="#fff" opacity="0.55" />
                 <circle cx="-7" cy="-4" r="0.8" fill="#fff" opacity="0.5" />
 
-                {/* Spiegel — weißer Rumpffleck der Ricke (herzförmig, prominent weiß).
-                    Bewusst ein wenig größer als in der Natur, damit er im kleinen
-                    Reh auch gut sichtbar ist. Bleibt statisch (ist Teil des Fells). */}
-                <path d="M -13,-1 Q -19,-3 -18,-7 Q -16,-10 -14,-7 Q -12,-10 -10,-7 Q -9,-3 -13,-1 Z" fill="#fff" opacity="0.96" />
-                {/* Feine braune Kontur am oberen Rand — trennt Spiegel sauber vom Rumpf */}
-                <path d="M -18,-7 Q -16,-10 -14,-7 Q -12,-10 -10,-7" fill="none" stroke="#8b5a3c" strokeWidth="0.35" opacity="0.55" />
+                {/* Spiegel & Wedel — Ricke, Seitenansicht.
+                    Spiegel: ovale weiße Fläche auf dem Hinterlauf (wie man ihn von der Seite sieht).
+                    Wedel: kleines Büschel oben am Spiegel, wedelt mit 11s-Zyklus (asynchron zu 16s-Grasen). */}
+                {/* Spiegel (statisch) */}
+                <ellipse cx="-14" cy="-5" rx="2.5" ry="3.5" fill="#fff" opacity="0.95" />
 
-                {/* Reh-Wedel — klein aber gut sichtbar, wedelt unabhängig vom Grasen.
-                    11s-Zyklus läuft asynchron zum 16s-Grasen → wirkt zufällig. */}
-                <g transform="translate(-14, -8)">
+                {/* Wedel — Pivot oben am Spiegel, Schweifform als kompakte Tränenform */}
+                <g transform="translate(-14, -9)">
                   <animateTransform
                     attributeName="transform"
                     type="rotate"
-                    values="0;0;0;0;0;-28;22;-18;12;-8;5;0;0;0;0"
+                    values="0;0;0;0;0;-20;15;-15;10;-8;4;0;0;0;0"
                     keyTimes="0;0.2;0.42;0.46;0.48;0.5;0.52;0.54;0.56;0.58;0.6;0.63;0.78;0.92;1"
                     dur="11s"
                     repeatCount="indefinite"
                     additive="sum"
                   />
-                  {/* Wedel — braune Oberseite (Fellfarbe) */}
-                  <ellipse cx="0" cy="-2.8" rx="1.9" ry="3.1" fill="#a6724a" />
-                  {/* Weiße Unterseite — das charakteristische „Blitzen" beim Wedeln */}
-                  <ellipse cx="-0.4" cy="-2.2" rx="1.5" ry="2.6" fill="#fff" />
+                  {/* Schweifbüschel: Tränenform nach oben (Seitenansicht) */}
+                  <path d="M 0,0 C -1.5,-0.5 -1.5,-3.5 0,-3.5 C 1.5,-3.5 1.5,-0.5 0,0 Z" fill="#fff" />
+                  {/* Kleine braune Kappe oben — trennt Schweif vom Spiegel */}
+                  <ellipse cx="0" cy="-3" rx="1" ry="0.65" fill="#a6724a" />
                 </g>
 
                 {/* Kopf + Hals — Grasen-Animation: Rotation um Hals-Pivot (11,-3).
