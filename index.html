@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.7
+  Version: 1.0.8
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.7";
+    const FRONTEND_VERSION = "1.0.8";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -527,7 +527,7 @@
                 <circle cx="-13" cy="-4" r="0.9" fill="#fff" opacity="0.55" />
                 <circle cx="-7" cy="-4" r="0.8" fill="#fff" opacity="0.5" />
 
-                {/* Kopf + Hals — rotiert für Grasen-Zyklus */}
+                {/* Kopf + Hals — äußere Gruppe rotiert für Grasen-Zyklus */}
                 <g>
                   <animateTransform
                     attributeName="transform"
@@ -541,47 +541,59 @@
                     keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
                   />
 
-                  {/* Hals */}
-                  <path d="M 8,-6 Q 13,-11 17,-13 L 21,-11 Q 16,-6 11,-3 Z" fill="#a6724a" />
-
-                  {/* Kopf (größer, runder = süßer) */}
-                  <circle cx="21" cy="-15" r="7" fill="#a6724a" />
-                  {/* Wange-Highlight */}
-                  <ellipse cx="19" cy="-13" rx="2.8" ry="2" fill="#c2875f" opacity="0.65" />
-
-                  {/* Schnauze (kleiner, süßer) */}
-                  <ellipse cx="26" cy="-13" rx="2.4" ry="1.8" fill="#7a4e32" />
-                  {/* Nase */}
-                  <ellipse cx="27.5" cy="-13.3" rx="0.9" ry="0.7" fill="#1a1a1a" />
-                  {/* Mini-Nasen-Highlight */}
-                  <circle cx="27.7" cy="-13.6" r="0.3" fill="#fff" opacity="0.6" />
-
-                  {/* Süßes großes Auge mit Blinzeln */}
+                  {/* Innere Gruppe: leichtes Kopfnicken während des Grasens */}
                   <g>
-                    <animate
-                      attributeName="opacity"
-                      values="1;1;1;1;0;1;1;1;1;0;1;1"
-                      keyTimes="0;0.15;0.17;0.18;0.185;0.19;0.5;0.52;0.53;0.535;0.54;1"
-                      dur="7s"
+                    <animateTransform
+                      attributeName="transform"
+                      attributeType="XML"
+                      type="translate"
+                      values="0 0; 0 0; 0 2.5; 0 0; 0 2.5; 0 0; 0 2.5; 0 0; 0 0"
+                      keyTimes="0; 0.47; 0.505; 0.54; 0.575; 0.61; 0.645; 0.68; 1"
+                      dur="16s"
                       repeatCount="indefinite"
+                      calcMode="spline"
+                      keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
                     />
-                    {/* Augapfel */}
-                    <ellipse cx="22" cy="-16" rx="1.6" ry="2" fill="#1a1a1a" />
-                    {/* Großer weißer Highlight-Punkt */}
-                    <circle cx="22.5" cy="-16.6" r="0.65" fill="#fff" />
-                    {/* Zweiter kleiner Reflex */}
-                    <circle cx="22" cy="-15.3" r="0.28" fill="#fff" opacity="0.8" />
-                  </g>
 
-                  {/* Hinteres Ohr (weiter weg, etwas kleiner/dunkler) */}
-                  <g transform="rotate(-28 16 -20)">
-                    <ellipse cx="16" cy="-20" rx="2" ry="4" fill="#8b5a3c" />
-                    <ellipse cx="16" cy="-20" rx="1.1" ry="2.8" fill="#c2875f" />
-                  </g>
-                  {/* Vorderes Ohr */}
-                  <g transform="rotate(20 21 -20)">
-                    <ellipse cx="21" cy="-20" rx="2.2" ry="4.2" fill="#a6724a" />
-                    <ellipse cx="21" cy="-20" rx="1.2" ry="3" fill="#e0a88a" />
+                    {/* Hals */}
+                    <path d="M 8,-6 Q 13,-11 17,-13 L 21,-11 Q 16,-6 11,-3 Z" fill="#a6724a" />
+
+                    {/* Kopf — Reh-Form mit Stupsnase (Schädel + Schnauzenbereich als Profil-Pfad) */}
+                    <path d="M 14,-22 Q 20,-26 25,-22 Q 29,-18 29,-13 Q 28,-9 24,-9 Q 19,-10 15,-12 Q 12,-15 13,-20 Z" fill="#a6724a" />
+                    {/* Wange-Highlight */}
+                    <ellipse cx="19" cy="-14" rx="2.5" ry="2" fill="#c2875f" opacity="0.55" />
+
+                    {/* Schnauzenbereich (Stupsnase — heller, klar vom Kopf abgesetzt) */}
+                    <ellipse cx="27" cy="-12.5" rx="3.2" ry="2.4" fill="#c9956b" />
+                    {/* Nase */}
+                    <ellipse cx="28.5" cy="-12.2" rx="1" ry="0.8" fill="#1a1a1a" />
+                    {/* Nasen-Highlight */}
+                    <circle cx="28.7" cy="-12.5" r="0.32" fill="#fff" opacity="0.6" />
+
+                    {/* Süßes großes Auge mit Blinzeln */}
+                    <g>
+                      <animate
+                        attributeName="opacity"
+                        values="1;1;1;1;0;1;1;1;1;0;1;1"
+                        keyTimes="0;0.15;0.17;0.18;0.185;0.19;0.5;0.52;0.53;0.535;0.54;1"
+                        dur="7s"
+                        repeatCount="indefinite"
+                      />
+                      <ellipse cx="21" cy="-16.5" rx="1.6" ry="2" fill="#1a1a1a" />
+                      <circle cx="21.5" cy="-17.1" r="0.65" fill="#fff" />
+                      <circle cx="21" cy="-15.8" r="0.28" fill="#fff" opacity="0.8" />
+                    </g>
+
+                    {/* Hinteres Ohr */}
+                    <g transform="rotate(-28 16 -20)">
+                      <ellipse cx="16" cy="-20" rx="2" ry="4" fill="#8b5a3c" />
+                      <ellipse cx="16" cy="-20" rx="1.1" ry="2.8" fill="#c2875f" />
+                    </g>
+                    {/* Vorderes Ohr */}
+                    <g transform="rotate(20 21 -20)">
+                      <ellipse cx="21" cy="-20" rx="2.2" ry="4.2" fill="#a6724a" />
+                      <ellipse cx="21" cy="-20" rx="1.2" ry="3" fill="#e0a88a" />
+                    </g>
                   </g>
                 </g>
               </g>

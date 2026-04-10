@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.8 (Reh: Stupsnase + Kopfnicken beim Grasen)
+
+### index.html 1.0.8
+- **Stupsnase:** Reh-Kopf ist nicht mehr ein einfacher Kreis, sondern ein SVG-Pfad der eine echte Rehsilhouette hat: runder Schädel hinten, klar abgesetzte Schnauze vorne. Maulbereich (`#c9956b`, heller/wärmer als Kopfbraun) hebt sich deutlich vom Kopf ab. Nase bleibt dunkel mit weißem Highlight.
+- **Kopfnicken:** Während der Grasphase (0.47–0.68 des 16s-Zyklus) nickt der Kopf 3× leicht auf und ab (`translate(0, 2.5)` in lokaler Gruppe, smooth via cubic-bezier). Sieht aus wie echtes Grasen.
+- **Bump-Typ: PATCH (1.0.7 → 1.0.8)** — rein visuell.
+
+---
+
 ## 2026-04-10 — backend/Code.gs 4.0.2 (Log-Rotation mit Archivierung)
 
 ### backend/Code.gs 4.0.2

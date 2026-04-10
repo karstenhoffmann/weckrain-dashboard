@@ -116,6 +116,12 @@ Nach **jedem** Frontend-Commit direkt auf `main` mergen und pushen. GitHub Pages
 
 Backend-Änderungen werden committed und gepusht, aber **nicht** selbstständig in die GAS-Umgebung deployed. Karsten kopiert den Code manuell in den GAS-Editor und deployt dort. Vor größeren Backend-Änderungen darauf hinweisen, wie ein Rollback aussieht (vorherige Version aus Git-History holen und erneut deployen).
 
+**Datei-Link für Karsten:** Nach jedem Backend-Commit immer den direkten GitHub-Link zur geänderten Datei mitgeben, damit Karsten sie einsehen und kopieren kann. Format:
+```
+https://github.com/karstenhoffmann/weckrain-dashboard/blob/main/backend/Code.gs
+```
+Claude Code läuft in einer VM — Karsten hat keinen direkten Zugriff auf das lokale Filesystem. GitHub ist der einzige Weg, Dateien zu teilen. Frontend-Änderungen sind über `weckrain.derkarsten.de` direkt testbar, Backend-Dateien müssen über GitHub bezogen werden.
+
 **Bei Cowork bleibt:**
 - High-Level-Projektstrategie und Entscheidungsrationale
 - Verworfene Alternativen (z.B. Raspberry Pi / Home Assistant)
