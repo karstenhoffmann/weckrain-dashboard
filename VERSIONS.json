@@ -7,8 +7,8 @@
   },
   "components": {
     "index.html": {
-      "version": "1.0.4",
-      "last_updated": "2026-04-09",
+      "version": "1.0.5",
+      "last_updated": "2026-04-10",
       "role": "Frontend-Dashboard (GitHub Pages, weckrain.derkarsten.de)"
     },
     "backend/Code.gs": {

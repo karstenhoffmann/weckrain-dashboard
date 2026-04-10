@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.4
-  Last updated: 2026-04-09
+  Version: 1.0.5
+  Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
 <html lang="de">
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.4";
+    const FRONTEND_VERSION = "1.0.5";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -1098,7 +1098,6 @@
         if (urlMode === "karsten") { localStorage.setItem("wetter_mode", "karsten"); return true; }
         return localStorage.getItem("wetter_mode") === "karsten";
       });
-      const [pwInput, setPwInput] = useState("");
       const [wrongPw, setWrongPw] = useState(false);
       const mob = useIsMobile();
 
@@ -1159,13 +1158,11 @@
         return () => clearInterval(timer);
       }, [state, pw, fetchData]);
 
-      const handleLogin = useCallback((e) => {
-        e.preventDefault();
-        if (pwInput.trim()) {
-          setPw(pwInput.trim());
-          fetchData(pwInput.trim());
+      const handleLogin = useCallback((password) => {
+        if (password.trim()) {
+          fetchData(password.trim());
         }
-      }, [pwInput, fetchData]);
+      }, [fetchData]);
 
       if (state === "login") return <LoginScreen onSubmit={handleLogin} wrongPw={wrongPw} mob={mob} />;
       if (state === "loading") return <LoadingScreen mob={mob} />;

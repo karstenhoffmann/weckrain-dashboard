@@ -13,6 +13,16 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.5 (fix: Login-Submit funktionslos)
+
+### index.html 1.0.5
+- **Bugfix:** `handleLogin` in `App` rief `e.preventDefault()` auf dem übergebenen Passwort-String auf, weil `LoginScreen` `onSubmit(input)` mit dem Klartext-Passwort aufruft — kein DOM-Event. Das warf einen TypeError und blockierte den gesamten Login-Flow.
+- **Bugfix:** `handleLogin` las aus dem toten `pwInput`-State (immer `""`), statt den von `LoginScreen` übergebenen Wert zu verwenden. Das Passwort kam also nie an.
+- Fix: `handleLogin` nimmt jetzt `(password)` als Argument und ruft direkt `fetchData(password.trim())` auf. Der tote `pwInput`/`setPwInput`-State wurde entfernt.
+- **Bump-Typ: PATCH (1.0.4 → 1.0.5)** — reiner Bugfix, kein Verhaltens- oder API-Change.
+
+---
+
 ## 2026-04-09 — index.html 1.0.4 (Bambi: größer, süßer, tageszeit-adaptiv)
 
 ### index.html 1.0.4
