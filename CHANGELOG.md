@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.18 (Reh: Ohr tiefer, braune Schweifkappe entfernt)
+
+### index.html 1.0.18
+- **Vorderes Ohr tiefer:** translate y von −25 auf −22 (3 Einheiten näher am Kopf).
+- **Braune Kappe am Schweif entfernt:** Der `<ellipse>` oberhalb des weißen Büschels gelöscht — sah komisch aus.
+- **Bump-Typ: PATCH (1.0.17 → 1.0.18)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.17 (Reh-Ohren: Konzept korrigiert — gestapelt statt nebeneinander)
 
 ### index.html 1.0.17
