@@ -13,6 +13,18 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.20 (Reh schlafend: Atemzug, Kopf-Neigung, Z-Bubbles)
+
+### index.html 1.0.20
+- **Kopf näher am Körper:** `headAngle` von 45° auf 48° erhöht — Nase kommt knapp bis an den Bodenlevel.
+- **Kopf-Neigung:** Innere Kopf-Gruppe dreht um Schädelbasis (16,−13) um `−sleepP×10°` (CCW). Nase zeigt leicht nach oben, Stirn leicht nach unten — wirkt als läge der Kopf seitlich. Transform nur aktiv wenn nicht `deerFullyAwake`; kompatibel mit Grasen-SMIL.
+- **Atemzug:** Atem-Gruppe wrappet alle Körper+Kopf-Elemente. `<animateTransform type="translate">` oszilliert mit `values="0,0; 0,-breatheAmp; 0,0"` (dur=3.8s, spline-Easing). `breatheAmp = sleepP×1.1` — sanftes Heben/Senken, das beim Einschlafen anschwillt und beim Aufwachen verschwindet.
+- **Z-Bubbles:** Drei gestaffelte `<text>`-Elemente (Z, z, z — 5.5/4/3.2pt, dur=4/3.2/2.8s) steigen aus dem Kopfbereich auf und faden aus. `begin="-1.8s"` und `"-2.5s"` sorgen für versetzten Loop. Erscheinen wenn `sleepP > 0.6`, faden mit `(sleepP-0.6)/0.4` ein.
+- **deerFullyAwake:** Definition geändert zu `!deerSleeping && sleepP < 0.05` — SMIL-Animationen stoppen sofort beim Einschlafen und starten erst nach vollständigem Aufwachen neu.
+- **Bump-Typ: MINOR (1.0.19 → 1.0.20)** — neue Animations-Features.
+
+---
+
 ## 2026-04-10 — index.html 1.0.19 (Reh schlafend: Animation für Nachts-Slot)
 
 ### index.html 1.0.19

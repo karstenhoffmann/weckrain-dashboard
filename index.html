@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.19
+  Version: 1.0.20
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.19";
+    const FRONTEND_VERSION = "1.0.20";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -269,11 +269,12 @@
       // Schlafendes Reh bei Nachts-Slot
       const deerSleeping = slotName === "Nachts";
       const sleepP = useAnimatedValue(deerSleeping ? 1 : 0, 1800);
-      const deerFullyAwake = sleepP < 0.05;
+      const deerFullyAwake = !deerSleeping && sleepP < 0.05;
       // Follow-Through: Beine zuerst, dann Körper, Kopf zuletzt
       const legScale   = 1 - Math.min(sleepP / 0.75, 1);
       const bodyShift  = Math.min(sleepP / 0.90, 1) * 10;
-      const headAngle  = Math.max((sleepP - 0.12) / 0.88, 0) * 45;
+      const headAngle  = Math.max((sleepP - 0.12) / 0.88, 0) * 48;
+      const breatheAmp = (sleepP * 1.1).toFixed(2);
 
       const animAngle = useAnimatedValue(sky.sunAngle, 1200);
       const sun = sunPos(animAngle);
@@ -515,6 +516,19 @@
                 {/* KÖRPER + KOPF — sinken gemeinsam auf den Boden ab (bodyShift: 0→10 SVG-Einheiten).
                     Körper-Unterkante (y=5) erreicht Bodenniveau (y=15) wenn sleepP=1. */}
                 <g transform={`translate(0, ${bodyShift})`}>
+                  {/* ATEM-GRUPPE — Amplitude skaliert mit sleepP (0→1.1 SVG-Einh.). Beim Aufwachen
+                      schwindet die Amplitude automatisch wieder auf 0. */}
+                  <g>
+                    <animateTransform
+                      attributeName="transform"
+                      type="translate"
+                      values={`0,0; 0,-${breatheAmp}; 0,0`}
+                      keyTimes="0; 0.45; 1"
+                      dur="3.8s"
+                      repeatCount="indefinite"
+                      calcMode="spline"
+                      keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"
+                    />
 
                   {/* Körper — warmes Braun */}
                   <ellipse cx="-2" cy="-3" rx="17" ry="8" fill="#a6724a" />
@@ -549,11 +563,12 @@
                   </g>
 
                   {/* KOPF-WRAPPER — Schlaf-Rotation um Hals-Pivot (11,-3).
-                      headAngle: 0° (wach, Kopf oben) → 45° (schlafend, Kopf vor Körper gelegt).
-                      SVG rotate(angle, cx, cy) nutzt SVG-Koordinaten direkt — kein px/CSS-Problem.
-                      Grasen-SMIL nur aktiv wenn deerFullyAwake (sleepP < 0.05). */}
+                      headAngle: 0° (wach, Kopf oben) → 48° (schlafend, Kopf vor Körper gelegt).
+                      headTilt (innen): -sleepP×10° CCW um Schädelbasis (16,-13) — Nase leicht nach
+                      oben, Stirn nach unten, wirkt wie "Kopf zur Seite legen".
+                      Grasen-SMIL nur aktiv wenn deerFullyAwake (!deerSleeping && sleepP < 0.05). */}
                   <g transform={`rotate(${headAngle}, 11, -3)`}>
-                    <g>
+                    <g transform={deerFullyAwake ? undefined : `rotate(${-sleepP * 10}, 16, -13)`}>
                       {deerFullyAwake && <animateTransform
                         attributeName="transform"
                         attributeType="XML"
@@ -641,6 +656,30 @@
                     </g>
                   </g>
 
+                  {/* Schlaf-Zzzs — steigen aus Kopfbereich auf und faden aus (wie Musiknoten beim Vogel).
+                      Im Körper-lokalen Koordinatensystem: Kopf liegt bei ca. (29, -5) wenn schlafend.
+                      Alle drei Zs gestaffelt (begin=-1.8s / -2.5s) → immer mehrere gleichzeitig sichtbar. */}
+                  {sleepP > 0.6 && (
+                    <g opacity={Math.min((sleepP - 0.6) / 0.4, 1)} fontFamily="Georgia, 'Times New Roman', serif" fontWeight="bold">
+                      <text x="35" y="-10" fontSize="5.5" fill="#b0cce0" textAnchor="middle">
+                        Z
+                        <animate attributeName="y" values="-10; -38" dur="4s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" />
+                        <animate attributeName="opacity" values="0; 0.9; 0.9; 0" keyTimes="0; 0.12; 0.78; 1" dur="4s" repeatCount="indefinite" />
+                      </text>
+                      <text x="31" y="-8" fontSize="4" fill="#98bcd4" textAnchor="middle">
+                        z
+                        <animate attributeName="y" values="-8; -30" dur="3.2s" begin="-1.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" />
+                        <animate attributeName="opacity" values="0; 0.8; 0.8; 0" keyTimes="0; 0.15; 0.75; 1" dur="3.2s" begin="-1.8s" repeatCount="indefinite" />
+                      </text>
+                      <text x="40" y="-13" fontSize="3.2" fill="#88acc4" textAnchor="middle">
+                        z
+                        <animate attributeName="y" values="-13; -33" dur="2.8s" begin="-2.5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1" />
+                        <animate attributeName="opacity" values="0; 0.7; 0.65; 0" keyTimes="0; 0.18; 0.72; 1" dur="2.8s" begin="-2.5s" repeatCount="indefinite" />
+                      </text>
+                    </g>
+                  )}
+
+                  </g>
                 </g>
               </g>
             </g>
