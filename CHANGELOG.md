@@ -13,6 +13,16 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.13 (Reh-Wedel: größer + schnelle Zuckbewegung)
+
+### index.html 1.0.13
+- **Spiegel opacity:** 0.95 → 0.80 — leicht transparenter, damit der wedelnde Teil mehr Fokus bekommt.
+- **Wedel größer + gestreckter:** Tränenform-Path von (±1.5, Höhe 3.5) auf (±2, Höhe 5.5). Braune Kappe entsprechend angepasst.
+- **Animationscharakter neu:** War smooth-slow (calcMode spline). Jetzt `calcMode="linear"` + 4 separate Flick-Bursts über 14s verteilt: Burst 1 ~0.18s (1× Zucken), Burst 2 ~0.32s (3× Zucken), Burst 3 ~0.18s (1×), Burst 4 ~0.24s (2×). Zwischen den Bursts lange Ruhephasen. Gleiche Zuckgeschwindigkeit (~80ms pro Ausschlag), variable Burst-Länge → wirkt organisch-rapid wie echte Tier-Wedelbewegung.
+- **Bump-Typ: PATCH (1.0.12 → 1.0.13)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.12 (Reh: Spiegel + Wedel an Hinterlauf verschoben)
 
 ### index.html 1.0.12

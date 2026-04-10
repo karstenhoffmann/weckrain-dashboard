@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.12
+  Version: 1.0.13
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.12";
+    const FRONTEND_VERSION = "1.0.13";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -514,26 +514,30 @@
                 <circle cx="-7" cy="-4" r="0.8" fill="#fff" opacity="0.5" />
 
                 {/* Spiegel & Wedel — Ricke, Seitenansicht.
-                    Spiegel: ovale weiße Fläche auf dem Hinterlauf (wie man ihn von der Seite sieht).
-                    Wedel: kleines Büschel oben am Spiegel, wedelt mit 11s-Zyklus (asynchron zu 16s-Grasen). */}
-                {/* Spiegel (statisch) — sitzt am Hinterlauf (Körper-Rückrand x≈-19, Spiegel-Zentrum x=-17) */}
-                <ellipse cx="-17" cy="-4" rx="2.5" ry="3.5" fill="#fff" opacity="0.95" />
+                    Spiegel: leicht transparent (0.80) damit der wedelnde Wedel mehr Fokus bekommt.
+                    Wedel: größer + länger, animiert mit schnellen Zuckungen (calcMode=linear).
+                    14s-Zyklus asynchron zu 16s-Grasen. */}
+                {/* Spiegel (statisch, leicht transparent) */}
+                <ellipse cx="-17" cy="-4" rx="2.5" ry="3.5" fill="#fff" opacity="0.80" />
 
-                {/* Wedel — Pivot oben am Spiegel, direkt am Rumpf-Rückrand */}
+                {/* Wedel — Pivot oben am Spiegel. Schnelle Zuckungen, calcMode=linear für
+                    scharfe/crisp Bewegung. Mehrere kurze Flick-Bursts über 14s verteilt:
+                    Burst 1: ~0.18s (1×), Burst 2: ~0.32s (3×), Burst 3: ~0.18s (1×), Burst 4: ~0.24s (2×) */}
                 <g transform="translate(-17, -8)">
                   <animateTransform
                     attributeName="transform"
                     type="rotate"
-                    values="0;0;0;0;0;-20;15;-15;10;-8;4;0;0;0;0"
-                    keyTimes="0;0.2;0.42;0.46;0.48;0.5;0.52;0.54;0.56;0.58;0.6;0.63;0.78;0.92;1"
-                    dur="11s"
+                    values="0;0;-22;0;0;-25;18;-15;0;0;-22;0;0;-20;15;0;0"
+                    keyTimes="0;0.414;0.421;0.427;0.593;0.599;0.604;0.610;0.616;0.764;0.770;0.776;0.893;0.899;0.904;0.910;1"
+                    calcMode="linear"
+                    dur="14s"
                     repeatCount="indefinite"
                     additive="sum"
                   />
-                  {/* Schweifbüschel: Tränenform nach oben (Seitenansicht) */}
-                  <path d="M 0,0 C -1.5,-0.5 -1.5,-3.5 0,-3.5 C 1.5,-3.5 1.5,-0.5 0,0 Z" fill="#fff" />
-                  {/* Kleine braune Kappe oben — trennt Schweif vom Spiegel */}
-                  <ellipse cx="0" cy="-3" rx="1" ry="0.65" fill="#a6724a" />
+                  {/* Schweifbüschel: Tränenform nach oben — größer und gestreckter */}
+                  <path d="M 0,0 C -2,-0.5 -2,-5.5 0,-5.5 C 2,-5.5 2,-0.5 0,0 Z" fill="#fff" />
+                  {/* Kleine braune Kappe oben */}
+                  <ellipse cx="0" cy="-5" rx="1.4" ry="0.75" fill="#a6724a" />
                 </g>
 
                 {/* Kopf + Hals — Grasen-Animation: Rotation um Hals-Pivot (11,-3).
