@@ -13,6 +13,17 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.10 (Reh: subtileres Grasen + Ricke-Wedel mit Spiegel)
+
+### index.html 1.0.10
+- **Grasen-Amplitude reduziert:** Rotationsbereich während der Grasphase von 61°–72° auf 63°–69° verkleinert. Die Auf-Ab-Variation ist jetzt sichtbar, aber dezenter — wirkt weniger hektisch.
+- **Spiegel (weißer Rumpffleck):** Neuer herzförmiger weißer SVG-Path am Rumpf der Ricke (cx≈-14, cy≈-5), leicht größer als anatomisch exakt, damit er im kleinen Reh gut sichtbar ist. Feine braune Kontur am oberen Rand trennt den Spiegel sauber vom Fell. Bleibt statisch (ist Fell, nicht Bewegung).
+- **Reh-Wedel mit unabhängiger Wackel-Animation:** Alter 4-Punkt-Polygon-Schwanz ersetzt durch zwei überlagerte Ellipsen (braune Oberseite #a6724a + weiße Unterseite für das charakteristische „Blitzen" beim Wedeln). Pivot sitzt oben am Spiegel (-14, -8). Wedel-Zyklus 11s — läuft asynchron zur 16s-Grasen-Animation, sodass die Bewegungen zufällig wirken und nicht synchron triggern.
+- **Draw-Order-Fix:** Alter Schwanz war VOR dem Body-Ellipse gerendert und damit teilweise vom Körper überdeckt (SVG Painters Algorithm). Neuer Schwanz + Spiegel sitzen jetzt korrekt NACH Body/Flecken und VOR dem Kopf → voll sichtbar.
+- **Bump-Typ: PATCH (1.0.9 → 1.0.10)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.9 (Reh: Grasen-Physik korrigiert)
 
 ### index.html 1.0.9
