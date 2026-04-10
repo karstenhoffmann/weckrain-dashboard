@@ -1,7 +1,7 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.0.1
-// Last updated: 2026-04-09
+// Version: 4.0.2
+// Last updated: 2026-04-10
 // Source of truth: /VERSIONS.json
 // ============================================================================
 // Fritz!Box Aktivitätsüberwachung via Google Apps Script
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.0.1";
+var CODE_GS_VERSION = "4.0.2";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -1372,32 +1372,83 @@ function testEmail() {
 }
 
 /**
- * Bereinigt alte Log-Einträge (älter als 90 Tage).
- * Kann manuell oder per monatlichem Trigger ausgeführt werden.
+ * Archiviert alte Einträge aus Log und Systemlog ins jeweilige Archiv-Tab.
+ *
+ * Strategie: Zeilen, die älter als LIVE_DAYS sind, werden in den
+ * Archiv-Tab verschoben (NICHT gelöscht). Das Archiv wächst kontinuierlich
+ * und ist überlappungsfrei — jeder Eintrag existiert genau einmal,
+ * entweder im Live-Tab oder im Archiv-Tab.
+ *
+ * Live-Tabs:    "Log" (≤ 30 Tage), "Systemlog" (≤ 90 Tage)
+ * Archiv-Tabs:  "Log_Archiv", "Systemlog_Archiv" (alles darüber hinaus)
+ *
+ * Wird monatlich per Trigger aufgerufen (siehe docs/DEPLOYMENT.md).
+ * Kann auch manuell im GAS-Editor ausgeführt werden.
  */
 function cleanupOldLogs() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Log");
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var total = 0;
 
-  var cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  total += _archiveTab(ss, "Log",       "Log_Archiv",       30);
+  total += _archiveTab(ss, "Systemlog", "Systemlog_Archiv", 90);
 
-  // Zähle, wie viele Zeilen am Anfang alt sind (Daten sind chronologisch)
-  var rowsToDelete = 0;
-  for (var row = 2; row <= lastRow; row++) {
-    var timestamp = sheet.getRange(row, 1).getValue();
-    if (timestamp instanceof Date && timestamp < cutoff) {
-      rowsToDelete++;
+  logSystem(
+    "WARTUNG",
+    "Log-Rotation abgeschlossen: " + total + " Zeile(n) ins Archiv verschoben."
+  );
+}
+
+/**
+ * Verschiebt Zeilen, die älter als liveDays sind, vom Tab sourceName
+ * in den Tab archiveName. Erstellt den Archiv-Tab falls nötig.
+ * Gibt die Anzahl verschobener Zeilen zurück.
+ *
+ * Voraussetzung: Beide Tabs haben Spaltenköpfe in Zeile 1.
+ * Zeilen werden chronologisch angehängt — kein Sortieren nötig, da
+ * appendRow() immer am Ende anfügt und die Quelldaten selbst chronologisch sind.
+ */
+function _archiveTab(ss, sourceName, archiveName, liveDays) {
+  var source = ss.getSheetByName(sourceName);
+  if (!source) return 0;
+
+  var lastRow = source.getLastRow();
+  if (lastRow < 2) return 0; // Nur Header, nichts zu tun
+
+  var cutoff = new Date(Date.now() - liveDays * 24 * 60 * 60 * 1000);
+
+  // Alle Zeilen auf einmal lesen (effizienter als Zeile für Zeile)
+  var allData = source.getRange(2, 1, lastRow - 1, source.getLastColumn()).getValues();
+
+  // Trennpunkt finden: erste Zeile, die NICHT archiviert werden soll
+  var archiveCount = 0;
+  for (var i = 0; i < allData.length; i++) {
+    var ts = allData[i][0];
+    if (ts instanceof Date && ts < cutoff) {
+      archiveCount++;
     } else {
-      break;
+      break; // Daten sind chronologisch → ab hier alles aktuell
     }
   }
 
-  if (rowsToDelete > 0) {
-    sheet.deleteRows(2, rowsToDelete);
-    logSystem(
-      "WARTUNG",
-      rowsToDelete + " alte Log-Einträge (>90 Tage) gelöscht.",
-    );
+  if (archiveCount === 0) return 0;
+
+  // Archiv-Tab holen oder erstellen
+  var archive = ss.getSheetByName(archiveName);
+  if (!archive) {
+    archive = ss.insertSheet(archiveName);
+    // Header aus dem Quell-Tab übernehmen
+    var header = source.getRange(1, 1, 1, source.getLastColumn()).getValues();
+    archive.getRange(1, 1, 1, header[0].length).setValues(header);
   }
+
+  // Zu archivierende Zeilen in einem Block ans Archiv anhängen
+  var toArchive = allData.slice(0, archiveCount);
+  var archiveLastRow = archive.getLastRow();
+  archive.getRange(archiveLastRow + 1, 1, archiveCount, toArchive[0].length)
+    .setValues(toArchive);
+
+  // Aus dem Live-Tab entfernen (deleteRows ist effizienter als Schleife)
+  source.deleteRows(2, archiveCount);
+
+  return archiveCount;
 }

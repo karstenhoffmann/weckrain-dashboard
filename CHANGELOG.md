@@ -13,6 +13,19 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — backend/Code.gs 4.0.2 (Log-Rotation mit Archivierung)
+
+### backend/Code.gs 4.0.2
+- **`cleanupOldLogs()` komplett neu:** Verschiebt alte Zeilen jetzt in Archiv-Tabs (`Log_Archiv`, `Systemlog_Archiv`) statt sie zu löschen. Kein Datenverlust mehr.
+- Archiv-Tabs werden beim ersten Lauf automatisch angelegt (Header aus dem Live-Tab übernommen).
+- Live-Fenster: `Log` ≤ 30 Tage, `Systemlog` ≤ 90 Tage.
+- Neu: `Systemlog` wird jetzt ebenfalls rotiert (vorher: nur `Log`).
+- Neuer interner Helper `_archiveTab(ss, sourceName, archiveName, liveDays)` — liest Daten block-weise (effizient), findet den Trennpunkt chronologisch, schreibt ins Archiv per `setValues()`, löscht aus Live per `deleteRows()`.
+- **Trigger noch einrichten (manuell durch Karsten):** GAS-Editor → Triggers → `cleanupOldLogs` → monatlich (z.B. 1. des Monats, 03:00 Uhr).
+- **Bump-Typ: PATCH (4.0.1 → 4.0.2)** — kein API-Change, kein Breaking Change.
+
+---
+
 ## 2026-04-10 — index.html 1.0.7 (Versionsanzeige auf Login-Screen)
 
 ### index.html 1.0.7

@@ -104,14 +104,19 @@ Mögliche Ursachen, in Reihenfolge der Wahrscheinlichkeit:
 
 Vor einem Fix: Ein konkreter Nutzer mit iOS Safari muss das Problem mit Screenshot + iOS-Version + Safari-Version + genauer Fehlerbeschreibung melden. Ohne das ist ein Fix Blindflug.
 
-## Issue 4 — `cleanupOldLogs()` nicht automatisch getriggert
+## Issue 4 — Log-Rotation: kein Archiv, kein Trigger
 
-**Status:** offen, niedrige Priorität
+**Status:** gelöst in Version 4.0.2
 **Betroffen:** `backend/Code.gs`, `cleanupOldLogs()`
 
-Die Rotations-Funktion existiert und funktioniert, ist aber nicht in einem Apps-Script-Trigger eingetragen. Das heißt: Der `Log`-Tab wächst unbegrenzt weiter. Bei 48 Zeilen/Tag macht das ca. 17.500 Zeilen/Jahr — für Google Sheets unkritisch (Limit: 10M Zellen), aber das Sheet wird beim Öffnen merklich langsamer.
+Die alte `cleanupOldLogs()`-Funktion hat Einträge gelöscht statt archiviert, deckte nur den `Log`-Tab (nicht `Systemlog`), und war nicht per Trigger eingetragen.
 
-**Lösung:** Im Apps-Script-Editor unter `Triggers` einen monatlichen Trigger für `cleanupOldLogs` einrichten. Siehe `docs/DEPLOYMENT.md`, Abschnitt „Wartung".
+**Fix in 4.0.2:**
+- `cleanupOldLogs()` verschiebt alte Zeilen jetzt in Archiv-Tabs (`Log_Archiv`, `Systemlog_Archiv`) statt sie zu löschen. Kein Datenverlust.
+- Archiv-Tabs werden beim ersten Lauf automatisch angelegt (Header vom Live-Tab übernommen).
+- Live-Fenster: `Log` ≤ 30 Tage, `Systemlog` ≤ 90 Tage.
+- Archivierung erfolgt in einem Block (effizient, kein Zeile-für-Zeile).
+- **Trigger einrichten (manuell durch Karsten):** Im GAS-Editor unter `Triggers` → `cleanupOldLogs` → monatlich (z.B. 1. des Monats, 03:00). Alternativ: manuell im GAS-Editor ausführen.
 
 ## Issue 5 — Erste Frontend-Ladezeit hoch
 
@@ -124,10 +129,39 @@ Das ist ein bewusster Trade-off gegen „Reparierbarkeit ohne Toolchain" — sie
 
 Aktuell nicht geplant.
 
+## Issue 6 — HTTP 403 von Fritz!Box deutlich zu häufig
+
+**Status:** offen, mittlere Priorität
+**Betroffen:** `backend/Code.gs`, `querySmartHomeDevices()`, `checkPhoneActivity()`
+
+### Symptom
+
+Aus dem Systemlog (07.04–10.04.2026): Etwa jeder 3.–4. Poll schlägt mit `AHA-HTTP-Abfrage fehlgeschlagen (HTTP 403) nach 6 Versuch(en)` fehl. Sporadisch, nicht in Blöcken — d.h. meist erholt sich das System beim nächsten regulären Poll. Betrifft `Poll #1` (nicht `Poll #2, #3`) → der Fehlerzähler wird nach jedem Erfolg zurückgesetzt, die Fehler sind also jeweils isoliert.
+
+Das IP-Rotations-Problem ist in Issue 2 bereits beschrieben und in 4.0.0 gemildert (Retry-Logik). Aber die beobachtete Fehlerrate (>20 Fehlschläge in ~3 Tagen bei ca. 144 erwarteten Polls) entspricht ca. 14% Fehlerrate — deutlich mehr als erwartet.
+
+### Mögliche Ursachen
+
+1. **Fritz!Box Session-Timeout aggressiver als gedacht.** Die SID läuft nach 10 min aus. Der GAS-Trigger feuert alle 30 min, Session ist also immer abgelaufen — aber `getFritzBoxSID()` holt jedesmal frisch eine SID. Das sollte OK sein, ist aber ein möglicher Fehlerquelle wenn Fritz!Box den Login-Request von wechselnden IPs ablehnt.
+2. **Steigende IP-Poolbreite bei Google.** Googles GAS-IP-Pool könnte breiter geworden sein oder aggressiver rotieren als 2024/2025.
+3. **Fritz!Box-seitiger Schutz.** Zu viele Login-Versuche aus verschiedenen IPs innerhalb kurzer Zeit → temporärer Soft-Block.
+
+### Diagnoseschritte (Karsten)
+
+1. Im Fritz!Box Ereignislog (Heimnetz → Netzwerk → Ereignisse) schauen, ob dort Login-Fehlschläge für `monitor_api` zu sehen sind.
+2. Im GAS-Systemlog prüfen: Treten die 403-Fehler zu bestimmten Tageszeiten gehäuft auf?
+3. Testen: `testPoll()` manuell im GAS-Editor ausführen und schauen ob es zum 403 kommt.
+
+### Mögliche Fixes (noch nicht implementiert)
+
+- **Delay zwischen Login-Retry und AHA-Request erhöhen** (aktuell: 1 Sekunde nach 403). Ggf. auf 3–5 Sekunden erhöhen.
+- **Retry-Anzahl reduzieren** (aktuell: 3 Versuche pro Sensor). Weniger aggressive Retries könnten Fritz!Box-seitigen Soft-Block verhindern.
+- **Konsolidierter Login:** Alle Sensor-Requests in einer Session (mit einer SID) statt jeder Sensor mit eigener SID — spart Login-Calls und reduziert IP-Exposition. (Gegenläufig zu Issue 2 Fix — Trade-off.)
+
 ## Referenzen
 
 - Bug 1 Code: `checkPhoneActivity()` in `backend/Code.gs`
 - Bug 2 Code: `getFritzBoxSID()`, `querySmartHomeDevices()` in `backend/Code.gs`
-- Issue 4 Code: `cleanupOldLogs()` in `backend/Code.gs`
+- Issue 4 Code: `cleanupOldLogs()`, `_archiveTab()` in `backend/Code.gs`
 - Config-Keys für Retry-Verhalten: nicht konfigurierbar, hart im Code
 - Verifikations-Tipps: `docs/MONITORING.md`, Abschnitt „Diagnose-Reihenfolge"
