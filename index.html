@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.15
+  Version: 1.0.16
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.15";
+    const FRONTEND_VERSION = "1.0.16";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -558,9 +558,9 @@
                   />
 
                   {/* Hinteres Ohr — liegt HINTER Kopf (vor Hals/Kopf gerendert → Kopfpfad überdeckt Ohrbasis).
-                      Pivot-Punkt (0,0) = Ohrbasis nach translate. Zuckt unabhängig, nur wenn Kopf oben:
-                      dur=16s synchron zum Grasen, keine Bewegung zwischen keyTime 0.40–0.75. */}
-                  <g transform="translate(16, -22)">
+                      x=15: ganz am Hinterkopf (Hinterrand x=14), klein, nur die Spitze ragt raus.
+                      Zuckt unabhängig, nur wenn Kopf oben (dur=16s, kein Zucken 0.40–0.75). */}
+                  <g transform="translate(15, -22)">
                     <g>
                       <animateTransform
                         attributeName="transform"
@@ -571,8 +571,8 @@
                         dur="16s"
                         repeatCount="indefinite"
                       />
-                      <ellipse cx="0" cy="-3" rx="1.3" ry="3" fill="#8b5a3c" />
-                      <ellipse cx="0" cy="-2.7" rx="0.7" ry="2.1" fill="#c2875f" opacity="0.9" />
+                      <ellipse cx="0" cy="-2.5" rx="1.1" ry="2.5" fill="#8b5a3c" />
+                      <ellipse cx="0" cy="-2.2" rx="0.6" ry="1.7" fill="#c2875f" opacity="0.9" />
                     </g>
                   </g>
 
@@ -606,9 +606,10 @@
                   </g>
 
                   {/* Vorderes Ohr — liegt VOR Kopf (nach Auge gerendert → komplett sichtbar, ragt über Kopfsilhouette).
-                      Pivot-Punkt (0,0) = Ohrbasis nach translate. Zuckt unabhängig, nur wenn Kopf oben:
-                      dur=16s synchron zum Grasen, keine Bewegung zwischen keyTime 0.40–0.75. */}
-                  <g transform="translate(20, -25)">
+                      x=23: klar in der vorderen Schädelhälfte (Scheitel x=20, Nase x=29), sichtbar als
+                      eigenständige Form. Stroke definiert Kontur gegen Himmel und Kopffarbe.
+                      Zuckt unabhängig, nur wenn Kopf oben (dur=16s, kein Zucken 0.40–0.75). */}
+                  <g transform="translate(23, -24)">
                     <g>
                       <animateTransform
                         attributeName="transform"
@@ -619,8 +620,8 @@
                         dur="16s"
                         repeatCount="indefinite"
                       />
-                      <ellipse cx="0" cy="-6" rx="2.8" ry="6" fill="#a6724a" />
-                      <ellipse cx="0" cy="-5.5" rx="1.6" ry="4.5" fill="#e0a88a" />
+                      <ellipse cx="0" cy="-6.5" rx="2.8" ry="6.5" fill="#a6724a" stroke="#7a4a2a" strokeWidth="0.4" />
+                      <ellipse cx="0" cy="-6" rx="1.6" ry="5" fill="#e0a88a" />
                     </g>
                   </g>
                 </g>

@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.16 (Reh-Ohren: Positionen korrigiert + Stroke für Vorderes Ohr)
+
+### index.html 1.0.16
+- **Vorderes Ohr nach vorne verschoben:** x=20 (Scheitel, blendete in Kopffarbe ein) → x=23 (zwischen Scheitel und Nase, klar als eigenständige Ohrform lesbar). Subtiler dunkler Stroke (#7a4a2a, 0.4) definiert Kontur gegen Himmel und Kopffarbe.
+- **Hinteres Ohr minimiert:** x=16 → x=15 (noch näher am Hinterkopf-Rand x=14), rx=1.3/ry=3 → rx=1.1/ry=2.5. Nur die allerkeine Spitze ragt über den Kopfpfad hinaus.
+- **Bump-Typ: PATCH (1.0.15 → 1.0.16)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.15 (Reh-Ohren: Größenverhältnis korrigiert)
 
 ### index.html 1.0.15
