@@ -100,11 +100,21 @@ High-Level-Projektstrategie, Recherche-Notizen, historische Entscheidungen und d
 - Dokumentation aktuell halten
 - Bugs fixen, Features bauen, Refactorings durchführen
 - Commits + PRs erstellen
+- Frontend-Änderungen nach jedem Commit sofort auf `main` mergen und pushen (GitHub Pages ist das einzige Testumfeld — kein Staging)
 
 **Claude Code (dieses Repo) soll NICHT:**
 - Persönliche/familiäre Kontext-Infos ins Repo schreiben (die bleiben bei Cowork)
 - Echte Secrets, Passwörter oder die reale MyFRITZ!-URL committen (nur Platzhalter verwenden)
-- Eigenmächtig Deployment auf GAS oder GitHub Pages auslösen — Karsten kontrolliert den Deploy-Moment
+
+## Deploy-Workflow
+
+### Frontend (`index.html`) — automatisch deployen
+
+Nach **jedem** Frontend-Commit direkt auf `main` mergen und pushen. GitHub Pages deployt automatisch (~1-2 min). Kein separates OK von Karsten nötig — häufige kleine Commits + Pushes sind der Rollback-Mechanismus (jederzeit zurück via `git revert` oder `git checkout <commit> -- index.html`).
+
+### Backend (`backend/Code.gs` etc.) — Karsten deployt manuell
+
+Backend-Änderungen werden committed und gepusht, aber **nicht** selbstständig in die GAS-Umgebung deployed. Karsten kopiert den Code manuell in den GAS-Editor und deployt dort. Vor größeren Backend-Änderungen darauf hinweisen, wie ein Rollback aussieht (vorherige Version aus Git-History holen und erneut deployen).
 
 **Bei Cowork bleibt:**
 - High-Level-Projektstrategie und Entscheidungsrationale
