@@ -13,6 +13,17 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.14 (Reh: Ohren neu — korrekte Seitenprofilposition + Zuckanimation)
+
+### index.html 1.0.14
+- **Ohren neu positioniert:** Alte Ohren saßen zu weit im Kopf (erkennbar als Fell-Flecken). Neue Ohren ragen klar über die Kopfsilhouette hinaus wie echte Reh-Ohren im Profil.
+- **Hinteres Ohr (far side):** Wird VOR Hals/Kopf gerendert → Kopfpfad überdeckt die Ohrbasis natürlich. Basis bei (16,−22), Ohr zeigt nach oben-hinten (statischer Lean +10°). Leicht kleiner/dunkler (Perspektive).
+- **Vorderes Ohr (near side):** Wird NACH Auge gerendert → komplett sichtbar, ragt klar aus der Kopfsilhouette heraus. Basis bei (20,−25), leicht nach vorne geneigt (statischer Lean −8°). Größer und heller (#e0a88a Innen).
+- **Unabhängige Zuckanimation:** Beide Ohren animiert mit `dur="16s"` synchron zum Grasen, `calcMode="linear"` für crisp-schnelle Zuckungen (je ~80ms/Ausschlag). Während der Grasenphase (keyTime 0.40–0.75) sind beide Ohren explizit statisch. Jedes Ohr hat eigene Burst-Muster (Phasenversatz → kein simultanes Zucken).
+- **Bump-Typ: PATCH (1.0.13 → 1.0.14)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.13 (Reh-Wedel: größer + schnelle Zuckbewegung)
 
 ### index.html 1.0.13

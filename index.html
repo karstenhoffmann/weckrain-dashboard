@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.13
+  Version: 1.0.14
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -40,7 +40,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.13";
+    const FRONTEND_VERSION = "1.0.14";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────
@@ -557,6 +557,25 @@
                     keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.6 0 0.2 1; 0.2 0 0.6 1; 0.6 0 0.2 1; 0.2 0 0.5 1; 0.6 0 0.2 1; 0.2 0 0.6 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
                   />
 
+                  {/* Hinteres Ohr — liegt HINTER Kopf (vor Hals/Kopf gerendert → Kopfpfad überdeckt Ohrbasis).
+                      Pivot-Punkt (0,0) = Ohrbasis nach translate. Zuckt unabhängig, nur wenn Kopf oben:
+                      dur=16s synchron zum Grasen, keine Bewegung zwischen keyTime 0.40–0.75. */}
+                  <g transform="translate(16, -22)">
+                    <g>
+                      <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        values="10;10;26;10;10;28;-2;20;10;10;10;10;28;10;10"
+                        keyTimes="0;0.150;0.155;0.160;0.325;0.330;0.335;0.340;0.345;0.400;0.750;0.900;0.905;0.910;1"
+                        calcMode="linear"
+                        dur="16s"
+                        repeatCount="indefinite"
+                      />
+                      <ellipse cx="0" cy="-4.5" rx="1.8" ry="4.5" fill="#8b5a3c" />
+                      <ellipse cx="0" cy="-4" rx="1" ry="3" fill="#c2875f" opacity="0.9" />
+                    </g>
+                  </g>
+
                   {/* Hals */}
                   <path d="M 8,-6 Q 13,-11 17,-13 L 21,-11 Q 16,-6 11,-3 Z" fill="#a6724a" />
 
@@ -586,15 +605,23 @@
                     <circle cx="21" cy="-15.8" r="0.28" fill="#fff" opacity="0.8" />
                   </g>
 
-                  {/* Hinteres Ohr */}
-                  <g transform="rotate(-28 16 -20)">
-                    <ellipse cx="16" cy="-20" rx="2" ry="4" fill="#8b5a3c" />
-                    <ellipse cx="16" cy="-20" rx="1.1" ry="2.8" fill="#c2875f" />
-                  </g>
-                  {/* Vorderes Ohr */}
-                  <g transform="rotate(20 21 -20)">
-                    <ellipse cx="21" cy="-20" rx="2.2" ry="4.2" fill="#a6724a" />
-                    <ellipse cx="21" cy="-20" rx="1.2" ry="3" fill="#e0a88a" />
+                  {/* Vorderes Ohr — liegt VOR Kopf (nach Auge gerendert → komplett sichtbar, ragt über Kopfsilhouette).
+                      Pivot-Punkt (0,0) = Ohrbasis nach translate. Zuckt unabhängig, nur wenn Kopf oben:
+                      dur=16s synchron zum Grasen, keine Bewegung zwischen keyTime 0.40–0.75. */}
+                  <g transform="translate(20, -25)">
+                    <g>
+                      <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        values="-8;-8;-26;-8;-8;-28;6;-20;-8;-8;-8;-8;-24;-8;-8"
+                        keyTimes="0;0.100;0.105;0.110;0.250;0.255;0.260;0.265;0.270;0.400;0.750;0.850;0.855;0.860;1"
+                        calcMode="linear"
+                        dur="16s"
+                        repeatCount="indefinite"
+                      />
+                      <ellipse cx="0" cy="-5.5" rx="2.5" ry="5.5" fill="#a6724a" />
+                      <ellipse cx="0" cy="-5" rx="1.4" ry="4" fill="#e0a88a" />
+                    </g>
                   </g>
                 </g>
               </g>
