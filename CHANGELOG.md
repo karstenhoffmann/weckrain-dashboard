@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-10 — index.html 1.0.9 (Reh: Grasen-Physik korrigiert)
+
+### index.html 1.0.9
+- **Grasen-Animation fix:** Separate translate-Animation entfernt (erzeugte falsche "Kopf-zum-Körper-ziehen"-Bewegung in Weltkoordinaten). Stattdessen: Rotations-Keyframes selbst variieren während der Grasphase. Rotation um den Hals-Pivot (11,-3) erzeugt physikalisch korrekte Kreisbogen-Bewegung = automatisch Auf-Ab + leichtes Seitwärtsschwingen wie bei echtem Reh-Körper.
+- **Natürliche Biss-Variation:** 3 Bisse mit unterschiedlichen Tiefen (70°, 68°, 72°) und verschiedenen Lift-Höhen (61°, 63°, 62°) in unterschiedlichem Rhythmus. Asymmetrische Easing-Splines: Biss runter schnell (0.6 0 0.2 1), Heben langsamer (0.2 0 0.6 1).
+- **Bump-Typ: PATCH (1.0.8 → 1.0.9)** — rein visuell.
+
+---
+
 ## 2026-04-10 — index.html 1.0.8 (Reh: Stupsnase + Kopfnicken beim Grasen)
 
 ### index.html 1.0.8
