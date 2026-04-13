@@ -1,6 +1,6 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.0.3
+// Version: 4.0.4
 // Last updated: 2026-04-13
 // Source of truth: /VERSIONS.json
 // ============================================================================
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.0.3";
+var CODE_GS_VERSION = "4.0.4";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -1397,6 +1397,49 @@ function testPoll() {
   } catch (error) {
     Logger.log("FEHLER: " + error.message);
     Logger.log("Stack: " + error.stack);
+  }
+}
+
+/**
+ * TESTFUNKTION: Prüft ob Anrufe in den letzten hoursBack Stunden erkannt werden.
+ *
+ * Setzt lastSuccessfulPoll temporär zurück, ruft checkPhoneActivity() auf,
+ * und stellt den ursprünglichen Wert danach wieder her (auch bei Fehlern).
+ *
+ * Ergebnis: Logger-Ausgabe UND neue TEL:-Einträge im Systemlog-Tab.
+ * Schreibt NICHT in den Log-Tab (keine Datenverfälschung).
+ *
+ * Aufruf:
+ *   testPhoneActivitySince()       — Standard: 48 Stunden zurück
+ *   testPhoneActivitySince(72)     — 72 Stunden zurück
+ */
+function testPhoneActivitySince(hoursBack) {
+  hoursBack = hoursBack || 48;
+  var props = PropertiesService.getScriptProperties();
+  var savedPoll = props.getProperty("lastSuccessfulPoll");
+
+  var fakePoll = new Date(Date.now() - hoursBack * 60 * 60 * 1000).toISOString();
+  props.setProperty("lastSuccessfulPoll", fakePoll);
+
+  Logger.log("=== testPhoneActivitySince(" + hoursBack + "h) ===");
+  Logger.log("Simulierter lastPoll: " + fakePoll);
+
+  try {
+    var sid = getFritzBoxSID();
+    var result = checkPhoneActivity(sid);
+    Logger.log("Ergebnis: " + result.status);
+    Logger.log("Details: siehe TEL:-Einträge im Systemlog-Tab des Google Sheets.");
+  } catch (e) {
+    Logger.log("FEHLER: " + e.message);
+  } finally {
+    // Immer wiederherstellen — egal ob Erfolg oder Fehler
+    if (savedPoll) {
+      props.setProperty("lastSuccessfulPoll", savedPoll);
+    } else {
+      props.deleteProperty("lastSuccessfulPoll");
+    }
+    Logger.log("lastSuccessfulPoll wiederhergestellt auf: " + (savedPoll || "(leer)"));
+    Logger.log("=== ENDE ===");
   }
 }
 

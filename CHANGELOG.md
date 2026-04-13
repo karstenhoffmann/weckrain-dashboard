@@ -13,6 +13,13 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-13 — backend/Code.gs 4.0.4 (testPhoneActivitySince() Hilfsfunktion)
+
+### backend/Code.gs 4.0.4
+- **Neu: `testPhoneActivitySince(hoursBack)`** — Testfunktion, die `lastSuccessfulPoll` temporär N Stunden zurücksetzt, `checkPhoneActivity()` aufruft, und den ursprünglichen Wert danach per `finally` wiederherstellt. Standard: 48h. Schreibt nicht in den Log-Tab. Ergebnis im GAS-Logger + TEL:-Einträgen im Systemlog-Tab.
+
+---
+
 ## 2026-04-13 — backend/Code.gs 4.0.3 (Telefon-Erkennung: Typ-3 fix + Diagnose-Log)
 
 ### backend/Code.gs 4.0.3
