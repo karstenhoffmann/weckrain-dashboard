@@ -13,6 +13,17 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-13 — backend/Code.gs 4.0.3 (Telefon-Erkennung: Typ-3 fix + Diagnose-Log)
+
+### backend/Code.gs 4.0.3
+- **Fix Typ-Code-Filter:** `TYPES_ANSWERED` von `["1","4"]` auf `["1","3","4"]` erweitert.
+  Die Verifikation in 4.0.1 bestätigte Typ 4 für einen konkreten CSV-Export (Fritz!OS 8.21), aber in der Praxis tauchen weiterhin fehlende Erkennungen auf. Manche Fritz!OS-Versionen oder Anruf-Konstellationen liefern Typ 3 (TR-064-Semantik) statt Typ 4 (Web-UI-Semantik) — oder es gibt noch einen anderen Typ. Belt-and-suspenders: alle Typ-Codes außer 2 (CALLFAIL) werden akzeptiert.
+- **Fix Dauer-Filter:** `MIN_DURATION_MINUTES` von `1` auf `0` gesenkt.
+  Kein Anrufbeantworter vorhanden → jede Verbindung (Typ 1/3/4) ist ein Lebenszeichen, unabhängig von der Dauer. Der Dauer-Filter war als Safety-Net gedacht, kann aber bei fehlender Dauer-Auflösung in manchen Gigaset-DECT-Konfigurationen fälschlicherweise gültige Gespräche herausfiltern.
+- **Neu: Diagnose-Logging ins Systemlog:** `checkPhoneActivity()` schreibt jetzt bei jedem RUHE-Ergebnis eine kompakte Zeile ins Systemlog (Label `TEL`) mit Separator, Anzahl CSV-Zeilen, lastPoll-Timestamp und Ablehnungsgrund pro Zeile (z.B. `typ2`, `0:00<=poll`). Bei AKTIV-Erkennung wird ebenfalls geloggt. So ist nachvollziehbar, warum ein Anruf nicht erkannt wurde.
+
+---
+
 ## 2026-04-13 — index.html 1.0.22 (PNG-Dateien committed, OG-Image-Extension fix)
 
 ### index.html 1.0.22

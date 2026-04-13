@@ -1,7 +1,7 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.0.2
-// Last updated: 2026-04-10
+// Version: 4.0.3
+// Last updated: 2026-04-13
 // Source of truth: /VERSIONS.json
 // ============================================================================
 // Fritz!Box Aktivitätsüberwachung via Google Apps Script
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.0.2";
+var CODE_GS_VERSION = "4.0.3";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -540,44 +540,84 @@ function checkPhoneActivity(sid) {
     //                  ausgehend ohne Antwort) → niemals zählen
     //   4 = CALLOUT  — ausgehend erfolgreich verbunden
     //
-    // Filter-Kriterium: Nur angenommene Gespräche (Typ 1 oder 4) UND
-    // Dauer ≥ 1 Minute (CSV "0:01"). Jeder Typ-1/4-Eintrag ist per
-    // Definition eine menschliche Handlung — die Mutter hat den Hörer
-    // aktiv abgehoben bzw. einen Anruf erfolgreich aufgebaut. Kein
-    // Anrufbeantworter im Einsatz → kein AB-Noise-Risiko, jede
-    // Hörer-Abnahme ist ein eindeutiges Lebenszeichen.
+    // Filter-Kriterium: Alle erfolgreich verbundenen Gespräche (Typ 1, 3, 4).
     //
-    // Die Fritz!Box speichert Dauern minuten-genau und rundet auf die
-    // nächste volle Minute auf (keine Sekunden-Auflösung im CSV).
-    // "0:00" bedeutet nur bei Typ 2 (CALLFAIL) — bei Typ 1/4 ist
-    // der Mindestwert "0:01". Der Dauer-Check dient als Safety-Net
-    // gegen etwaige Fritz!OS-Edge-Cases.
+    // Typ-Codes — defensive Abdeckung beider Fritz!OS-Generationen:
+    //   1 = CALLIN   — eingehend angenommen
+    //   3 = CALLOUT  — ausgehend (TR-064-Semantik, ältere Fritz!OS-Versionen)
+    //   4 = CALLOUT  — ausgehend (Web-UI-Semantik, neuere Fritz!OS-Versionen)
+    //   2 = CALLFAIL — nie zählen (verpasst / nicht zustande gekommen)
     //
-    // Siehe docs/KNOWN_ISSUES.md Issue 1 für die Hintergrund-Recherche
-    // (TR-064-Spec, Community-Quellen, empirische Verifikation).
-    var TYPES_ANSWERED = ["1", "4"];
-    var MIN_DURATION_MINUTES = 1;
+    // Warum ["1","3","4"] statt nur ["1","4"]:
+    //   Die empirische Verifikation in 4.0.1 bestätigte Typ 4 im Web-UI-Export.
+    //   In der Praxis tauchen aber weiterhin fehlende Erkennungen auf — manche
+    //   Fritz!OS-Versionen oder Anruf-Konstellationen liefern Typ 3 statt 4.
+    //   Belt-and-suspenders: alle Nicht-CALLFAIL-Typen abdecken.
+    //
+    // Dauer-Filter: MIN_DURATION_MINUTES = 0 (jede Verbindung zählt).
+    //   Kein Anrufbeantworter vorhanden → kein AB-Noise-Risiko.
+    //   Primärziel ist Lebenszeichen-Erkennung, nicht Gesprächslänge.
+    //   (Typ 2 / CALLFAIL werden über den Typ-Filter bereits ausgeschlossen.)
+    //
+    // Siehe docs/KNOWN_ISSUES.md Issue 1 für Hintergrund und Quellen.
+    var TYPES_ANSWERED = ["1", "3", "4"];
+    var MIN_DURATION_MINUTES = 0;
+
+    // Ablehnungsprotokoll für Diagnose-Logging im RUHE-Fall
+    var rejections = [];
 
     for (var i = dataStart; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line) continue;
       var fields = line.split(separator);
-      if (fields.length < 8) continue;
+      if (fields.length < 8) {
+        rejections.push("Z" + (i - dataStart + 1) + ":felder=" + fields.length);
+        continue;
+      }
 
       var typ = fields[0].trim();
-      if (TYPES_ANSWERED.indexOf(typ) === -1) continue;
+      if (TYPES_ANSWERED.indexOf(typ) === -1) {
+        rejections.push("Z" + (i - dataStart + 1) + ":typ" + typ);
+        continue;
+      }
 
       var dauerStr = fields[7].trim();
       var dauerMinuten = parseDurationMinutes(dauerStr);
-      if (dauerMinuten < MIN_DURATION_MINUTES) continue;
+      if (dauerMinuten < MIN_DURATION_MINUTES) {
+        rejections.push("Z" + (i - dataStart + 1) + ":dur" + dauerStr);
+        continue;
+      }
 
       var callDate = parseFritzDate(fields[1].trim());
-      if (!callDate) continue;
+      if (!callDate) {
+        rejections.push("Z" + (i - dataStart + 1) + ":datum?");
+        continue;
+      }
 
       if (callDate > lastPoll) {
+        logSystem(
+          "TEL",
+          "AKTIV: typ=" + typ +
+            " " + fields[1].trim() +
+            " dauer=" + dauerStr +
+            " callDate=" + callDate.toISOString().substring(0, 16) +
+            " lastPoll=" + lastPoll.toISOString().substring(0, 16),
+        );
         return { status: "AKTIV", aktiv: true, sid: sid };
       }
+
+      rejections.push("Z" + (i - dataStart + 1) + ":" + fields[1].trim() + "<=poll");
     }
+
+    logSystem(
+      "TEL",
+      "RUHE: sep='" + separator + "'" +
+        " daten=" + (lines.length - dataStart) +
+        " lastPoll=" + lastPoll.toISOString().substring(0, 16) +
+        (rejections.length > 0
+          ? " rej=[" + rejections.slice(0, 10).join(", ") + "]" + (rejections.length > 10 ? "…" : "")
+          : " (leere Liste)"),
+    );
 
     return { status: "RUHE", aktiv: false, sid: sid };
   } catch (e) {

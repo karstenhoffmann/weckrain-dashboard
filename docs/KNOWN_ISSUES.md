@@ -4,7 +4,7 @@ Offene und bekannte Probleme, die beim nächsten Iterationsschritt angegangen we
 
 ## Issue 1 — Gesang / Telefon-Aktivität nicht zuverlässig erkannt
 
-**Status:** gelöst in Version 4.0.1
+**Status:** erneut gepatcht in Version 4.0.3 (nach Regression in 4.0.1)
 **Betroffen (pre-fix):** `checkPhoneActivity()` in `backend/Code.gs`, Sensor-Key `g`
 **Symptom:** Im Dashboard wurde der Gesang-Slot häufig als inaktiv angezeigt, obwohl in der Fritz!Box-Anrufliste sehr wohl ein geführtes Telefonat im Zeitraum stand. Gleichzeitig wurden sehr kurze Klingel-Anrufe (ein paar Sekunden) fälschlich als Aktivität gewertet.
 
@@ -55,9 +55,23 @@ Die ursprüngliche Anforderung war „nur Anrufe länger als 1 Minute zählen" �
 4. Filter: `typ ∈ {"1", "4"}` AND `dauerMinuten >= 1`. Der Dauer-Check dient als Safety-Net — Typ 1/4 mit Dauer 0 sollte laut AVM-Spec nie vorkommen, wir fangen es trotzdem defensiv ab.
 5. Typ-Codes und Rationale ausführlich im Code kommentiert.
 
-Verifiziert gegen einen realen CSV-Export mit 20 Zeilen: Keine false positives (alle `CALLFAIL`-Einträge werden korrekt verworfen), keine false negatives (alle Typ-1- und Typ-4-Einträge mit Dauer > 0 werden gezählt — inklusive des 50-Minuten-Schrozberg-Gesprächs, des 95-Minuten-Langenau-Gesprächs und der kurzen Gespräche).
+Verifiziert gegen einen realen CSV-Export mit 20 Zeilen: Keine false positives (alle `CALLFAIL`-Einträge werden korrekt verworfen), keine false negatives (alle Typ-1- und Typ-4-Einträge mit Dauer > 0 werden gezählt).
 
-**Falls die Mutter doch irgendwann einen Anrufbeantworter aktivieren will:** Die Filter-Schwelle muss dann auf `MIN_DURATION_MINUTES = 2` angehoben werden, um AB-Antworten auszuschließen. Alternativ kann die `Nebenstelle`-Spalte (`fields[5]`) auf AB-Bezeichner geprüft werden — siehe Hintergrund-Diskussion in dieser Doku-Historie.
+### Regression nach 4.0.1 (entdeckt 2026-04-13)
+
+Trotz 4.0.1-Fix weiterhin fehlende Erkennungen bei realen Gesprächen. Drei mögliche Ursachen, von denen mindestens eine zutrifft:
+
+1. **Typ 3 statt Typ 4:** Manche Fritz!OS-Versionen oder Gerätekombinationen (Gigaset DECT) liefern für ausgehende Gespräche weiterhin Typ 3 (TR-064-Semantik), nicht Typ 4. Die 4.0.1-Verifikation war mit einem einzigen CSV-Snapshot aus Fritz!OS 8.21 durchgeführt worden — keine Garantie für andere Firmware-Versionen.
+2. **Dauer 0:00 trotz echtem Gespräch:** Bei bestimmten Gigaset-DECT-Konfigurationen kann die Gesprächsdauer fehlen (`0:00`) obwohl das Gespräch stattfand. `MIN_DURATION_MINUTES = 1` filterte dann fälschlicherweise echte Gespräche heraus.
+3. **Fehlende Diagnosemöglichkeit:** Ohne Logging war nicht nachvollziehbar, welcher Filter welche Zeile ablehnte.
+
+### Fix in 4.0.3
+
+1. `TYPES_ANSWERED = ["1", "3", "4"]` — alle Nicht-CALLFAIL-Typen werden akzeptiert (belt-and-suspenders für alle Fritz!OS-Versionen).
+2. `MIN_DURATION_MINUTES = 0` — jede Verbindung (Typ 1/3/4) zählt als Lebenszeichen, unabhängig von der gemeldeten Dauer. Kein AB vorhanden, kein Noise-Risiko.
+3. Diagnose-Logging: `checkPhoneActivity()` schreibt bei RUHE-Ergebnis eine kompakte Zeile ins Systemlog (Label `TEL`) mit sep, Zeilenanzahl, lastPoll-Timestamp und Ablehnungsgrund pro Zeile. Bei AKTIV ebenfalls ein Log-Eintrag.
+
+**Falls die Mutter irgendwann einen Anrufbeantworter aktiviert:** `MIN_DURATION_MINUTES = 2` setzen, um AB-Antworten (< 2 Min) herauszufiltern. Alternativ die `Nebenstelle`-Spalte (`fields[5]`) auf AB-Bezeichner prüfen.
 
 ### Quellen
 
