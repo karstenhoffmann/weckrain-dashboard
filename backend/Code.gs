@@ -1,6 +1,6 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.0.4
+// Version: 4.0.5
 // Last updated: 2026-04-13
 // Source of truth: /VERSIONS.json
 // ============================================================================
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.0.4";
+var CODE_GS_VERSION = "4.0.5";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -512,14 +512,18 @@ function checkPhoneActivity(sid) {
 
     // ── Separator auto-detection via "sep=<char>" Präambel ──
     // Fritz!OS liefert den Web-UI-Export mit Semikolon (sep=;), manche
-    // Versionen mit Tab. Defensiv: den Separator aus der ersten Zeile
-    // lesen statt hartkodieren.
+    // Versionen mit Tab (sep=<TAB-Byte>). WICHTIG: Kein .trim() verwenden —
+    // das würde einen TAB-Separator-Byte wegschneiden. Nur Zeilenenden (\r\n)
+    // am Ende der Zeile entfernen.
     var separator = ";";
     var dataStart = 1;
     if (lines.length > 0 && lines[0].indexOf("sep=") === 0) {
-      var sepChar = lines[0].substring(4).trim();
-      if (sepChar === "\\t") separator = "\t";
-      else if (sepChar && sepChar.length === 1) separator = sepChar;
+      var sepChar = lines[0].substring(4).replace(/[\r\n]+$/, "");
+      if (sepChar === "\t" || sepChar === "\\t") {
+        separator = "\t";
+      } else if (sepChar && sepChar.length === 1) {
+        separator = sepChar;
+      }
       dataStart = 2;
     }
 
@@ -609,11 +613,13 @@ function checkPhoneActivity(sid) {
       rejections.push("Z" + (i - dataStart + 1) + ":" + fields[1].trim() + "<=poll");
     }
 
+    var firstRaw = JSON.stringify((lines[dataStart] || "").substring(0, 80));
     logSystem(
       "TEL",
-      "RUHE: sep='" + separator + "'" +
+      "RUHE: sep=" + JSON.stringify(separator) +
         " daten=" + (lines.length - dataStart) +
         " lastPoll=" + lastPoll.toISOString().substring(0, 16) +
+        " raw1=" + firstRaw +
         (rejections.length > 0
           ? " rej=[" + rejections.slice(0, 10).join(", ") + "]" + (rejections.length > 10 ? "…" : "")
           : " (leere Liste)"),

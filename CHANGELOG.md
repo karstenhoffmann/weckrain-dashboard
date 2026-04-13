@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-13 — backend/Code.gs 4.0.5 (Fix: Tab-Separator in Anrufliste-CSV)
+
+### backend/Code.gs 4.0.5
+- **Root-Cause-Fix Telefon-Erkennung:** Die Fritz!Box liefert im CSV-Header `sep=<TAB-Byte>` (echtes Tab-Zeichen, nicht `\t`). Der bisherige Code machte `.trim()` auf den Separator-Char — `trim()` entfernt auch Tab-Zeichen, sodass `sepChar = ""` und der Separator als Standard-Semikolon gesetzt blieb. Alle Tab-separierten Datenzeilen wurden dann mit `;` gesplittet → `felder=1` → alle Zeilen verworfen.
+  Fix: `lines[0].substring(4).trim()` → `.replace(/[\r\n]+$/, "")` — entfernt nur Zeilenenden, kein Whitespace. Tab-Byte wird jetzt korrekt erkannt und `separator = "\t"` gesetzt.
+- **Diagnose-Log verbessert:** RUHE-Log zeigt jetzt auch `raw1=...` (erste Datenzeile escaped), um den Separator in Zukunft direkt am Log zu erkennen.
+
+---
+
 ## 2026-04-13 — backend/Code.gs 4.0.4 (testPhoneActivitySince() Hilfsfunktion)
 
 ### backend/Code.gs 4.0.4
