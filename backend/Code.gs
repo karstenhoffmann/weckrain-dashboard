@@ -1,6 +1,6 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.0.5
+// Version: 4.0.6
 // Last updated: 2026-04-13
 // Source of truth: /VERSIONS.json
 // ============================================================================
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.0.5";
+var CODE_GS_VERSION = "4.0.6";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -481,6 +481,19 @@ function checkPhoneActivity(sid) {
 
       if (response.getResponseCode() === 200) {
         csv = response.getContentText("UTF-8");
+        // Früherkennung: Fritz!Box liefert bei fehlender Berechtigung
+        // HTTP 200 mit einer HTML-Seite statt CSV. Explizit abfangen.
+        if (csv.indexOf("<html") !== -1 || csv.indexOf("<!DOCTYPE") !== -1) {
+          logSystem(
+            "WARNUNG",
+            "Anrufliste: HTTP 200 aber HTML-Antwort statt CSV. " +
+              "Ursache: Benutzer 'monitor_api' hat möglicherweise keine " +
+              "Berechtigung 'Anrufliste und Telefonbuch' in den Fritz!Box-" +
+              "Benutzereinstellungen (System → Fritz!Box-Benutzer). " +
+              "Anfang der Antwort: " + csv.substring(0, 120).replace(/\n/g, "↵"),
+          );
+          return { status: "FEHLER", aktiv: false, sid: sid };
+        }
         break;
       }
 
@@ -613,13 +626,14 @@ function checkPhoneActivity(sid) {
       rejections.push("Z" + (i - dataStart + 1) + ":" + fields[1].trim() + "<=poll");
     }
 
-    var firstRaw = JSON.stringify((lines[dataStart] || "").substring(0, 80));
     logSystem(
       "TEL",
       "RUHE: sep=" + JSON.stringify(separator) +
         " daten=" + (lines.length - dataStart) +
         " lastPoll=" + lastPoll.toISOString().substring(0, 16) +
-        " raw1=" + firstRaw +
+        " L0=" + JSON.stringify((lines[0] || "").substring(0, 40)) +
+        " Lhdr=" + JSON.stringify((lines[1] || "").substring(0, 60)) +
+        " Ld0=" + JSON.stringify((lines[dataStart] || "").substring(0, 60)) +
         (rejections.length > 0
           ? " rej=[" + rejections.slice(0, 10).join(", ") + "]" + (rejections.length > 10 ? "…" : "")
           : " (leere Liste)"),

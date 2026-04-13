@@ -13,6 +13,14 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-13 — backend/Code.gs 4.0.6 (HTML-Detection + erweitertes Diagnose-Log)
+
+### backend/Code.gs 4.0.6
+- **HTML-Erkennung:** Nach HTTP 200 wird der Response-Body auf `<html`/`<!DOCTYPE` geprüft. Wenn die Fritz!Box HTML statt CSV liefert (typisch: fehlende Berechtigung "Anrufliste" für `monitor_api`), wird sofort `WARNUNG` ins Systemlog geschrieben mit dem Anfang der HTML-Antwort und dem Hinweis auf die Fritz!Box-Benutzereinstellungen. Bisher: Code versuchte HTML als CSV zu parsen → alle Zeilen `felder=1`, stilles RUHE.
+- **Diagnose-Log verbessert:** RUHE-Log zeigt jetzt `L0=` (sep-Zeile), `Lhdr=` (Header-Zeile), `Ld0=` (erste Daten-Zeile) — alle escaped. Erlaubt vollständige Strukturanalyse des Responses ohne zusätzliche Deployments.
+
+---
+
 ## 2026-04-13 — backend/Code.gs 4.0.5 (Fix: Tab-Separator in Anrufliste-CSV)
 
 ### backend/Code.gs 4.0.5
