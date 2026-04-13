@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-13 — index.html 1.0.22 (PNG-Dateien committed, OG-Image-Extension fix)
+
+### index.html 1.0.22
+- **App-Icons committed:** `apple-touch-icon.png` (180×180), `icon-192.png` (192×192), `icon-512.png` (256×256) — alle generierten PNG-Icons sind jetzt im Repo
+- **OG-Image committed:** `og-image.jpg` (1200×630 JPEG) — generiertes Link-Preview-Bild ist jetzt im Repo
+- **Fix:** `og:image` und `twitter:image` Meta-Tags korrigiert von `/og-image.png` auf `/og-image.jpg` (tatsächliches Format war JPEG)
+
+---
+
 ## 2026-04-13 — index.html 1.0.21 (Favicon, App-Icons, OG-Image, PWA-Manifest)
 
 ### index.html 1.0.21
