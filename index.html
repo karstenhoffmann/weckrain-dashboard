@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Weckrain Frontend — index.html
-  Version: 1.0.20
+  Version: 1.0.21
   Last updated: 2026-04-10
   Source of truth: /VERSIONS.json
 -->
@@ -10,6 +10,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="robots" content="noindex, nofollow">
+
+  <!-- ── App-Icon & PWA ─────────────────────────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#080e1a">
+  <!-- iOS: Vollbild-App-Modus wenn zum Home-Bildschirm hinzugefügt -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mama Wetter">
+
+  <!-- ── Open Graph (WhatsApp / iMessage / Slack etc.) ─────────────── -->
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="Mama Wetter">
+  <meta property="og:description" content="Wetterstation Weckrain">
+  <meta property="og:image"       content="https://weckrain.derkarsten.de/og-image.png">
+  <meta property="og:url"         content="https://weckrain.derkarsten.de">
+  <meta property="og:site_name"   content="Mama Wetter">
+  <!-- Twitter/X summary card (wird auch von manchen Messengern ausgewertet) -->
+  <meta name="twitter:card"  content="summary_large_image">
+  <meta name="twitter:image" content="https://weckrain.derkarsten.de/og-image.png">
+  <meta name="twitter:title" content="Mama Wetter">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -40,7 +62,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwNSH79BZ48JJ9WuQvO2kXBT3PYZ72NJfZYofaQ8CSOcrjxr6gVu9mwaftNovFf1CO5/exec";
 
     // Frontend-Version — wird im Footer angezeigt. Bei jedem Release mit /VERSIONS.json synchron halten.
-    const FRONTEND_VERSION = "1.0.20";
+    const FRONTEND_VERSION = "1.0.21";
     // ═════════════════════════════════════════════════════════════════════
 
     // ─── RESPONSIVE HOOK ─────────────────────────────────────────────────

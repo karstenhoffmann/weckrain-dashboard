@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 100">
+  <!--
+    OG-Image / Link-Preview für weckrain.derkarsten.de
+    Proportionen: 190×100 ≈ 1.9:1 (entspricht 1200×630 px wenn gerendert)
+    Verwendung: In Browser öffnen → Screenshot bei 1200×630 px speichern als og-image.png
+    Alternativ: Online-Konverter (z.B. cloudconvert.com) SVG → PNG, Zielgröße 1200×630
+  -->
+  <defs>
+    <linearGradient id="sky" x1="0.4" y1="0" x2="0.6" y2="1">
+      <stop offset="0%"   stop-color="#0e1e38"/>
+      <stop offset="60%"  stop-color="#0a1525"/>
+      <stop offset="100%" stop-color="#060c18"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.75" cy="0.55" r="0.4">
+      <stop offset="0%"   stop-color="#243650" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#060c18" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="190" height="100" fill="url(#sky)"/>
+  <!-- Subtle glow behind deer -->
+  <rect width="190" height="100" fill="url(#glow)"/>
+
+  <!-- Stars (scattered) -->
+  <circle cx="8"   cy="6"   r="0.6"  fill="#fff" opacity="0.7"/>
+  <circle cx="22"  cy="3"   r="0.5"  fill="#fff" opacity="0.55"/>
+  <circle cx="40"  cy="8"   r="0.45" fill="#fff" opacity="0.45"/>
+  <circle cx="60"  cy="4"   r="0.55" fill="#fff" opacity="0.6"/>
+  <circle cx="78"  cy="9"   r="0.4"  fill="#fff" opacity="0.4"/>
+  <circle cx="95"  cy="3"   r="0.5"  fill="#fff" opacity="0.5"/>
+  <circle cx="115" cy="7"   r="0.45" fill="#fff" opacity="0.45"/>
+  <circle cx="130" cy="2"   r="0.6"  fill="#fff" opacity="0.65"/>
+  <circle cx="148" cy="6"   r="0.4"  fill="#fff" opacity="0.4"/>
+  <circle cx="162" cy="4"   r="0.5"  fill="#fff" opacity="0.5"/>
+  <circle cx="178" cy="9"   r="0.45" fill="#fff" opacity="0.45"/>
+  <circle cx="5"   cy="20"  r="0.4"  fill="#fff" opacity="0.35"/>
+  <circle cx="185" cy="18"  r="0.4"  fill="#fff" opacity="0.35"/>
+  <circle cx="170" cy="15"  r="0.35" fill="#fff" opacity="0.3"/>
+
+  <!-- Ground strip -->
+  <rect x="0" y="88" width="190" height="12" fill="#060e1a" opacity="0.7"/>
+  <ellipse cx="95" cy="88" rx="90" ry="4" fill="#0a1520" opacity="0.5"/>
+
+  <!-- ── DEER (centered, facing right) ── -->
+  <g transform="translate(68, 12) scale(0.54)">
+
+    <!-- Legs -->
+    <rect x="27" y="66" width="5.5" height="24" rx="2.7" fill="#7a4e2e"/>
+    <rect x="35" y="66" width="5.5" height="24" rx="2.7" fill="#7a4e2e"/>
+    <rect x="52" y="66" width="5.5" height="24" rx="2.7" fill="#7a4e2e"/>
+    <rect x="60" y="66" width="5.5" height="24" rx="2.7" fill="#7a4e2e"/>
+    <ellipse cx="29.5" cy="90" rx="3.2" ry="1.4" fill="#2e1a0a"/>
+    <ellipse cx="37.5" cy="90" rx="3.2" ry="1.4" fill="#2e1a0a"/>
+    <ellipse cx="54.5" cy="90" rx="3.2" ry="1.4" fill="#2e1a0a"/>
+    <ellipse cx="62.5" cy="90" rx="3.2" ry="1.4" fill="#2e1a0a"/>
+
+    <!-- Body -->
+    <ellipse cx="46" cy="58" rx="24" ry="14" fill="#a6724a"/>
+    <ellipse cx="46" cy="67" rx="17" ry="6.5" fill="#f5e6c4" opacity="0.55"/>
+
+    <!-- White tail -->
+    <ellipse cx="19" cy="55" rx="6" ry="9" fill="#fff" opacity="0.88"/>
+
+    <!-- Bambi-Flecken -->
+    <circle cx="37" cy="49" r="2.2" fill="#fff" opacity="0.6"/>
+    <circle cx="47" cy="46" r="1.9" fill="#fff" opacity="0.55"/>
+    <circle cx="57" cy="50" r="1.6" fill="#fff" opacity="0.5"/>
+
+    <!-- Neck -->
+    <path d="M 62,52 Q 66,39 71,36 L 75,39 Q 70,43 67,54 Z" fill="#a6724a"/>
+
+    <!-- Head -->
+    <path d="M 65,22 Q 71,16 80,21 Q 89,26 88,35 Q 87,42 82,43 Q 75,43 71,40 Q 65,35 65,22 Z" fill="#a6724a"/>
+    <ellipse cx="75" cy="34" rx="5" ry="4" fill="#c2875f" opacity="0.42"/>
+
+    <!-- Snout -->
+    <ellipse cx="86" cy="38" rx="5.5" ry="3.8" fill="#c9956b"/>
+    <ellipse cx="88.5" cy="37" rx="1.8" ry="1.4" fill="#111"/>
+    <circle  cx="89.2" cy="36.4" r="0.7" fill="#fff" opacity="0.65"/>
+
+    <!-- Eye -->
+    <circle cx="73" cy="26" r="3.5" fill="#111"/>
+    <circle cx="74.2" cy="24.9" r="1.2" fill="#fff"/>
+
+    <!-- Ears -->
+    <ellipse cx="66"   cy="16"   rx="4"   ry="9.5"  fill="#8b5a3c" transform="rotate(-10,66,16)"/>
+    <ellipse cx="68.5" cy="14"   rx="5.5" ry="11.5" fill="#a6724a"  transform="rotate(-7,68.5,14)"/>
+    <ellipse cx="68.5" cy="15"   rx="3.3" ry="7.8"  fill="#d48858"  opacity="0.82" transform="rotate(-7,68.5,15)"/>
+  </g>
+
+  <!-- App name (subtle, unten rechts) -->
+  <text x="183" y="96" textAnchor="end" fontSize="6" fill="#4a6080" opacity="0.7"
+        fontFamily="Georgia, 'Times New Roman', serif" letterSpacing="1.5">MAMA WETTER</text>
+</svg>

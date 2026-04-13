@@ -13,6 +13,25 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-13 — index.html 1.0.21 (Favicon, App-Icons, OG-Image, PWA-Manifest)
+
+### index.html 1.0.21
+- **Favicon:** `<link rel="icon" type="image/svg+xml" href="/favicon.svg">` — funktioniert sofort in allen modernen Browsern (Browser-Tab, Bookmark).
+- **Apple Touch Icon + PWA:** `<link rel="apple-touch-icon">` + `<link rel="manifest">` — Infrastruktur steht, PNG-Dateien noch ausstehend.
+- **Theme Color + iOS-PWA-Modus:** sauberes Vollbild wenn "Zum Home-Bildschirm hinzufügen".
+- **Open Graph + Twitter Card:** WhatsApp/iMessage/Slack Link-Previews via `og:image`. PNG noch ausstehend.
+- **Bump-Typ: MINOR (1.0.20 → 1.0.21)** — neue Meta-Infrastruktur.
+
+### Neue Asset-Dateien
+- `favicon.svg` — SVG-Reh-Icon (100×100 viewBox, Nacht-Gradient + Reh). Sofort als Browser-Favicon aktiv.
+- `og-image.svg` — Quell-SVG für OG-Image (190×100 ≈ 1200×630). Muss noch als `og-image.png` exportiert werden.
+- `manifest.json` — PWA-Manifest. Verweist auf `icon-192.png` / `icon-512.png` (noch nicht committed).
+
+### Noch ausstehend
+PNG-Dateien: `apple-touch-icon.png` (180×180), `icon-192.png`, `icon-512.png` (512×512), `og-image.png` (1200×630). Quell-SVGs im Repo. Konvertierung: cloudconvert.com oder AI-Bildgenerierung.
+
+---
+
 ## 2026-04-10 — index.html 1.0.20 (Reh schlafend: Atemzug, Kopf-Neigung, Z-Bubbles)
 
 ### index.html 1.0.20
