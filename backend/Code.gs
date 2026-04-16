@@ -1,6 +1,6 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.2.0
+// Version: 4.2.1
 // Last updated: 2026-04-16
 // Source of truth: /VERSIONS.json
 // ============================================================================
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.2.0";
+var CODE_GS_VERSION = "4.2.1";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -1537,41 +1537,49 @@ function setupTracking() {
 
   // ── Visits: Header ──
   var visits = ss.getSheetByName("Visits");
-  if (visits && visits.getLastRow() === 0) {
-    visits.appendRow([
-      "Zeitpunkt", "device_id", "person_label", "fingerprint",
-      "device_type", "os", "os_version", "browser", "browser_version",
-      "screen_w", "screen_h", "dpr",
-      "city", "region", "country", "isp",
-      "mode", "app_version", "ua_raw"
-    ]);
+  if (visits) {
+    var visitsHeader = visits.getLastRow() > 0 ? String(visits.getRange(1, 1).getValue()) : "";
+    if (visitsHeader !== "Zeitpunkt") {
+      visits.insertRowBefore(1);
+      visits.getRange(1, 1, 1, 19).setValues([[
+        "Zeitpunkt", "device_id", "person_label", "fingerprint",
+        "device_type", "os", "os_version", "browser", "browser_version",
+        "screen_w", "screen_h", "dpr",
+        "city", "region", "country", "isp",
+        "mode", "app_version", "ua_raw"
+      ]]);
+      Logger.log("Visits: Header angelegt.");
+    } else {
+      Logger.log("Visits: Header bereits vorhanden, übersprungen.");
+    }
     visits.getRange(1, 1, 1, 19)
       .setFontWeight("bold")
       .setBackground("#1a2a3a")
       .setFontColor("#ffffff");
     visits.getRange("A:A").setNumberFormat("dd.MM.yyyy HH:mm:ss");
     visits.setFrozenRows(1);
-    Logger.log("Visits: Header angelegt.");
-  } else {
-    Logger.log("Visits: Bereits befüllt, übersprungen.");
   }
 
   // ── Mapping: Header ──
   var mapping = ss.getSheetByName("Mapping");
-  if (mapping && mapping.getLastRow() === 0) {
-    mapping.appendRow([
-      "device_id", "fingerprint", "label",
-      "device_description", "first_seen", "last_seen", "notes"
-    ]);
+  if (mapping) {
+    var mappingHeader = mapping.getLastRow() > 0 ? String(mapping.getRange(1, 1).getValue()) : "";
+    if (mappingHeader !== "device_id") {
+      mapping.insertRowBefore(1);
+      mapping.getRange(1, 1, 1, 7).setValues([[
+        "device_id", "fingerprint", "label",
+        "device_description", "first_seen", "last_seen", "notes"
+      ]]);
+      Logger.log("Mapping: Header angelegt.");
+    } else {
+      Logger.log("Mapping: Header bereits vorhanden, übersprungen.");
+    }
     mapping.getRange(1, 1, 1, 7)
       .setFontWeight("bold")
       .setBackground("#1a2a3a")
       .setFontColor("#ffffff");
     mapping.getRange("E:F").setNumberFormat("dd.MM.yyyy HH:mm");
     mapping.setFrozenRows(1);
-    Logger.log("Mapping: Header angelegt.");
-  } else {
-    Logger.log("Mapping: Bereits befüllt, übersprungen.");
   }
 
   // ── Dashboard: KPI-Formeln ──

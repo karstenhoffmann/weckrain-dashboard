@@ -13,6 +13,13 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-16 — backend/Code.gs 4.2.1 (fix setupTracking: Header auch nachträglich einfügen)
+
+### backend/Code.gs 4.2.1
+- **Fix `setupTracking()`:** Header-Zeilen werden jetzt per `insertRowBefore(1)` oben eingefügt, wenn Row 1 noch keine Überschriften enthält. Bisher: nur bei komplett leerem Tab. Damit funktioniert der Aufruf auch wenn bereits Tracking-Daten vorhanden sind (z.B. weil erster Besuch vor dem Setup-Aufruf einging).
+
+---
+
 ## 2026-04-16 — Besucher-Tracking (index.html 1.1.0 + backend/Code.gs 4.2.0)
 
 ### index.html 1.1.0
