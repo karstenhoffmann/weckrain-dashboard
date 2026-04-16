@@ -1,6 +1,6 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.2.1
+// Version: 4.3.0
 // Last updated: 2026-04-16
 // Source of truth: /VERSIONS.json
 // ============================================================================
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.2.1";
+var CODE_GS_VERSION = "4.3.0";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -1406,8 +1406,11 @@ function _archiveTab(ss, sourceName, archiveName, liveDays) {
 
 /**
  * Empfängt Tracking-Daten vom Frontend und schreibt sie in den Visits-Tab.
- * Prüft ob das Gerät bekannt ist (Mapping-Tab). Bei unbekanntem Gerät:
- * Email-Benachrichtigung an Karsten + neuer Eintrag im Mapping-Tab.
+ * Identifikations-Logik (in dieser Reihenfolge):
+ *   1. Exakter device_id-Match in Mapping → bekanntes Gerät
+ *   2. Fingerprint-Match in Mapping (ITP-Clear-Fall) → Gerät wird still wiedererkannt,
+ *      device_id wird auf die neue UUID aktualisiert, keine Email
+ *   3. Kein Match → neue Mapping-Zeile, Email an Karsten mit Region/Fingerprint-Hints
  * Nur aufgerufen nach erfolgreichem Passwort-Check in doGet().
  */
 function handleVisitLog(params) {
@@ -1425,40 +1428,55 @@ function handleVisitLog(params) {
     var fingerprint = String(params.fingerprint || "").trim();
     var now = new Date();
 
-    // Mapping prüfen: Gerät bekannt?
-    var personLabel = "?";
-    var deviceFound = false;
+    var mappingData = mappingSheet.getDataRange().getValues();
+    var matchedRow = -1;
+    var matchedByFingerprint = false;
+
+    // 1. Exakter device_id-Match
     if (deviceId) {
-      var mappingData = mappingSheet.getDataRange().getValues();
       for (var i = 1; i < mappingData.length; i++) {
         if (String(mappingData[i][0]).trim() === deviceId) {
-          personLabel = String(mappingData[i][2]).trim() || "?";
-          deviceFound = true;
-          mappingSheet.getRange(i + 1, 6).setValue(now); // Spalte F = last_seen
+          matchedRow = i;
           break;
         }
       }
     }
 
-    // Unbekanntes Gerät: in Mapping eintragen + Email senden
-    if (!deviceFound && deviceId) {
+    // 2. Fingerprint-Match (ITP-Clear-Fall)
+    if (matchedRow === -1 && fingerprint) {
+      for (var j = 1; j < mappingData.length; j++) {
+        if (String(mappingData[j][1]).trim() === fingerprint) {
+          matchedRow = j;
+          matchedByFingerprint = true;
+          // device_id auf neue UUID aktualisieren (alte ist tot)
+          mappingSheet.getRange(j + 1, 1).setValue(deviceId);
+          break;
+        }
+      }
+    }
+
+    if (matchedRow !== -1) {
+      // Letzten Besuch aktualisieren (Spalte F)
+      mappingSheet.getRange(matchedRow + 1, 6).setValue(now);
+    } else if (deviceId) {
+      // 3. Komplett neues Gerät — anlegen + Email
       mappingSheet.appendRow([
         deviceId,
         fingerprint,
-        "",   // label — Karsten trägt manuell ein
-        "",   // device_description
-        now,  // first_seen
-        now,  // last_seen
-        ""    // notes
+        "",   // Person — Karsten trägt via Dropdown ein
+        "",   // Gerät (Beschreibung, optional)
+        now,  // Erstkontakt
+        now,  // Letzter Besuch
+        ""    // Notizen
       ]);
       _sendNewDeviceEmail(params, deviceId, now, ss);
     }
 
-    // Zeile in Visits schreiben
+    // Zeile in Visits schreiben (person_label bleibt leer — Dashboard rechnet per VLOOKUP)
     visitsSheet.appendRow([
       now,
       deviceId,
-      personLabel,
+      "",   // person_label (legacy — nicht mehr gefüllt, Dashboard nutzt VLOOKUP)
       fingerprint,
       String(params.device_type || ""),
       String(params.os || ""),
@@ -1477,8 +1495,9 @@ function handleVisitLog(params) {
       String(params.ua_raw || "").substring(0, 500)
     ]);
 
-    return ContentService.createTextOutput("ok")
-      .setMimeType(ContentService.MimeType.TEXT);
+    return ContentService.createTextOutput(
+      matchedByFingerprint ? "ok (fingerprint-match)" : (matchedRow !== -1 ? "ok" : "ok (new)")
+    ).setMimeType(ContentService.MimeType.TEXT);
   } catch (e) {
     Logger.log("handleVisitLog Fehler: " + e.message);
     return ContentService.createTextOutput("error")
@@ -1487,7 +1506,8 @@ function handleVisitLog(params) {
 }
 
 /**
- * Sendet eine Email an Karsten wenn ein unbekanntes Gerät das Dashboard öffnet.
+ * Sendet eine Email an Karsten wenn ein komplett unbekanntes Gerät das Dashboard öffnet.
+ * Enthält Personen-Vorschläge basierend auf Region-Übereinstimmung.
  */
 function _sendNewDeviceEmail(params, deviceId, now, ss) {
   try {
@@ -1498,10 +1518,22 @@ function _sendNewDeviceEmail(params, deviceId, now, ss) {
     var browserVersion = String(params.browser_version || "");
     var city = String(params.city || "?");
     var region = String(params.region || "");
+    var country = String(params.country || "");
     var isp = String(params.isp || "?");
     var screenW = String(params.screen_w || "?");
     var screenH = String(params.screen_h || "?");
     var dpr = String(params.dpr || "1");
+
+    // Personen-Vorschläge nach Region
+    var suggestions = _suggestPersonsByRegion(ss, city, region);
+    var suggestionText;
+    if (suggestions.length === 0) {
+      suggestionText = "— keine Region-Übereinstimmung, bitte manuell zuordnen";
+    } else {
+      suggestionText = suggestions.map(function(s) {
+        return "  • " + s.id + " (" + s.name + ") — wohnt in " + s.region;
+      }).join("\n");
+    }
 
     var mappingUrl = ss.getUrl() + "#gid=317237356";
     var zeitpunkt = Utilities.formatDate(now, "Europe/Berlin", "dd.MM.yyyy, HH:mm") + " Uhr";
@@ -1512,9 +1544,11 @@ function _sendNewDeviceEmail(params, deviceId, now, ss) {
       "Gerät:        " + deviceType + " · " + os + (osVersion ? " " + osVersion : "") +
         " · " + browser + (browserVersion ? " " + browserVersion : "") + "\n" +
       "Bildschirm:   " + screenW + "×" + screenH + " (" + dpr + "×)\n" +
-      "Ort:          " + city + (region ? ", " + region : "") + " · " + isp + "\n" +
-      "device_id:    " + deviceId + "\n\n" +
-      "→ Bitte in der Mapping-Tabelle zuordnen:\n" +
+      "Ort:          " + city + (region ? ", " + region : "") +
+        (country ? " · " + country : "") + " · " + isp + "\n\n" +
+      "Wahrscheinliche Person(en):\n" +
+      suggestionText + "\n\n" +
+      "→ Im Mapping-Tab in der Spalte 'Person' die passende id aus dem Dropdown wählen:\n" +
       mappingUrl;
 
     MailApp.sendEmail({
@@ -1528,12 +1562,91 @@ function _sendNewDeviceEmail(params, deviceId, now, ss) {
 }
 
 /**
+ * Sucht Personen-Kandidaten anhand Region/Stadt-Übereinstimmung.
+ * Matching-Strategie: Stadt oder Region kommt als Substring in Personen.Region vor
+ * (oder umgekehrt). Großschreibung ignoriert.
+ */
+function _suggestPersonsByRegion(ss, city, region) {
+  var personsSheet = ss.getSheetByName("Personen");
+  if (!personsSheet) return [];
+  var data = personsSheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+
+  var needle = ((city || "") + " " + (region || "")).toLowerCase();
+  var matches = [];
+  for (var i = 1; i < data.length; i++) {
+    var id = String(data[i][0] || "").trim();
+    var name = String(data[i][1] || "").trim();
+    var personRegion = String(data[i][2] || "").trim();
+    var isAdmin = String(data[i][3] || "").trim().toLowerCase() === "ja";
+    if (!id || !name || isAdmin) continue;
+
+    var haystack = personRegion.toLowerCase();
+    if (!haystack) continue;
+
+    // Einzelne Wörter aus Personen.Region gegen Visit-Ort testen
+    var tokens = haystack.split(/[\s,()]+/).filter(function(t) { return t.length >= 3; });
+    var hit = tokens.some(function(t) { return needle.indexOf(t) !== -1; });
+    if (hit) matches.push({ id: id, name: name, region: personRegion });
+  }
+  return matches;
+}
+
+/**
  * EINMALIG AUSFÜHREN im GAS-Editor: Richtet die Tracking-Sheets ein.
- * Fügt Header-Zeilen in Visits und Mapping ein (nur wenn noch leer),
- * und baut den Dashboard-Tab mit KPI-Formeln auf.
+ * Idempotent — mehrfaches Ausführen ist sicher.
+ *
+ * Tabs:
+ *   • Personen  → Stammdaten (id, Name, Region, Admin, Notizen). Einziger Ort,
+ *                 an dem Namen gepflegt werden. Änderungen propagieren automatisch
+ *                 via VLOOKUP ins Dashboard.
+ *   • Mapping   → device_id + fingerprint → Person-id (Dropdown auf Personen.id).
+ *   • Visits    → Fakten-Tab. Kein person_label mehr (Legacy-Spalte bleibt leer).
+ *   • Dashboard → Personen-Übersicht via VLOOKUP-Chain (Visits → Mapping → Personen).
  */
 function setupTracking() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // ── Personen: Stammdaten ──
+  var persons = ss.getSheetByName("Personen");
+  if (!persons) {
+    persons = ss.insertSheet("Personen");
+  }
+  var personsHeader = persons.getLastRow() > 0 ? String(persons.getRange(1, 1).getValue()) : "";
+  if (personsHeader !== "id") {
+    persons.insertRowBefore(1);
+    persons.getRange(1, 1, 1, 5).setValues([[
+      "id", "Name", "Region", "Admin", "Notizen"
+    ]]);
+    Logger.log("Personen: Header angelegt.");
+  }
+  // Initialdaten nur einfügen, wenn Tab (außer Header) leer ist
+  if (persons.getLastRow() < 2) {
+    persons.getRange(2, 1, 5, 5).setValues([
+      ["karsten", "Karsten", "München",                "ja",   "Admin-Gerät, taucht nicht in Auswertungen auf"],
+      ["mama",    "Mama",    "Künzelsau",              "nein", "schaut das Dashboard selbst gerne an"],
+      ["britta",  "Britta",  "Langenau (BW, bei Ulm)", "nein", ""],
+      ["sandra",  "Sandra",  "Augsburg",               "nein", ""],
+      ["felix",   "Felix",   "Augsburg",               "nein", "Sandras Partner"]
+    ]);
+    Logger.log("Personen: Initialdaten (5 Zeilen) eingefügt.");
+  }
+  persons.getRange(1, 1, 1, 5)
+    .setFontWeight("bold")
+    .setBackground("#1a2a3a")
+    .setFontColor("#ffffff");
+  persons.setFrozenRows(1);
+  persons.setColumnWidth(1, 110);
+  persons.setColumnWidth(2, 130);
+  persons.setColumnWidth(3, 220);
+  persons.setColumnWidth(4, 70);
+  persons.setColumnWidth(5, 320);
+  // Dropdown auf Admin-Spalte
+  var adminRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(["ja", "nein"], true)
+    .setAllowInvalid(false)
+    .build();
+  persons.getRange(2, 4, Math.max(persons.getMaxRows() - 1, 1), 1).setDataValidation(adminRule);
 
   // ── Visits: Header ──
   var visits = ss.getSheetByName("Visits");
@@ -1549,8 +1662,6 @@ function setupTracking() {
         "mode", "app_version", "ua_raw"
       ]]);
       Logger.log("Visits: Header angelegt.");
-    } else {
-      Logger.log("Visits: Header bereits vorhanden, übersprungen.");
     }
     visits.getRange(1, 1, 1, 19)
       .setFontWeight("bold")
@@ -1560,71 +1671,114 @@ function setupTracking() {
     visits.setFrozenRows(1);
   }
 
-  // ── Mapping: Header ──
+  // ── Mapping: Header + Dropdown auf "Person" (Personen.id) ──
   var mapping = ss.getSheetByName("Mapping");
   if (mapping) {
     var mappingHeader = mapping.getLastRow() > 0 ? String(mapping.getRange(1, 1).getValue()) : "";
     if (mappingHeader !== "device_id") {
       mapping.insertRowBefore(1);
-      mapping.getRange(1, 1, 1, 7).setValues([[
-        "device_id", "fingerprint", "label",
-        "device_description", "first_seen", "last_seen", "notes"
-      ]]);
-      Logger.log("Mapping: Header angelegt.");
-    } else {
-      Logger.log("Mapping: Header bereits vorhanden, übersprungen.");
     }
+    // Header immer überschreiben (Migration von "label" → "Person" etc.)
+    mapping.getRange(1, 1, 1, 7).setValues([[
+      "device_id", "fingerprint", "Person",
+      "Gerät", "Erstkontakt", "Letzter Besuch", "Notizen"
+    ]]);
     mapping.getRange(1, 1, 1, 7)
       .setFontWeight("bold")
       .setBackground("#1a2a3a")
       .setFontColor("#ffffff");
     mapping.getRange("E:F").setNumberFormat("dd.MM.yyyy HH:mm");
     mapping.setFrozenRows(1);
+    mapping.setColumnWidth(1, 280);
+    mapping.setColumnWidth(2, 130);
+    mapping.setColumnWidth(3, 110);
+    mapping.setColumnWidth(4, 220);
+    mapping.setColumnWidth(5, 140);
+    mapping.setColumnWidth(6, 140);
+    mapping.setColumnWidth(7, 280);
+
+    // Dropdown auf Person-Spalte → Personen.A2:A (alle ids)
+    var personRule = SpreadsheetApp.newDataValidation()
+      .requireValueInRange(persons.getRange("A2:A"), true)
+      .setAllowInvalid(false)
+      .setHelpText("Person aus dem Dropdown wählen. Falls keine passt, erst im Personen-Tab anlegen.")
+      .build();
+    mapping.getRange(2, 3, Math.max(mapping.getMaxRows() - 1, 1), 1).setDataValidation(personRule);
+    Logger.log("Mapping: Header + Dropdown gesetzt.");
   }
 
-  // ── Dashboard: KPI-Formeln ──
+  // ── Dashboard: Personen-orientiert via VLOOKUP-Chain ──
   var dash = ss.getSheetByName("Dashboard");
   if (dash) {
     dash.clearContents();
+    dash.clearFormats();
 
     dash.getRange("A1").setValue("WECKRAIN BESUCHER — DASHBOARD");
     dash.getRange("A1").setFontSize(14).setFontWeight("bold");
 
+    // Kennzahlen
     dash.getRange("A3").setValue("KENNZAHLEN").setFontWeight("bold");
     dash.getRange("A4").setValue("Besuche gesamt");
-    dash.getRange("B4").setFormula("=COUNTA(Visits!A:A)-1");
+    dash.getRange("B4").setFormula("=MAX(0, COUNTA(Visits!A2:A))");
     dash.getRange("A5").setValue("Letzte 7 Tage");
-    dash.getRange("B5").setFormula("=COUNTIFS(Visits!A:A,\">=\"&(TODAY()-7),Visits!A:A,\"<=\"&TODAY())");
+    dash.getRange("B5").setFormula("=COUNTIFS(Visits!A2:A,\">=\"&(TODAY()-7))");
     dash.getRange("A6").setValue("Heute");
-    dash.getRange("B6").setFormula("=COUNTIFS(Visits!A:A,\">=\"&TODAY())");
+    dash.getRange("B6").setFormula("=COUNTIFS(Visits!A2:A,\">=\"&TODAY())");
     dash.getRange("A7").setValue("Unique Geräte");
     dash.getRange("B7").setFormula("=IFERROR(COUNTUNIQUE(Visits!B2:B),0)");
-    dash.getRange("A8").setValue("Ohne Zuordnung");
-    dash.getRange("B8").setFormula("=COUNTIF(Visits!C:C,\"?\")");
-    dash.getRange("B8").setFontColor("#cc4444"); // rot wenn >0 — visueller Hinweis
+    dash.getRange("A8").setValue("Unzugeordnete Geräte");
+    dash.getRange("B8").setFormula(
+      "=MAX(0, COUNTA(Mapping!A2:A) - COUNTA(Mapping!C2:C))"
+    );
+    dash.getRange("B8").setFontColor("#cc4444"); // rot wenn >0 — Hinweis auf manuelle Zuordnung
 
+    // Pro Person (über VLOOKUP-Chain: Visits.device_id → Mapping.Person → Personen.Name)
+    // Admin-Personen (Karsten) werden gefiltert via WHERE Admin <> 'ja'
     dash.getRange("A10").setValue("PRO PERSON").setFontWeight("bold");
     dash.getRange("A11").setFormula(
-      "=IFERROR(QUERY(Visits!A:C," +
-      "\"SELECT C, COUNT(A), MAX(A) WHERE C <> '' AND C <> '?' " +
-      "GROUP BY C ORDER BY COUNT(A) DESC " +
-      "LABEL C 'Person', COUNT(A) 'Besuche', MAX(A) 'Zuletzt gesehen'\"" +
-      ",1),\"– noch keine gelabelten Besucher –\")"
+      "=IFERROR(QUERY(" +
+      "{Visits!A2:A, " +
+      " ARRAYFORMULA(IFERROR(VLOOKUP(VLOOKUP(Visits!B2:B, Mapping!A:C, 3, FALSE), Personen!A:B, 2, FALSE), \"\")), " +
+      " ARRAYFORMULA(IFERROR(VLOOKUP(VLOOKUP(Visits!B2:B, Mapping!A:C, 3, FALSE), Personen!A:D, 4, FALSE), \"\"))}," +
+      "\"SELECT Col2, COUNT(Col1), MAX(Col1) " +
+      "WHERE Col2 <> '' AND LOWER(Col3) <> 'ja' " +
+      "GROUP BY Col2 ORDER BY COUNT(Col1) DESC " +
+      "LABEL Col2 'Person', COUNT(Col1) 'Besuche', MAX(Col1) 'Zuletzt gesehen'\", 0)," +
+      "\"– noch keine zugeordneten Besuche –\")"
     );
 
-    dash.getRange("A21").setValue("LETZTE 10 BESUCHE").setFontWeight("bold");
-    dash.getRange("A22").setFormula(
-      "=IFERROR(QUERY(Visits!A:R," +
-      "\"SELECT A, C, E, F, H, M, P, R ORDER BY A DESC LIMIT 10\"" +
-      ",1),\"Noch keine Daten\")"
+    // Letzte Besuche mit aufgelöstem Namen
+    dash.getRange("A22").setValue("LETZTE 15 BESUCHE").setFontWeight("bold");
+    dash.getRange("A23").setFormula(
+      "=IFERROR(QUERY(" +
+      "{Visits!A2:P, " +
+      " ARRAYFORMULA(IFERROR(VLOOKUP(VLOOKUP(Visits!B2:B, Mapping!A:C, 3, FALSE), Personen!A:B, 2, FALSE), \"?\"))}," +
+      "\"SELECT Col17, Col1, Col5, Col6, Col8, Col13, Col14 " +
+      "WHERE Col1 IS NOT NULL " +
+      "ORDER BY Col1 DESC LIMIT 15 " +
+      "LABEL Col17 'Person', Col1 'Zeitpunkt', Col5 'Typ', Col6 'OS', Col8 'Browser', Col13 'Stadt', Col14 'Region'\", 0)," +
+      "\"Noch keine Daten\")"
     );
 
-    dash.getRange("A34").setValue("UNBEKANNTE GERÄTE (kein Label)").setFontWeight("bold");
-    dash.getRange("A35").setFormula(
-      "=IFERROR(QUERY(Visits!A:F," +
-      "\"SELECT A, B, E, F WHERE C = '?' ORDER BY A DESC LIMIT 20\"" +
-      ",1),\"\")"
+    // Unzugeordnete Geräte (Mapping ohne Person)
+    dash.getRange("A41").setValue("UNZUGEORDNETE GERÄTE").setFontWeight("bold");
+    dash.getRange("A42").setValue("→ Im Mapping-Tab in Spalte 'Person' eine id aus dem Dropdown wählen.")
+      .setFontColor("#666666").setFontStyle("italic");
+    dash.getRange("A43").setFormula(
+      "=IFERROR(QUERY(Mapping!A:G," +
+      "\"SELECT A, F, D, G WHERE C = '' OR C IS NULL " +
+      "ORDER BY F DESC " +
+      "LABEL A 'device_id', F 'Letzter Besuch', D 'Gerät', G 'Notizen'\", 1)," +
+      "\"– alle bekannten Geräte zugeordnet –\")"
     );
+
+    dash.setColumnWidth(1, 180);
+    dash.setColumnWidth(2, 160);
+    dash.setColumnWidth(3, 120);
+    dash.setColumnWidth(4, 140);
+    dash.setColumnWidth(5, 140);
+    dash.setColumnWidth(6, 140);
+    dash.setColumnWidth(7, 160);
 
     Logger.log("Dashboard: Formeln eingerichtet.");
   }

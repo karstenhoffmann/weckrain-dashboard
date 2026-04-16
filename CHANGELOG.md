@@ -13,6 +13,21 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-16 — backend/Code.gs 4.3.0 (Personen-Stammdaten + Fingerprint-Fallback + Dashboard-Refactor)
+
+### backend/Code.gs 4.3.0
+- **Neu: `Personen`-Tab als Stammdaten-Quelle** — `id | Name | Region | Admin | Notizen`. Einziger Ort, an dem Namen gepflegt werden. Änderungen (z.B. Umbenennung, neue Person) propagieren automatisch via VLOOKUP ins Dashboard, ohne Fehler oder manuelle Nacharbeit.
+- **Initial-Datensatz (5 Personen):** Karsten (München, Admin=ja), Mama (Künzelsau), Britta (Langenau/BW bei Ulm), Sandra (Augsburg), Felix (Augsburg, Sandras Partner). Admin-Personen tauchen nicht in Auswertungen auf.
+- **Mapping-Tab umstrukturiert:** Spalte `label` → `Person` mit Dropdown-Validation auf `Personen!A:A`. Spalten umbenannt auf Deutsch (Gerät, Erstkontakt, Letzter Besuch, Notizen). Datenmigration: Spalten-Positionen unverändert, nur Header + Validation neu.
+- **Fingerprint-Fallback in `handleVisitLog()`:** Wenn `device_id` nicht gefunden wird (iOS ITP hat localStorage geleert), wird per Fingerprint-Match das gleiche Gerät erkannt, Mapping-Zeile behalten, nur die `device_id` aktualisiert. Keine Doppel-Email, keine erneute Zuordnung.
+- **`_sendNewDeviceEmail()` erweitert:** Region-basierte Personen-Vorschläge (neuer Helper `_suggestPersonsByRegion`). Email schlägt passende Personen vor statt leerer Zuordnung.
+- **Dashboard komplett neu:** Personen-Übersicht via VLOOKUP-Chain (Visits.device_id → Mapping.Person → Personen.Name). Letzte 15 Besuche mit aufgelöstem Namen. Unzugeordnete Geräte direkt aus Mapping mit konkretem Action-Hinweis. Admin-Personen ausgeblendet.
+- **`person_label`-Spalte in Visits** wird nicht mehr gefüllt (Legacy, bleibt für Archiv-Kompatibilität). Die Auflösung passiert live im Dashboard per VLOOKUP — so propagieren Umbenennungen rückwirkend auf alle Besuche.
+- **`setupTracking()` idempotent + migrationsfähig:** Mehrfaches Ausführen ist sicher. Header werden überschrieben, Initialdaten nur bei leerem Tab eingefügt, Dropdowns neu gesetzt.
+- **Bump-Typ: MINOR (4.2.1 → 4.3.0)** — neue Personen-Struktur ist additiv. Bestehende Mapping-Daten bleiben gültig (Spalten-Positionen unverändert). Rückwärtskompatibel zur JSON-API und Sensor-Logik.
+
+---
+
 ## 2026-04-16 — index.html 1.1.1 (fix Tracking: visibilitychange + 4h-Cooldown)
 
 ### index.html 1.1.1
