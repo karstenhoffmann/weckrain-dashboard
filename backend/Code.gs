@@ -1,7 +1,7 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.1.0
-// Last updated: 2026-04-15
+// Version: 4.2.0
+// Last updated: 2026-04-16
 // Source of truth: /VERSIONS.json
 // ============================================================================
 // Fritz!Box Aktivitätsüberwachung via Google Apps Script
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.1.0";
+var CODE_GS_VERSION = "4.2.0";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -1088,6 +1088,11 @@ function doGet(e) {
   }
 
   if (configPw && pw !== configPw) {
+    // API-Aufrufe bekommen einen einfachen Text-Fehler, kein HTML
+    if (e && e.parameter && e.parameter.action === "log") {
+      return ContentService.createTextOutput("unauthorized")
+        .setMimeType(ContentService.MimeType.TEXT);
+    }
     var wrongPw = pw !== "";
     var appUrl = ScriptApp.getService().getUrl();
     return HtmlService.createHtmlOutput(
@@ -1118,6 +1123,11 @@ function doGet(e) {
         '<button type="submit">Öffnen</button>' +
         "</form></body></html>",
     ).setTitle("74653 Wetter");
+  }
+
+  // Besucher-Tracking
+  if (e && e.parameter && e.parameter.action === "log") {
+    return handleVisitLog(e.parameter);
   }
 
   // JSON-API Modus
@@ -1390,4 +1400,226 @@ function _archiveTab(ss, sourceName, archiveName, liveDays) {
   source.deleteRows(2, archiveCount);
 
   return archiveCount;
+}
+
+// ─── BESUCHER-TRACKING ──────────────────────────────────────────────────────
+
+/**
+ * Empfängt Tracking-Daten vom Frontend und schreibt sie in den Visits-Tab.
+ * Prüft ob das Gerät bekannt ist (Mapping-Tab). Bei unbekanntem Gerät:
+ * Email-Benachrichtigung an Karsten + neuer Eintrag im Mapping-Tab.
+ * Nur aufgerufen nach erfolgreichem Passwort-Check in doGet().
+ */
+function handleVisitLog(params) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var visitsSheet = ss.getSheetByName("Visits");
+    var mappingSheet = ss.getSheetByName("Mapping");
+
+    if (!visitsSheet || !mappingSheet) {
+      return ContentService.createTextOutput("sheets not found")
+        .setMimeType(ContentService.MimeType.TEXT);
+    }
+
+    var deviceId = String(params.device_id || "").trim();
+    var fingerprint = String(params.fingerprint || "").trim();
+    var now = new Date();
+
+    // Mapping prüfen: Gerät bekannt?
+    var personLabel = "?";
+    var deviceFound = false;
+    if (deviceId) {
+      var mappingData = mappingSheet.getDataRange().getValues();
+      for (var i = 1; i < mappingData.length; i++) {
+        if (String(mappingData[i][0]).trim() === deviceId) {
+          personLabel = String(mappingData[i][2]).trim() || "?";
+          deviceFound = true;
+          mappingSheet.getRange(i + 1, 6).setValue(now); // Spalte F = last_seen
+          break;
+        }
+      }
+    }
+
+    // Unbekanntes Gerät: in Mapping eintragen + Email senden
+    if (!deviceFound && deviceId) {
+      mappingSheet.appendRow([
+        deviceId,
+        fingerprint,
+        "",   // label — Karsten trägt manuell ein
+        "",   // device_description
+        now,  // first_seen
+        now,  // last_seen
+        ""    // notes
+      ]);
+      _sendNewDeviceEmail(params, deviceId, now, ss);
+    }
+
+    // Zeile in Visits schreiben
+    visitsSheet.appendRow([
+      now,
+      deviceId,
+      personLabel,
+      fingerprint,
+      String(params.device_type || ""),
+      String(params.os || ""),
+      String(params.os_version || ""),
+      String(params.browser || ""),
+      String(params.browser_version || ""),
+      parseInt(params.screen_w || 0, 10),
+      parseInt(params.screen_h || 0, 10),
+      parseFloat(params.dpr || 1),
+      String(params.city || ""),
+      String(params.region || ""),
+      String(params.country || ""),
+      String(params.isp || ""),
+      String(params.mode || ""),
+      String(params.app_version || ""),
+      String(params.ua_raw || "").substring(0, 500)
+    ]);
+
+    return ContentService.createTextOutput("ok")
+      .setMimeType(ContentService.MimeType.TEXT);
+  } catch (e) {
+    Logger.log("handleVisitLog Fehler: " + e.message);
+    return ContentService.createTextOutput("error")
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+/**
+ * Sendet eine Email an Karsten wenn ein unbekanntes Gerät das Dashboard öffnet.
+ */
+function _sendNewDeviceEmail(params, deviceId, now, ss) {
+  try {
+    var deviceType = String(params.device_type || "?");
+    var os = String(params.os || "?");
+    var osVersion = String(params.os_version || "");
+    var browser = String(params.browser || "?");
+    var browserVersion = String(params.browser_version || "");
+    var city = String(params.city || "?");
+    var region = String(params.region || "");
+    var isp = String(params.isp || "?");
+    var screenW = String(params.screen_w || "?");
+    var screenH = String(params.screen_h || "?");
+    var dpr = String(params.dpr || "1");
+
+    var mappingUrl = ss.getUrl() + "#gid=317237356";
+    var zeitpunkt = Utilities.formatDate(now, "Europe/Berlin", "dd.MM.yyyy, HH:mm") + " Uhr";
+
+    var body =
+      "Ein neues Gerät hat das Weckrain-Dashboard geöffnet.\n\n" +
+      "Zeitpunkt:    " + zeitpunkt + "\n" +
+      "Gerät:        " + deviceType + " · " + os + (osVersion ? " " + osVersion : "") +
+        " · " + browser + (browserVersion ? " " + browserVersion : "") + "\n" +
+      "Bildschirm:   " + screenW + "×" + screenH + " (" + dpr + "×)\n" +
+      "Ort:          " + city + (region ? ", " + region : "") + " · " + isp + "\n" +
+      "device_id:    " + deviceId + "\n\n" +
+      "→ Bitte in der Mapping-Tabelle zuordnen:\n" +
+      mappingUrl;
+
+    MailApp.sendEmail({
+      to: "karsten.hoffmann@gmail.com",
+      subject: "Neue:r Reh-Besucher:in!",
+      body: body
+    });
+  } catch (e) {
+    Logger.log("_sendNewDeviceEmail Fehler: " + e.message);
+  }
+}
+
+/**
+ * EINMALIG AUSFÜHREN im GAS-Editor: Richtet die Tracking-Sheets ein.
+ * Fügt Header-Zeilen in Visits und Mapping ein (nur wenn noch leer),
+ * und baut den Dashboard-Tab mit KPI-Formeln auf.
+ */
+function setupTracking() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // ── Visits: Header ──
+  var visits = ss.getSheetByName("Visits");
+  if (visits && visits.getLastRow() === 0) {
+    visits.appendRow([
+      "Zeitpunkt", "device_id", "person_label", "fingerprint",
+      "device_type", "os", "os_version", "browser", "browser_version",
+      "screen_w", "screen_h", "dpr",
+      "city", "region", "country", "isp",
+      "mode", "app_version", "ua_raw"
+    ]);
+    visits.getRange(1, 1, 1, 19)
+      .setFontWeight("bold")
+      .setBackground("#1a2a3a")
+      .setFontColor("#ffffff");
+    visits.getRange("A:A").setNumberFormat("dd.MM.yyyy HH:mm:ss");
+    visits.setFrozenRows(1);
+    Logger.log("Visits: Header angelegt.");
+  } else {
+    Logger.log("Visits: Bereits befüllt, übersprungen.");
+  }
+
+  // ── Mapping: Header ──
+  var mapping = ss.getSheetByName("Mapping");
+  if (mapping && mapping.getLastRow() === 0) {
+    mapping.appendRow([
+      "device_id", "fingerprint", "label",
+      "device_description", "first_seen", "last_seen", "notes"
+    ]);
+    mapping.getRange(1, 1, 1, 7)
+      .setFontWeight("bold")
+      .setBackground("#1a2a3a")
+      .setFontColor("#ffffff");
+    mapping.getRange("E:F").setNumberFormat("dd.MM.yyyy HH:mm");
+    mapping.setFrozenRows(1);
+    Logger.log("Mapping: Header angelegt.");
+  } else {
+    Logger.log("Mapping: Bereits befüllt, übersprungen.");
+  }
+
+  // ── Dashboard: KPI-Formeln ──
+  var dash = ss.getSheetByName("Dashboard");
+  if (dash) {
+    dash.clearContents();
+
+    dash.getRange("A1").setValue("WECKRAIN BESUCHER — DASHBOARD");
+    dash.getRange("A1").setFontSize(14).setFontWeight("bold");
+
+    dash.getRange("A3").setValue("KENNZAHLEN").setFontWeight("bold");
+    dash.getRange("A4").setValue("Besuche gesamt");
+    dash.getRange("B4").setFormula("=COUNTA(Visits!A:A)-1");
+    dash.getRange("A5").setValue("Letzte 7 Tage");
+    dash.getRange("B5").setFormula("=COUNTIFS(Visits!A:A,\">=\"&(TODAY()-7),Visits!A:A,\"<=\"&TODAY())");
+    dash.getRange("A6").setValue("Heute");
+    dash.getRange("B6").setFormula("=COUNTIFS(Visits!A:A,\">=\"&TODAY())");
+    dash.getRange("A7").setValue("Unique Geräte");
+    dash.getRange("B7").setFormula("=IFERROR(COUNTUNIQUE(Visits!B2:B),0)");
+    dash.getRange("A8").setValue("Ohne Zuordnung");
+    dash.getRange("B8").setFormula("=COUNTIF(Visits!C:C,\"?\")");
+    dash.getRange("B8").setFontColor("#cc4444"); // rot wenn >0 — visueller Hinweis
+
+    dash.getRange("A10").setValue("PRO PERSON").setFontWeight("bold");
+    dash.getRange("A11").setFormula(
+      "=IFERROR(QUERY(Visits!A:C," +
+      "\"SELECT C, COUNT(A), MAX(A) WHERE C <> '' AND C <> '?' " +
+      "GROUP BY C ORDER BY COUNT(A) DESC " +
+      "LABEL C 'Person', COUNT(A) 'Besuche', MAX(A) 'Zuletzt gesehen'\"" +
+      ",1),\"– noch keine gelabelten Besucher –\")"
+    );
+
+    dash.getRange("A21").setValue("LETZTE 10 BESUCHE").setFontWeight("bold");
+    dash.getRange("A22").setFormula(
+      "=IFERROR(QUERY(Visits!A:R," +
+      "\"SELECT A, C, E, F, H, M, P, R ORDER BY A DESC LIMIT 10\"" +
+      ",1),\"Noch keine Daten\")"
+    );
+
+    dash.getRange("A34").setValue("UNBEKANNTE GERÄTE (kein Label)").setFontWeight("bold");
+    dash.getRange("A35").setFormula(
+      "=IFERROR(QUERY(Visits!A:F," +
+      "\"SELECT A, B, E, F WHERE C = '?' ORDER BY A DESC LIMIT 20\"" +
+      ",1),\"\")"
+    );
+
+    Logger.log("Dashboard: Formeln eingerichtet.");
+  }
+
+  Logger.log("setupTracking() abgeschlossen.");
 }

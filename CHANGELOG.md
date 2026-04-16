@@ -13,6 +13,27 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-16 — Besucher-Tracking (index.html 1.1.0 + backend/Code.gs 4.2.0)
+
+### index.html 1.1.0
+- **Neu: Besucher-Tracking** — feuert einmalig pro Session nach erfolgreichem Login (state === "ready"). Kein Tracking im LoginScreen, bei falschem Passwort oder während des Ladens.
+- Geräte-UUID wird beim ersten Besuch generiert und in `localStorage` (`weckrain_device_id`) gespeichert. Stabil über Sessions, solange der Browser-Cache nicht geleert wird.
+- Browser-Fingerprint (Hash aus UA + Bildschirm + Zeitzone + Sprache + CPU) als Fallback-Korrelation bei verlorenem localStorage.
+- UA-Parsing: Geräteklasse (Phone/Tablet/Desktop), OS + Version, Browser + Version.
+- Geo-IP via `ipapi.co` (kostenlos, 1000 req/Tag): Stadt, Region, Land, ISP.
+- Alle Daten per fire-and-forget GET-Request an GAS `?action=log` — blockiert UI nicht.
+- **Bump-Typ: MINOR (1.0.22 → 1.1.0)** — neues Feature, rückwärtskompatibel.
+
+### backend/Code.gs 4.2.0
+- **Neu: `handleVisitLog()`** — empfängt Tracking-Parameter, prüft Mapping-Tab auf bekannte `device_id`, schreibt Zeile in Visits-Tab. Bei unbekanntem Gerät: Eintrag im Mapping-Tab (label leer) + Email-Benachrichtigung.
+- **Neu: `_sendNewDeviceEmail()`** — sendet Email an karsten.hoffmann@gmail.com mit Betreff "Neue:r Reh-Besucher:in!" und Gerätedetails (Zeitpunkt, Gerät, OS, Browser, Bildschirm, Ort, ISP, device_id) + direktem Link zum Mapping-Tab.
+- **Neu: `setupTracking()`** — einmalig im GAS-Editor auszuführen: legt Header-Zeilen in Visits und Mapping an (idempotent), baut Dashboard-Tab mit KPI-Formeln (Kennzahlen, Pro-Person-Auswertung, Letzte 10 Besuche, Unbekannte Geräte).
+- `doGet()` erweitert: `?action=log` wird nach Passwort-Check abgezweigt. Falsches Passwort bei API-Calls → Text "unauthorized" statt Login-HTML.
+- Google Sheets: Visits (19 Spalten), Mapping (7 Spalten), Dashboard (QUERY-Formeln) — alle im bestehenden Weckrain-Sheet.
+- **Bump-Typ: MINOR (4.1.0 → 4.2.0)** — neues Feature (Tracking-API + Sheet-Setup), rückwärtskompatibel zur Sensor-/Polling-Logik.
+
+---
+
 ## 2026-04-16 — backend/Code.gs 4.1.0 (Konsolidierung: 4.0.7 → 4.1.0 aus fix-password-submission-Branch nach main übernommen)
 
 ### backend/Code.gs 4.1.0 (Konsolidierung)
