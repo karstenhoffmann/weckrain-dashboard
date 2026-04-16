@@ -13,6 +13,15 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-16 — index.html 1.1.1 (fix Tracking: visibilitychange + 4h-Cooldown)
+
+### index.html 1.1.1
+- **Fix: Tracking feuert jetzt auch bei Tab-Aufwecken** — via Page Visibility API (`visibilitychange`-Event). Bisher wurde nur beim initialen Seitenload geloggt. Wer den Tab tagelang offen lässt und nur den Rechner aus dem Ruhemodus holt, wurde nicht erfasst.
+- **4-Stunden-Cooldown** (`weckrain_last_tracked` in localStorage) verhindert Log-Spam bei häufigem Tab-Wechseln. Pro Gerät max. ~6 Einträge/Tag.
+- `trackingSent`-Ref entfernt — Cooldown übernimmt die Deduplizierung.
+
+---
+
 ## 2026-04-16 — backend/Code.gs 4.2.1 (fix setupTracking: Header auch nachträglich einfügen)
 
 ### backend/Code.gs 4.2.1
