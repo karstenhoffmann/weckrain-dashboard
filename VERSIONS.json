@@ -12,8 +12,8 @@
       "role": "Frontend-Dashboard (GitHub Pages, weckrain.derkarsten.de)"
     },
     "backend/Code.gs": {
-      "version": "4.0.6",
-      "last_updated": "2026-04-13",
+      "version": "4.1.0",
+      "last_updated": "2026-04-15",
       "role": "Google Apps Script — Polling, Logging, JSON-API, Alerts"
     },
     "backend/Dashboard.html": {

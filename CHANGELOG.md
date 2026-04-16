@@ -13,6 +13,21 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-16 — backend/Code.gs 4.1.0 (Konsolidierung: 4.0.7 → 4.1.0 aus fix-password-submission-Branch nach main übernommen)
+
+### backend/Code.gs 4.1.0 (Konsolidierung)
+Diese Version war zuvor nur im Branch `claude/fix-password-submission-7Kigs` und wurde ohne Merge nach `main` direkt in GAS deployed. Damit `main` dem realen Deployment-Stand entspricht, wird der Endzustand der Branch hier übernommen. Enthaltene Zwischenversionen aus der Branch-Historie:
+
+- **4.0.7 (Lockout-Prävention + WARNUNG-Korrektur):** Schutz gegen Fritz!Box-Lockout bei wiederholten Login-Fehlern.
+- **4.0.8 (Anrufliste via calllist.lua XML statt foncalls_list.lua CSV):** Versuch, die in 4.0.6 dokumentierten CSV-Probleme über XML-API zu umgehen.
+- **4.0.9 (Diagnose testCallListRaw + deadline + null-Guard):** Diagnose-Hilfen, nachdem `calllist.lua` HTTP 404 lieferte.
+- **4.1.0 (Telefon-Erkennung via Gmail Push-Service):** Komplette Ablösung der Fritz!Box-CSV-/XML-Telefon-API durch Gmail-Push (Anruflisten-Mailer der Fritz!Box). Macht die in 4.0.4–4.0.6 entwickelten CSV-Fixes obsolet (das CSV-Polling existiert nicht mehr).
+
+### Workflow-Lehre
+Backend-Branches müssen nach jedem GAS-Deploy nach `main` gemerged werden. Sonst entsteht Drift zwischen `VERSIONS.json`/`CHANGELOG.md` (auf main) und dem realen GAS-Stand. Der Branch `claude/fix-password-submission-7Kigs` wird nach diesem Konsolidierungs-Commit gelöscht.
+
+---
+
 ## 2026-04-13 — backend/Code.gs 4.0.6 (HTML-Detection + erweitertes Diagnose-Log)
 
 ### backend/Code.gs 4.0.6

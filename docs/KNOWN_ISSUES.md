@@ -4,7 +4,7 @@ Offene und bekannte Probleme, die beim nächsten Iterationsschritt angegangen we
 
 ## Issue 1 — Gesang / Telefon-Aktivität nicht zuverlässig erkannt
 
-**Status:** erneut gepatcht in Version 4.0.3 (nach Regression in 4.0.1)
+**Status:** 4.1.0 implementiert Gmail-basierte Erkennung (Option A). Wartet auf Fritz!Box Push Service Konfiguration durch Karsten (System → Push Service → Anrufe aktivieren, Empfänger = GAS-Gmail-Konto). Bis zur Konfiguration: g=RUHE (kein FEHLER, kein Spam).
 **Betroffen (pre-fix):** `checkPhoneActivity()` in `backend/Code.gs`, Sensor-Key `g`
 **Symptom:** Im Dashboard wurde der Gesang-Slot häufig als inaktiv angezeigt, obwohl in der Fritz!Box-Anrufliste sehr wohl ein geführtes Telefonat im Zeitraum stand. Gleichzeitig wurden sehr kurze Klingel-Anrufe (ein paar Sekunden) fälschlich als Aktivität gewertet.
 
@@ -72,6 +72,44 @@ Trotz 4.0.1-Fix weiterhin fehlende Erkennungen bei realen Gesprächen. Drei mög
 3. Diagnose-Logging: `checkPhoneActivity()` schreibt bei RUHE-Ergebnis eine kompakte Zeile ins Systemlog (Label `TEL`) mit sep, Zeilenanzahl, lastPoll-Timestamp und Ablehnungsgrund pro Zeile. Bei AKTIV ebenfalls ein Log-Eintrag.
 
 **Falls die Mutter irgendwann einen Anrufbeantworter aktiviert:** `MIN_DURATION_MINUTES = 2` setzen, um AB-Antworten (< 2 Min) herauszufiltern. Alternativ die `Nebenstelle`-Spalte (`fields[5]`) auf AB-Bezeichner prüfen.
+
+### Weitere Untersuchung nach 4.0.3 (entdeckt 2026-04-13)
+
+Nach 4.0.3 wurden alle Gespräche immer noch nicht erkannt. Tests mit `testPhoneActivitySince(48)` zeigten:
+
+- 4.0.3–4.0.4: Alle CSV-Zeilen mit `felder=1` → Hinweis auf Tab-Separator-Problem
+- 4.0.5: Tab-Separator-Fix, aber erste Antwortzeile war `<html lang="de">` → Fritz!Box liefert Login-HTML statt CSV
+
+**Kernbefund:** Die Fritz!Box antwortet auf `/fon_num/foncalls_list.lua?sid=<SID>&csv=&type=all&max=20` mit HTTP 200 + der Login-HTML-Seite. Das bedeutet: Die Fritz!Box behandelt den Request als nicht-authentifiziert, obwohl die SID gültig ist (für das AHA-Interface funktioniert dieselbe SID einwandfrei).
+
+**Berechtigungen `monitor_api` sind korrekt und verifiziert (Karsten, 2026-04-13):** Der Benutzer `monitor_api` hat in den Fritz!Box-Einstellungen (System → Fritz!Box-Benutzer) die Berechtigung „Sprachnachrichten, Faxnachrichten, FRITZ!App Fon und Anrufliste". Das ist die erwartete Berechtigung für Anruflisten-Zugriff. Die Berechtigungen sind NICHT die Ursache des Problems. Nicht weiter in diese Richtung untersuchen.
+
+**Hypothesen zur Login-HTML-Ursache:**
+
+1. **URL-Parameter `csv=` (leer) statt `csv=1`:** Manche Fritz!OS-Versionen interpretieren den leeren Parameter als „HTML-Ansicht öffnen" statt als CSV-Download. Fix in 4.0.7: `csv=1`.
+2. **SID nur als URL-Parameter, nicht als Cookie:** Fritz!OS 8.x-Web-UI-Seiten könnten Cookie-basierte Sessions (`Cookie: sid=<SID>`) verlangen, nicht nur URL-Parameter. Fix in 4.0.7: Cookie-Header zusätzlich.
+3. **MD5-SID vs. PBKDF2-SID:** Fritz!OS 8.x führte PBKDF2-Authentifizierung ein. Die MD5-SID könnte für Web-UI-Endpoints eingeschränkt sein (AHA-Interface akzeptiert MD5 aus Kompatibilitätsgründen explizit). Noch nicht untersucht.
+
+**4.0.7 Fix-Versuch gescheitert (verifiziert):** `csv=1` + Cookie-Header hatte keinen Effekt. Fritz!Box liefert auch dann HTML-Login-Seite.
+
+**Ansatz-Wechsel in 4.0.8:** Statt `foncalls_list.lua` (Web-UI-Seite) wird jetzt `/calllist.lua` verwendet — der dedizierte API-Endpoint den TR-064's `GetCallList`-Action in seiner Response-URL nennt. `calllist.lua` ist für programmatischen Zugriff gebaut und gibt XML zurück (kein HTML). Er sollte MD5-SIDs wie das AHA-Interface akzeptieren. Falls auch `calllist.lua` HTML liefert, bestätigt das, dass das Problem nicht URL-spezifisch ist, sondern grundsätzlich die Session-Validierung betrifft — dann wäre PBKDF2-Auth oder TR-064-SOAP (Port 49000) die nächste Eskalationsstufe.
+
+**4.0.9 Befund — `calllist.lua` HTTP 404 (2026-04-14):** `testCallListRaw()` und die reguläre Poll-Routine bestätigen: `/calllist.lua` ist über die MyFRITZ!-Remote-URL **nicht erreichbar** — die Fritz!Box antwortet mit HTTP 404. Das ist eine architektonische Einschränkung der MyFRITZ!-Proxy-Schicht: Sie leitet nur das Web-UI (`/`) und das AHA-Interface (`/webservices/homeautoswitch.lua`) weiter. `calllist.lua`, `calllist.lua`, und TR-064-Ports (49000/49443) sind via MyFRITZ! nicht zugänglich. Damit sind **alle Fritz!Box-API-Pfade über das Remote-URL exhaustiert**:
+
+| Endpoint | Ergebnis | Ursache |
+|---|---|---|
+| `foncalls_list.lua?csv=` | HTTP 200 + HTML-Login | Web-UI-Session-Anforderung (4.0.3–4.0.7) |
+| `foncalls_list.lua?csv=1` + Cookie | HTTP 200 + HTML-Login | Gleich, Cookie hat keinen Effekt (4.0.7) |
+| `calllist.lua` (XML-API) | HTTP 404 | MyFRITZ! leitet diesen Pfad nicht weiter (4.0.8–4.0.9) |
+| TR-064 Port 49000/49443 | Nicht erreichbar | MyFRITZ! leitet keine non-standard Ports weiter |
+
+**Mögliche nächste Schritte:**
+
+A) **Fritz!Box Push Service (Anruf-Email-Benachrichtigungen)** — EMPFOHLEN: Fritz!Box kann per Push Service eine Email senden wenn ein Anruf eingeht oder geführt wird. Das GAS-Script würde diese Emails per `GmailApp.search()` auslesen — identische Architektur wie die bereits funktionierende Tür-Erkennung (`checkDoorViaGmail()`). Erfordert: Fritz!Box Push Service für Anrufe aktivieren (System → Push Service → Anrufe), Email-Empfänger = dieselbe Gmail-Adresse die das GAS-Script nutzt. Kein Code-Refactoring auf Fritz!Box-Seite nötig.
+
+B) **`monitor_api` vollen Admin-Zugriff geben** ("Fritz!Box-Einstellungen"): Damit würde `foncalls_list.lua` zugänglich — diese Seite erfordert `Fritz!Box-Einstellungen`-Berechtigung, nicht nur `Anrufliste`. Sicherheitsabwägung: `monitor_api` hätte dann vollen Admin-Zugriff auf die Fritz!Box.
+
+C) **Einschränkung dokumentieren, Sensor deaktivieren**: `ENABLED_SENSORS.telefon = false` setzen, Anruferkennung aus dem System entfernen.
 
 ### Quellen
 
@@ -143,9 +181,9 @@ Das ist ein bewusster Trade-off gegen „Reparierbarkeit ohne Toolchain" — sie
 
 Aktuell nicht geplant.
 
-## Issue 6 — HTTP 403 von Fritz!Box deutlich zu häufig
+## Issue 6 — HTTP 403 von Fritz!Box zu häufig + Lockout-Risiko
 
-**Status:** offen, mittlere Priorität
+**Status:** teilweise behoben in 4.0.7 (maxRetries reduziert), Monitoring weiter empfohlen
 **Betroffen:** `backend/Code.gs`, `querySmartHomeDevices()`, `checkPhoneActivity()`
 
 ### Symptom
@@ -154,7 +192,20 @@ Aus dem Systemlog (07.04–10.04.2026): Etwa jeder 3.–4. Poll schlägt mit `AH
 
 Das IP-Rotations-Problem ist in Issue 2 bereits beschrieben und in 4.0.0 gemildert (Retry-Logik). Aber die beobachtete Fehlerrate (>20 Fehlschläge in ~3 Tagen bei ca. 144 erwarteten Polls) entspricht ca. 14% Fehlerrate — deutlich mehr als erwartet.
 
-### Mögliche Ursachen
+### Lockout-Risiko (analysiert 2026-04-13)
+
+Mit `maxRetries=5` (vor 4.0.7) erzeugte ein einziger Poll im Worst Case bis zu **13 Login-Aufrufe**:
+- 1 initialer `getFritzBoxSID()`-Aufruf
+- bis zu 6 Wiederholungs-Logins in `querySmartHomeDevices()` (bei jedem 403)
+- bis zu 6 Wiederholungs-Logins in `checkPhoneActivity()` (bei jedem 403)
+
+Diese Logins kommen aus rotierenden Google-IPs alle 30 Minuten. Fritz!Box Brute-Force-Schutz reagiert primär auf fehlgeschlagene Logins (falsches Passwort) — unsere Logins GELINGEN. Aber die hohe Frequenz von Logins aus vielen verschiedenen IPs kann `BlockTime` erzeugen (Fritz!Box erzwingt dann eine Wartezeit vor dem nächsten Login-Versuch).
+
+### Fix in 4.0.7
+
+`maxRetries` in `querySmartHomeDevices()` und `checkPhoneActivity()` von 5 auf 2 reduziert → maximal **7 Login-Aufrufe** pro Poll statt 13. Das Retry-Delay bleibt bei 1 Sekunde.
+
+### Mögliche Ursachen (403-Häufigkeit)
 
 1. **Fritz!Box Session-Timeout aggressiver als gedacht.** Die SID läuft nach 10 min aus. Der GAS-Trigger feuert alle 30 min, Session ist also immer abgelaufen — aber `getFritzBoxSID()` holt jedesmal frisch eine SID. Das sollte OK sein, ist aber ein möglicher Fehlerquelle wenn Fritz!Box den Login-Request von wechselnden IPs ablehnt.
 2. **Steigende IP-Poolbreite bei Google.** Googles GAS-IP-Pool könnte breiter geworden sein oder aggressiver rotieren als 2024/2025.
@@ -166,11 +217,10 @@ Das IP-Rotations-Problem ist in Issue 2 bereits beschrieben und in 4.0.0 gemilde
 2. Im GAS-Systemlog prüfen: Treten die 403-Fehler zu bestimmten Tageszeiten gehäuft auf?
 3. Testen: `testPoll()` manuell im GAS-Editor ausführen und schauen ob es zum 403 kommt.
 
-### Mögliche Fixes (noch nicht implementiert)
+### Weitere Maßnahmen (falls 4.0.7 nicht ausreicht)
 
 - **Delay zwischen Login-Retry und AHA-Request erhöhen** (aktuell: 1 Sekunde nach 403). Ggf. auf 3–5 Sekunden erhöhen.
-- **Retry-Anzahl reduzieren** (aktuell: 3 Versuche pro Sensor). Weniger aggressive Retries könnten Fritz!Box-seitigen Soft-Block verhindern.
-- **Konsolidierter Login:** Alle Sensor-Requests in einer Session (mit einer SID) statt jeder Sensor mit eigener SID — spart Login-Calls und reduziert IP-Exposition. (Gegenläufig zu Issue 2 Fix — Trade-off.)
+- **Konsolidierter Login:** Alle Sensor-Requests in einer Session (mit einer SID) statt eigene SID pro Retry — spart Login-Calls und reduziert IP-Exposition. (Gegenläufig zu Issue 2 Fix — Trade-off.)
 
 ## Referenzen
 

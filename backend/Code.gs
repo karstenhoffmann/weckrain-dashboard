@@ -1,13 +1,13 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.0.6
-// Last updated: 2026-04-13
+// Version: 4.1.0
+// Last updated: 2026-04-15
 // Source of truth: /VERSIONS.json
 // ============================================================================
 // Fritz!Box Aktivitätsüberwachung via Google Apps Script
 //
 // Authentifizierung: MD5 Challenge-Response (AVM-Spezifikation)
-// Sensorik: Energiezähler-Delta (kumulativ), Gmail-Push (Tür), CSV (Telefon)
+// Sensorik: Energiezähler-Delta (kumulativ), Gmail-Push (Tür + Telefon)
 // Alerting: Nur bei Inaktivität (>18h) oder Ausfall (>3h), mit Kontext-Historie
 // Sicherheit: Dedizierter Nur-Lese-Benutzer, Passwort in Script Properties
 // ============================================================================
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.0.6";
+var CODE_GS_VERSION = "4.1.0";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -235,7 +235,10 @@ function extractXmlValue(xml, tagName) {
  */
 function querySmartHomeDevices(sid) {
   var baseUrl = getConfig("FRITZBOX_URL");
-  var maxRetries = 5; // 6 Versuche — nötig wegen Google-IP-Rotation vs. Fritz!Box-SID-Binding
+  var maxRetries = 2; // 3 Versuche — IP-Rotation-Workaround. Bewusst niedrig gehalten:
+  // Zu viele Logins in kurzer Zeit aus wechselnden Google-IPs könnten den Fritz!Box-
+  // Brute-Force-Schutz (BlockTime) auslösen oder einen Soft-Lock erzeugen.
+  // 3 Versuche reichen für die überwiegende Mehrheit der IP-Rotation-Fälle.
 
   for (var attempt = 0; attempt <= maxRetries; attempt++) {
     var url =
@@ -447,255 +450,83 @@ function checkDoorViaGmail() {
   }
 }
 
-// ─── ANRUFLISTE (CSV-Export) ────────────────────────────────────────────────
+// ─── ANRUFE (Gmail Push-Service) ───────────────────────────────────────────
 
 /**
- * Fragt die Anrufliste der Fritz!Box ab (CSV-Export).
- * Gibt zurück, ob seit dem letzten Poll ein Telefonat GEFÜHRT wurde.
+ * Prüft per Gmail, ob die Fritz!Box seit dem letzten Poll eine
+ * Anruf-Push-Mail gesendet hat.
  *
- * Anruftypen in der CSV:
- * 1 = Eingehend angenommen, 2 = Verpasst, 3 = Ausgehend, 4 = Aktiv
- * Wir zählen Typ 1 und 3 als "Telefonat geführt".
+ * Architektur identisch zur Tür-Erkennung (checkDoorViaGmail()): Die Fritz!Box
+ * sendet per Push Service eine E-Mail pro Anruf. Das Script durchsucht Gmail
+ * nach diesen Mails und verschiebt verarbeitete Threads in den Papierkorb
+ * (verhindert volles Postfach über Monate).
+ *
+ * Voraussetzung (Fritz!Box-seitig, einmalig durch Karsten):
+ *   System → Push Service → Neue Benachrichtigung: Typ "Anruf" /
+ *   "Änderung der Anrufliste", Versand "bei jedem Anruf",
+ *   Empfänger = Gmail-Konto dieses Scripts (dieselbe Adresse wie Tür-Push).
+ *
+ * Suchstrategie:
+ *   Breite Subject-Keywords — deckt Fritz!OS 7.x und 8.x ab.
+ *   Falls Push Service noch nicht konfiguriert: GmailApp.search() findet
+ *   nichts → RUHE (kein FEHLER, kein Systemlog-Spam).
+ *   Bei AKTIV: TEL-Systemlog enthält Betreff + Absender → zur Verfeinerung
+ *   der Suchquery nach erstem echten Fund.
  */
-function checkPhoneActivity(sid) {
-  if (!ENABLED_SENSORS.telefon)
-    return { status: "N/A", aktiv: false, sid: sid };
+function checkPhoneViaGmail() {
+  if (!ENABLED_SENSORS.telefon) return { status: "N/A", aktiv: false };
 
   try {
-    var baseUrl = getConfig("FRITZBOX_URL");
-    var maxRetries = 5; // 6 Versuche — analog zu Smart-Home-Abfrage
-    var csv = null;
-
-    // Retry-Logik wie bei Smart Home (IP-Rotation-Workaround)
-    for (var attempt = 0; attempt <= maxRetries; attempt++) {
-      var url =
-        baseUrl +
-        "/fon_num/foncalls_list.lua?sid=" +
-        sid +
-        "&csv=&type=all&max=20";
-
-      var response = UrlFetchApp.fetch(url, {
-        muteHttpExceptions: true,
-        validateHttpsCertificates: false,
-      });
-
-      if (response.getResponseCode() === 200) {
-        csv = response.getContentText("UTF-8");
-        // Früherkennung: Fritz!Box liefert bei fehlender Berechtigung
-        // HTTP 200 mit einer HTML-Seite statt CSV. Explizit abfangen.
-        if (csv.indexOf("<html") !== -1 || csv.indexOf("<!DOCTYPE") !== -1) {
-          logSystem(
-            "WARNUNG",
-            "Anrufliste: HTTP 200 aber HTML-Antwort statt CSV. " +
-              "Ursache: Benutzer 'monitor_api' hat möglicherweise keine " +
-              "Berechtigung 'Anrufliste und Telefonbuch' in den Fritz!Box-" +
-              "Benutzereinstellungen (System → Fritz!Box-Benutzer). " +
-              "Anfang der Antwort: " + csv.substring(0, 120).replace(/\n/g, "↵"),
-          );
-          return { status: "FEHLER", aktiv: false, sid: sid };
-        }
-        break;
-      }
-
-      // Bei 403: Neuen Login versuchen (IP-Rotation-Workaround, kein Log nötig)
-      if (response.getResponseCode() === 403 && attempt < maxRetries) {
-        Utilities.sleep(1000);
-        sid = getFritzBoxSID();
-        continue;
-      }
-
-      logSystem(
-        "WARNUNG",
-        "Anrufliste HTTP " +
-          response.getResponseCode() +
-          " nach " +
-          (attempt + 1) +
-          " Versuch(en)",
-      );
-      return { status: "FEHLER", aktiv: false, sid: sid };
-    }
-
-    var lines = csv.split("\n");
-
     var props = PropertiesService.getScriptProperties();
     var lastPollStr = props.getProperty("lastSuccessfulPoll");
     var lastPoll = lastPollStr
       ? new Date(lastPollStr)
       : new Date(Date.now() - 30 * 60 * 1000);
 
-    // ── Separator auto-detection via "sep=<char>" Präambel ──
-    // Fritz!OS liefert den Web-UI-Export mit Semikolon (sep=;), manche
-    // Versionen mit Tab (sep=<TAB-Byte>). WICHTIG: Kein .trim() verwenden —
-    // das würde einen TAB-Separator-Byte wegschneiden. Nur Zeilenenden (\r\n)
-    // am Ende der Zeile entfernen.
-    var separator = ";";
-    var dataStart = 1;
-    if (lines.length > 0 && lines[0].indexOf("sep=") === 0) {
-      var sepChar = lines[0].substring(4).replace(/[\r\n]+$/, "");
-      if (sepChar === "\t" || sepChar === "\\t") {
-        separator = "\t";
-      } else if (sepChar && sepChar.length === 1) {
-        separator = sepChar;
-      }
-      dataStart = 2;
+    var afterEpoch = Math.floor(lastPoll.getTime() / 1000);
+    // Subject-Keywords für Fritz!Box Anruf-Push-Mails (Fritz!OS 7.x + 8.x).
+    // Typische Betreffs:
+    //   Fritz!OS 7.x: "Änderung der Anrufliste auf FRITZ!Box"
+    //   Fritz!OS 8.x: variiert — Betreff aus erstem AKTIV-Log ableiten.
+    var searchQuery =
+      "subject:(Anruf OR Anrufliste OR Rufmitteilung) after:" + afterEpoch;
+
+    var threads = GmailApp.search(searchQuery, 0, 10);
+    if (threads.length === 0) {
+      return { status: "RUHE", aktiv: false };
     }
 
-    // ── CSV-Datenzeilen verarbeiten ──
-    // Spalten-Layout (Fritz!OS 8.x):
-    //   0: Typ
-    //   1: Datum (DD.MM.YY HH:MM)
-    //   2: Name
-    //   3: Rufnummer
-    //   4: Landes-/Ortsnetzbereich
-    //   5: Nebenstelle
-    //   6: Eigene Rufnummer
-    //   7: Dauer (H:MM, minuten-aufgerundet)
-    //
-    // Typ-Codes bei foncalls_list.lua?csv= (Web-UI-URL, NICHT TR-064!):
-    //   1 = CALLIN   — eingehend angenommen (Hörer wurde abgenommen)
-    //   2 = CALLFAIL — nicht zustande gekommen (verpasst, abgelehnt,
-    //                  ausgehend ohne Antwort) → niemals zählen
-    //   4 = CALLOUT  — ausgehend erfolgreich verbunden
-    //
-    // Filter-Kriterium: Alle erfolgreich verbundenen Gespräche (Typ 1, 3, 4).
-    //
-    // Typ-Codes — defensive Abdeckung beider Fritz!OS-Generationen:
-    //   1 = CALLIN   — eingehend angenommen
-    //   3 = CALLOUT  — ausgehend (TR-064-Semantik, ältere Fritz!OS-Versionen)
-    //   4 = CALLOUT  — ausgehend (Web-UI-Semantik, neuere Fritz!OS-Versionen)
-    //   2 = CALLFAIL — nie zählen (verpasst / nicht zustande gekommen)
-    //
-    // Warum ["1","3","4"] statt nur ["1","4"]:
-    //   Die empirische Verifikation in 4.0.1 bestätigte Typ 4 im Web-UI-Export.
-    //   In der Praxis tauchen aber weiterhin fehlende Erkennungen auf — manche
-    //   Fritz!OS-Versionen oder Anruf-Konstellationen liefern Typ 3 statt 4.
-    //   Belt-and-suspenders: alle Nicht-CALLFAIL-Typen abdecken.
-    //
-    // Dauer-Filter: MIN_DURATION_MINUTES = 0 (jede Verbindung zählt).
-    //   Kein Anrufbeantworter vorhanden → kein AB-Noise-Risiko.
-    //   Primärziel ist Lebenszeichen-Erkennung, nicht Gesprächslänge.
-    //   (Typ 2 / CALLFAIL werden über den Typ-Filter bereits ausgeschlossen.)
-    //
-    // Siehe docs/KNOWN_ISSUES.md Issue 1 für Hintergrund und Quellen.
-    var TYPES_ANSWERED = ["1", "3", "4"];
-    var MIN_DURATION_MINUTES = 0;
-
-    // Ablehnungsprotokoll für Diagnose-Logging im RUHE-Fall
-    var rejections = [];
-
-    for (var i = dataStart; i < lines.length; i++) {
-      var line = lines[i].trim();
-      if (!line) continue;
-      var fields = line.split(separator);
-      if (fields.length < 8) {
-        rejections.push("Z" + (i - dataStart + 1) + ":felder=" + fields.length);
-        continue;
+    var found = false;
+    for (var i = 0; i < threads.length; i++) {
+      var messages = threads[i].getMessages();
+      for (var j = 0; j < messages.length; j++) {
+        if (messages[j].getDate() > lastPoll) {
+          found = true;
+          logSystem(
+            "TEL",
+            'AKTIV via Gmail: subject="' +
+              messages[j].getSubject().substring(0, 60) +
+              '" from=' +
+              messages[j].getFrom().substring(0, 40) +
+              " date=" +
+              messages[j].getDate().toISOString().substring(0, 16),
+          );
+          break;
+        }
       }
-
-      var typ = fields[0].trim();
-      if (TYPES_ANSWERED.indexOf(typ) === -1) {
-        rejections.push("Z" + (i - dataStart + 1) + ":typ" + typ);
-        continue;
+      if (found) {
+        threads[i].moveToTrash();
       }
-
-      var dauerStr = fields[7].trim();
-      var dauerMinuten = parseDurationMinutes(dauerStr);
-      if (dauerMinuten < MIN_DURATION_MINUTES) {
-        rejections.push("Z" + (i - dataStart + 1) + ":dur" + dauerStr);
-        continue;
-      }
-
-      var callDate = parseFritzDate(fields[1].trim());
-      if (!callDate) {
-        rejections.push("Z" + (i - dataStart + 1) + ":datum?");
-        continue;
-      }
-
-      if (callDate > lastPoll) {
-        logSystem(
-          "TEL",
-          "AKTIV: typ=" + typ +
-            " " + fields[1].trim() +
-            " dauer=" + dauerStr +
-            " callDate=" + callDate.toISOString().substring(0, 16) +
-            " lastPoll=" + lastPoll.toISOString().substring(0, 16),
-        );
-        return { status: "AKTIV", aktiv: true, sid: sid };
-      }
-
-      rejections.push("Z" + (i - dataStart + 1) + ":" + fields[1].trim() + "<=poll");
     }
 
-    logSystem(
-      "TEL",
-      "RUHE: sep=" + JSON.stringify(separator) +
-        " daten=" + (lines.length - dataStart) +
-        " lastPoll=" + lastPoll.toISOString().substring(0, 16) +
-        " L0=" + JSON.stringify((lines[0] || "").substring(0, 40)) +
-        " Lhdr=" + JSON.stringify((lines[1] || "").substring(0, 60)) +
-        " Ld0=" + JSON.stringify((lines[dataStart] || "").substring(0, 60)) +
-        (rejections.length > 0
-          ? " rej=[" + rejections.slice(0, 10).join(", ") + "]" + (rejections.length > 10 ? "…" : "")
-          : " (leere Liste)"),
-    );
+    return found
+      ? { status: "AKTIV", aktiv: true }
+      : { status: "RUHE", aktiv: false };
 
-    return { status: "RUHE", aktiv: false, sid: sid };
   } catch (e) {
-    logSystem(
-      "WARNUNG",
-      "Anrufliste konnte nicht abgerufen werden: " + e.message,
-    );
-    return { status: "FEHLER", aktiv: false, sid: sid };
+    logSystem("WARNUNG", "Gmail-Telefonprüfung fehlgeschlagen: " + e.message);
+    return { status: "FEHLER", aktiv: false };
   }
-}
-
-/**
- * Parst ein Fritz!Box-Datum im Format "DD.MM.YY HH:MM" in ein Date-Objekt.
- */
-function parseFritzDate(str) {
-  try {
-    var parts = str.split(" ");
-    if (parts.length < 2) return null;
-    var dateParts = parts[0].split(".");
-    var timeParts = parts[1].split(":");
-    var year = parseInt(dateParts[2], 10);
-    if (year < 100) year += 2000;
-    return new Date(
-      year,
-      parseInt(dateParts[1], 10) - 1,
-      parseInt(dateParts[0], 10),
-      parseInt(timeParts[0], 10),
-      parseInt(timeParts[1], 10),
-    );
-  } catch (e) {
-    return null;
-  }
-}
-
-/**
- * Parst die Dauer-Spalte der Fritz!Box-Anrufliste ("H:MM"-Format mit
- * Minuten-Aufrundung) und gibt die Dauer in Minuten zurück.
- *
- * AVM-Semantik (TR-064 + foncalls_list.lua?csv=, Fritz!OS 8.x):
- *   "0:00" = Anruf kam nicht zustande (CALLFAIL)           →   0 Minuten
- *   "0:01" = Anruf < 1 Minute ("< 1 Min" in Web-UI)        →   1 Minute
- *   "0:50" = 50 Minuten                                    →  50 Minuten
- *   "1:35" = 1 Stunde 35 Minuten                           →  95 Minuten
- *
- * Das CSV-Feld enthält grundsätzlich NUR Stunden und Minuten — keine
- * Sekunden-Auflösung. Sehr kurze Anrufe werden als "0:01" abgespeichert.
- *
- * Quelle: AVM TR-064 Spec (X_AVM-DE_OnTel Calllist) und Community-
- * Verifikation — siehe docs/KNOWN_ISSUES.md Issue 1.
- */
-function parseDurationMinutes(str) {
-  if (!str) return 0;
-  var parts = String(str).split(":");
-  if (parts.length !== 2) return 0;
-  var hours = parseInt(parts[0], 10);
-  var minutes = parseInt(parts[1], 10);
-  if (isNaN(hours) || isNaN(minutes)) return 0;
-  return hours * 60 + minutes;
 }
 
 // ─── GOOGLE SHEET LOGGING ───────────────────────────────────────────────────
@@ -895,11 +726,7 @@ function pollFritzBox() {
     var devices = smartHomeResult.devices;
     sid = smartHomeResult.sid; // Ggf. aktualisierte SID nach Retry
 
-    // ── 3. Anrufliste prüfen ──
-    var telefonResult = checkPhoneActivity(sid);
-    sid = telefonResult.sid; // Ggf. aktualisierte SID nach Retry
-
-    // ── 4. Session beenden ──
+    // ── 3. Session beenden ──
     try {
       UrlFetchApp.fetch(
         getConfig("FRITZBOX_URL") + "/login_sid.lua?logout=1&sid=" + sid,
@@ -912,13 +739,14 @@ function pollFritzBox() {
       /* Logout-Fehler ignorieren */
     }
 
-    // ── 5. Haustür via Gmail prüfen ──
+    // ── 4. Sensoren via Gmail prüfen (kein Fritz!Box-Kontakt nötig) ──
     var tuerResult = checkDoorViaGmail();
+    var telefonResult = checkPhoneViaGmail();
 
-    // ── 6. Daten loggen ──
+    // ── 5. Daten loggen ──
     var irgendwasAktiv = logData(devices, tuerResult, telefonResult, "");
 
-    // ── 7. Ausfall-Recovery prüfen ──
+    // ── 6. Ausfall-Recovery prüfen ──
     var consecutiveFailures = parseInt(
       props.getProperty("consecutiveFailures") || "0",
       10,
@@ -953,7 +781,7 @@ function pollFritzBox() {
     props.setProperty("outageAlertSent", "false");
     props.setProperty("lastSuccessfulPoll", new Date().toISOString());
 
-    // ── 8. Inaktivität prüfen ──
+    // ── 7. Inaktivität prüfen ──
     var inaktivStunden = getConfigNumber("INAKTIVITAET_STUNDEN", 18);
     var aktivitaetVorhanden = hatAktivitaetInLetztenStunden(inaktivStunden);
     var inactivityAlertSent =
@@ -1387,11 +1215,6 @@ function testPoll() {
         (devices.tvAktiv ? " (Verbrauch seit letztem Poll!)" : ""),
     );
 
-    Logger.log("Prüfe Anrufliste...");
-    var telefon = checkPhoneActivity(sid);
-    sid = telefon.sid; // Ggf. aktualisierte SID nach Retry
-    Logger.log("Telefon: " + telefon.status);
-
     // Session beenden
     try {
       UrlFetchApp.fetch(
@@ -1407,6 +1230,10 @@ function testPoll() {
     var tuer = checkDoorViaGmail();
     Logger.log("Haustür: " + tuer.status);
 
+    Logger.log("Prüfe Gmail auf Anruf-Push-Mails...");
+    var telefon = checkPhoneViaGmail();
+    Logger.log("Telefon: " + telefon.status);
+
     Logger.log("=== TESTPOLL ERFOLGREICH ===");
     Logger.log(
       "HINWEIS: Beim allerersten Lauf zeigt Wasserkocher/TV immer RUHE,",
@@ -1421,9 +1248,10 @@ function testPoll() {
 }
 
 /**
- * TESTFUNKTION: Prüft ob Anrufe in den letzten hoursBack Stunden erkannt werden.
+ * TESTFUNKTION: Prüft ob Anruf-Push-Mails in den letzten hoursBack Stunden
+ * in Gmail eingegangen sind.
  *
- * Setzt lastSuccessfulPoll temporär zurück, ruft checkPhoneActivity() auf,
+ * Setzt lastSuccessfulPoll temporär zurück, ruft checkPhoneViaGmail() auf,
  * und stellt den ursprünglichen Wert danach wieder her (auch bei Fehlern).
  *
  * Ergebnis: Logger-Ausgabe UND neue TEL:-Einträge im Systemlog-Tab.
@@ -1443,16 +1271,23 @@ function testPhoneActivitySince(hoursBack) {
 
   Logger.log("=== testPhoneActivitySince(" + hoursBack + "h) ===");
   Logger.log("Simulierter lastPoll: " + fakePoll);
+  Logger.log("Suche nach Fritz!Box-Anruf-Push-Mails in Gmail...");
 
   try {
-    var sid = getFritzBoxSID();
-    var result = checkPhoneActivity(sid);
+    var result = checkPhoneViaGmail();
     Logger.log("Ergebnis: " + result.status);
-    Logger.log("Details: siehe TEL:-Einträge im Systemlog-Tab des Google Sheets.");
+    if (result.status === "AKTIV") {
+      Logger.log("→ Anruf-Push-Mail gefunden. Details: TEL-Eintrag im Systemlog-Tab.");
+    } else {
+      Logger.log("→ Keine Anruf-Push-Mails seit " + hoursBack + "h in Gmail.");
+      Logger.log("  Mögliche Ursachen:");
+      Logger.log("  1. Fritz!Box Push Service für Anrufe noch nicht konfiguriert.");
+      Logger.log("  2. Push-Mail im Spam-Ordner gelandet.");
+      Logger.log("  3. Keine Anrufe in diesem Zeitraum (normal).");
+    }
   } catch (e) {
     Logger.log("FEHLER: " + e.message);
   } finally {
-    // Immer wiederherstellen — egal ob Erfolg oder Fehler
     if (savedPoll) {
       props.setProperty("lastSuccessfulPoll", savedPoll);
     } else {
@@ -1462,6 +1297,7 @@ function testPhoneActivitySince(hoursBack) {
     Logger.log("=== ENDE ===");
   }
 }
+
 
 /**
  * TESTFUNKTION: Sendet eine Test-E-Mail, um den E-Mail-Versand zu prüfen.
