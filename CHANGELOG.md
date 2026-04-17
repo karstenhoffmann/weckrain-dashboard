@@ -13,6 +13,16 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-17 — backend/Code.gs 4.3.1 (fix Dashboard-Formeln: ARRAYFORMULA-Placement + clearFormats-Kompatibilität)
+
+### backend/Code.gs 4.3.1
+- **Fix Dashboard `PRO PERSON` und `LETZTE 15 BESUCHE`:** `ARRAYFORMULA` muss den gesamten `{}`-Block wrappen — nicht einzelne VLOOKUP-Aufrufe innerhalb davon. Falsches Placement war die Ursache für `#ERROR!` in beiden QUERY-Feldern.
+- **Fix Dashboard KENNZAHLEN (B4–B8):** `clearFormats()` kann in manchen Locales Zellen auf "Text"-Format setzen, was Formeln als Literale statt auszuwerten. Fix: `setNumberFormat("General")` explizit nach `clearFormats()`. Außerdem jetzt volle Spaltenreferenzen (`A:A` statt `A2:A`) für bessere Kompatibilität.
+- **Fix Dashboard QUERY-SQL:** `LOWER()` wird in der Google Query Language nicht unterstützt. Ersetzt durch direkten String-Vergleich `Col3<>'ja'` (funktioniert, da der Personen-Dropdown nur Lowercase-Werte erlaubt).
+- **Bump-Typ: PATCH (4.3.0 → 4.3.1)** — nur Dashboard-Formeln korrigiert, keine Verhaltens- oder API-Änderung.
+
+---
+
 ## 2026-04-16 — backend/Code.gs 4.3.0 (Personen-Stammdaten + Fingerprint-Fallback + Dashboard-Refactor)
 
 ### backend/Code.gs 4.3.0
