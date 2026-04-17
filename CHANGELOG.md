@@ -13,6 +13,14 @@ Format pro Eintrag:
 
 ---
 
+## 2026-04-17 — backend/Code.gs 4.3.2 (fix Dashboard-Formeln: Deutsch-Locale-Syntax)
+
+### backend/Code.gs 4.3.2
+- **Fix Dashboard-Formeln: Deutsch-Locale-Syntax** — GAS `setFormula()` übernimmt die Zeichenkette 1:1 ohne Locale-Konvertierung. In deutschem Google Sheets ist `;` der Funktions-Trenner und `\` (Backslash) der **Spalten**-Trenner innerhalb `{}`-Array-Literalen (nicht `;` — das wäre eine neue Zeile). Alle `setFormula()`-Aufrufe im Dashboard entsprechend korrigiert.
+- **Bump-Typ: PATCH (4.3.1 → 4.3.2)** — nur Locale-Syntax in Dashboard-Formeln.
+
+---
+
 ## 2026-04-17 — backend/Code.gs 4.3.1 (fix Dashboard-Formeln: ARRAYFORMULA-Placement + clearFormats-Kompatibilität)
 
 ### backend/Code.gs 4.3.1

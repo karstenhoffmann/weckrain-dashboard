@@ -1,6 +1,6 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.3.1
+// Version: 4.3.2
 // Last updated: 2026-04-17
 // Source of truth: /VERSIONS.json
 // ============================================================================
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.3.1";
+var CODE_GS_VERSION = "4.3.2";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -1708,61 +1708,60 @@ function setupTracking() {
   }
 
   // ── Dashboard: Personen-orientiert via VLOOKUP-Chain ──
+  // WICHTIG: Formeln in Deutsch-Locale-Syntax (Semikolon als Funktions-Trenner,
+  // Backslash als Spalten-Trenner innerhalb {}). GAS setFormula() übernimmt die
+  // Zeichenkette 1:1 — keine automatische Locale-Konvertierung findet statt.
   var dash = ss.getSheetByName("Dashboard");
   if (dash) {
     dash.clearContents();
     dash.clearFormats();
-    // clearFormats kann in manchen Locales Zellen auf "Text"-Format setzen —
-    // explizit auf "General" zurücksetzen damit Formeln ausgewertet werden.
     dash.getRange("A1:G200").setNumberFormat("General");
 
     dash.getRange("A1").setValue("WECKRAIN BESUCHER — DASHBOARD");
     dash.getRange("A1").setFontSize(14).setFontWeight("bold");
 
-    // Kennzahlen — volle Spaltenreferenzen (A:A) statt A2:A für bessere Kompatibilität
+    // Kennzahlen
     dash.getRange("A3").setValue("KENNZAHLEN").setFontWeight("bold");
     dash.getRange("A4").setValue("Besuche gesamt");
-    dash.getRange("B4").setFormula("=MAX(0,COUNTA(Visits!A:A)-1)");
+    dash.getRange("B4").setFormula("=MAX(0;COUNTA(Visits!A:A)-1)");
     dash.getRange("A5").setValue("Letzte 7 Tage");
-    dash.getRange("B5").setFormula("=COUNTIFS(Visits!A:A,\">=\"&(TODAY()-7))");
+    dash.getRange("B5").setFormula("=COUNTIFS(Visits!A:A;\">=\"&(TODAY()-7))");
     dash.getRange("A6").setValue("Heute");
-    dash.getRange("B6").setFormula("=COUNTIFS(Visits!A:A,\">=\"&TODAY())");
+    dash.getRange("B6").setFormula("=COUNTIFS(Visits!A:A;\">=\"&TODAY())");
     dash.getRange("A7").setValue("Unique Geräte");
-    dash.getRange("B7").setFormula("=IFERROR(COUNTUNIQUE(Visits!B:B)-1,0)");
+    dash.getRange("B7").setFormula("=IFERROR(COUNTUNIQUE(Visits!B:B)-1;0)");
     dash.getRange("A8").setValue("Unzugeordnete Geräte");
-    // Geräte in Mapping ohne Person-Zuweisung (volle Spalten, Header hebt sich auf)
-    dash.getRange("B8").setFormula("=MAX(0,COUNTA(Mapping!A:A)-COUNTA(Mapping!C:C))");
-    dash.getRange("B8").setFontColor("#cc4444"); // rot wenn >0 — Hinweis auf manuelle Zuordnung
+    dash.getRange("B8").setFormula("=MAX(0;COUNTA(Mapping!A:A)-COUNTA(Mapping!C:C))");
+    dash.getRange("B8").setFontColor("#cc4444");
 
-    // Pro Person via VLOOKUP-Chain: Visits.device_id → Mapping.Person-id → Personen.Name
-    // ARRAYFORMULA muss den gesamten {}-Block wrappen (nicht einzelne VLOOKUP darin).
-    // LOWER() wird in der Google Query Language nicht unterstützt — direkter String-Vergleich.
-    // Personen mit Admin='ja' werden ausgefiltert.
+    // Pro Person: VLOOKUP-Chain Visits.device_id → Mapping.Person-id → Personen.Name
+    // {} Spalten-Trenner = Backslash (Deutsch-Locale), Funktions-Trenner = Semikolon
+    // QUERY-SQL-String intern: Kommas bleiben (SQL-Standard, locale-unabhängig)
     dash.getRange("A10").setValue("PRO PERSON").setFontWeight("bold");
     dash.getRange("A11").setFormula(
       "=IFERROR(QUERY(" +
-      "ARRAYFORMULA({Visits!A2:A," +
-      "IFERROR(VLOOKUP(IFERROR(VLOOKUP(Visits!B2:B,Mapping!A:C,3,0),\"\"),Personen!A:B,2,0),\"\")," +
-      "IFERROR(VLOOKUP(IFERROR(VLOOKUP(Visits!B2:B,Mapping!A:C,3,0),\"\"),Personen!A:D,4,0),\"\")})," +
+      "ARRAYFORMULA({Visits!A2:A\\" +
+      "IFERROR(VLOOKUP(IFERROR(VLOOKUP(Visits!B2:B;Mapping!A:C;3;0);\"\");Personen!A:B;2;0);\"\")\\"+
+      "IFERROR(VLOOKUP(IFERROR(VLOOKUP(Visits!B2:B;Mapping!A:C;3;0);\"\");Personen!A:D;4;0);\"\")});" +
       "\"SELECT Col2,COUNT(Col1),MAX(Col1) " +
       "WHERE Col2<>'' AND Col3<>'ja' " +
       "GROUP BY Col2 ORDER BY COUNT(Col1) DESC " +
-      "LABEL Col2 'Person',COUNT(Col1) 'Besuche',MAX(Col1) 'Zuletzt gesehen'\",0)," +
+      "LABEL Col2 'Person',COUNT(Col1) 'Besuche',MAX(Col1) 'Zuletzt gesehen'\";0);" +
       "\"– noch keine zugeordneten Besuche –\")"
     );
 
-    // Letzte Besuche mit aufgelöstem Namen (Personen-Name statt device_id)
-    // Visits-Spalten: A=Zeitpunkt B=device_id E=device_type F=os H=browser M=city N=region
-    // Der VLOOKUP-Join wird als 17. Spalte an Visits!A2:P angehängt.
+    // Letzte 15 Besuche mit aufgelöstem Personen-Namen
+    // Visits-Spalten im Array: A=Zeitpunkt E=device_type F=os H=browser M=city N=region
+    // 7. Spalte = aufgelöster Personen-Name via VLOOKUP-Chain
     dash.getRange("A22").setValue("LETZTE 15 BESUCHE").setFontWeight("bold");
     dash.getRange("A23").setFormula(
       "=IFERROR(QUERY(" +
-      "ARRAYFORMULA({Visits!A2:A,Visits!E2:E,Visits!F2:F,Visits!H2:H,Visits!M2:M,Visits!N2:N," +
-      "IFERROR(VLOOKUP(IFERROR(VLOOKUP(Visits!B2:B,Mapping!A:C,3,0),\"\"),Personen!A:B,2,0),\"?\")})," +
+      "ARRAYFORMULA({Visits!A2:A\\Visits!E2:E\\Visits!F2:F\\Visits!H2:H\\Visits!M2:M\\Visits!N2:N\\" +
+      "IFERROR(VLOOKUP(IFERROR(VLOOKUP(Visits!B2:B;Mapping!A:C;3;0);\"\");Personen!A:B;2;0);\"?\")});" +
       "\"SELECT Col7,Col1,Col2,Col3,Col4,Col5,Col6 " +
       "WHERE Col1 IS NOT NULL " +
       "ORDER BY Col1 DESC LIMIT 15 " +
-      "LABEL Col7 'Person',Col1 'Zeitpunkt',Col2 'Typ',Col3 'OS',Col4 'Browser',Col5 'Stadt',Col6 'Region'\",0)," +
+      "LABEL Col7 'Person',Col1 'Zeitpunkt',Col2 'Typ',Col3 'OS',Col4 'Browser',Col5 'Stadt',Col6 'Region'\";0);" +
       "\"Noch keine Daten\")"
     );
 
@@ -1771,9 +1770,9 @@ function setupTracking() {
     dash.getRange("A42").setValue("→ Im Mapping-Tab Spalte 'Person': id aus Dropdown wählen.")
       .setFontColor("#666666").setFontStyle("italic");
     dash.getRange("A43").setFormula(
-      "=IFERROR(QUERY(Mapping!A:G," +
+      "=IFERROR(QUERY(Mapping!A:G;" +
       "\"SELECT A,F,D,G WHERE C='' OR C IS NULL ORDER BY F DESC " +
-      "LABEL A 'device_id',F 'Letzter Besuch',D 'Geraet',G 'Notizen'\",1)," +
+      "LABEL A 'device_id',F 'Letzter Besuch',D 'Geraet',G 'Notizen'\";1);" +
       "\"– alle bekannten Geraete sind zugeordnet –\")"
     );
 
