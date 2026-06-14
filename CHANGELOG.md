@@ -13,6 +13,19 @@ Format pro Eintrag:
 
 ---
 
+## 2026-06-14 — backend/Code.gs 4.4.0 (Dashboard-Erreichbarkeits-Check)
+
+### backend/Code.gs 4.4.0
+- **Neu: `checkDashboardReachability()`** — prüft alle 30 Minuten von Googles Servern aus ob `weckrain.derkarsten.de` HTTP 200 zurückgibt. Echte externe Perspektive, unabhängig vom Tailnet (Uptime Kuma sieht das nicht).
+- Alert erst nach 2 aufeinanderfolgenden Fehlern (~60 Min) um False Positives durch kurze GitHub-Pages-Hickups zu vermeiden. Recovery-Alert wenn das Dashboard wieder erreichbar ist.
+- Subject-Präfix `[Dashboard]` statt `[Weckrain Check]` — auf einen Blick erkennbar: Technik-Problem, kein Mama-Problem. Kein `getRecentHistory()` im Body (Sensor-Daten irrelevant für DNS/TLS-Probleme).
+- Fehler-Diagnose im Alert-Body: HTTP 404 → CNAME/Repo-Problem, HTTP 403 → Custom-Domain-Config, `null` (Exception) → DNS/TLS/Verbindungsfehler.
+- Konfiguration: Config-Tab, Schlüssel `DASHBOARD_URL = https://weckrain.derkarsten.de`. Optional — ohne diesen Key passiert nichts.
+- Hintergrund: DNS-Migration von all-inkl.com zu Infomaniak hatte nur einen Wildcard-A-Record (`*.derkarsten.de → Tailscale-IP`), der auch `weckrain` erfasst hat. Dashboard war ~2 Monate von außen nicht erreichbar, ohne dass das Monitoring es gemeldet hätte.
+- **Bump-Typ: MINOR (4.3.2 → 4.4.0)** — neues Feature, rückwärtskompatibel.
+
+---
+
 ## 2026-04-17 — backend/Code.gs 4.3.2 (fix Dashboard-Formeln: Deutsch-Locale-Syntax)
 
 ### backend/Code.gs 4.3.2

@@ -1,7 +1,7 @@
 // ============================================================================
 // Weckrain Backend — Code.gs
-// Version: 4.3.2
-// Last updated: 2026-04-17
+// Version: 4.4.0
+// Last updated: 2026-06-14
 // Source of truth: /VERSIONS.json
 // ============================================================================
 // Fritz!Box Aktivitätsüberwachung via Google Apps Script
@@ -16,7 +16,7 @@
 // Diese Konstante wird bei jedem Code.gs-Release mit /VERSIONS.json synchron
 // gehalten. Sie erscheint im JSON-API-Response als `version`-Feld, im
 // Systemlog beim Setup und im täglichen Heartbeat-Eintrag.
-var CODE_GS_VERSION = "4.3.2";
+var CODE_GS_VERSION = "4.4.0";
 
 // ─── SENSOR-KONFIGURATION ────────────────────────────────────────────────────
 // Setze einen Sensor auf false, wenn er nicht installiert oder dauerhaft
@@ -707,6 +707,117 @@ function sendHeartbeat(success) {
   }
 }
 
+// ─── DASHBOARD-ERREICHBARKEIT ────────────────────────────────────────────────
+
+/**
+ * Prüft von außen ob das Dashboard erreichbar ist (HTTP 200).
+ * Läuft auf Googles Servern — echte externe Perspektive, unabhängig vom Tailnet.
+ *
+ * Alert-Logik: erst nach 2 aufeinanderfolgenden Fehlern (~60 Min), damit
+ * kurze GitHub-Pages-Hickups keine False Positives auslösen.
+ * Recovery-Alert wenn das Dashboard wieder erreichbar ist.
+ *
+ * Konfiguration: Config-Tab, Schlüssel "DASHBOARD_URL" (optional — ohne
+ * diesen Key passiert gar nichts).
+ *
+ * Aufgerufen aus pollFritzBox(). Hat eigenen try-catch — kann nie den
+ * Hauptprozess stören.
+ */
+function checkDashboardReachability() {
+  var url;
+  try {
+    url = getConfig("DASHBOARD_URL");
+  } catch (e) {
+    return; // Nicht konfiguriert — still ignorieren
+  }
+  if (!url || url.indexOf("http") !== 0) return;
+
+  var props = PropertiesService.getScriptProperties();
+  var failures = parseInt(props.getProperty("dashboardFailures") || "0", 10);
+  var alertSent = props.getProperty("dashboardAlertSent") === "true";
+
+  try {
+    var response = UrlFetchApp.fetch(url, {
+      method: "get",
+      followRedirects: true,
+      muteHttpExceptions: true,   // Gibt HTTP-Fehler als Response, wirft keinen Error
+      validateHttpsCertificates: true,
+      deadline: 20,               // Sekunden — verhindert, dass ein Hänger den Poll blockiert
+    });
+    var code = response.getResponseCode();
+
+    if (code === 200) {
+      if (alertSent) {
+        _sendDashboardAlert(
+          "Entwarnung — Dashboard wieder erreichbar",
+          "Das Dashboard ist wieder erreichbar (HTTP 200).\n\n" +
+          "URL: " + url + "\n" +
+          "Es war " + failures + " aufeinanderfolgende Check(s) " +
+          "(~" + Math.round(failures * 30) + " Minuten) nicht erreichbar."
+        );
+      }
+      props.setProperty("dashboardFailures", "0");
+      props.setProperty("dashboardAlertSent", "false");
+    } else {
+      _handleDashboardFailure(props, url, failures, alertSent, "HTTP " + code, code);
+    }
+  } catch (e) {
+    // Verbindungsfehler: SSL-Handshake-Fehler, DNS-Timeout, Netzwerk
+    _handleDashboardFailure(props, url, failures, alertSent, e.message, null);
+  }
+}
+
+/**
+ * Zählt Fehler, setzt Properties, löst Alert ab dem 2. aufeinanderfolgenden
+ * Fehler aus.
+ */
+function _handleDashboardFailure(props, url, failures, alertSent, errorDetail, httpCode) {
+  failures++;
+  props.setProperty("dashboardFailures", String(failures));
+  Logger.log("Dashboard nicht erreichbar (Versuch " + failures + "): " + errorDetail);
+
+  if (failures >= 2 && !alertSent) {
+    var ursache =
+      httpCode === 404 ? "GitHub Pages findet die Seite nicht (CNAME oder Repo-Name geändert?)" :
+      httpCode === 403 ? "GitHub Pages verweigert Zugriff (Custom-Domain-Konfiguration prüfen)" :
+      httpCode === null ? "Verbindungsfehler — DNS-Problem, TLS-Zertifikat oder Netzwerk" :
+      "Unerwarteter HTTP-Statuscode — GitHub Pages oder Proxy-Problem";
+
+    _sendDashboardAlert(
+      "Dashboard nicht erreichbar — " + url,
+      "Das Dashboard ist seit " + failures + " aufeinanderfolgenden Checks " +
+      "(~" + Math.round(failures * 30) + " Minuten) nicht erreichbar.\n\n" +
+      "URL:    " + url + "\n" +
+      "Fehler: " + errorDetail + "\n\n" +
+      "Wahrscheinliche Ursache:\n  " + ursache + "\n\n" +
+      "GitHub Pages Status:   https://www.githubstatus.com\n" +
+      "GitHub Pages Settings: https://github.com/karstenhoffmann/weckrain-dashboard/settings/pages"
+    );
+    props.setProperty("dashboardAlertSent", "true");
+  }
+}
+
+/**
+ * Sendet einen Dashboard-Infrastruktur-Alert.
+ * Bewusst KEIN getRecentHistory() — Sensor-Daten sind für ein
+ * DNS/TLS/Hosting-Problem irrelevant.
+ * Subject-Präfix "[Dashboard]" statt "[Weckrain Check]" — auf einen Blick
+ * erkennbar: das ist ein Technik-Problem, kein Mama-Problem.
+ */
+function _sendDashboardAlert(betreff, nachricht) {
+  try {
+    var email = getConfig("ALERT_EMAIL");
+    MailApp.sendEmail({
+      to: email,
+      subject: "[Dashboard] " + betreff,
+      body: nachricht + "\n\nDiese E-Mail wurde automatisch von deinem Weckrain Check gesendet.",
+    });
+    logSystem("DASHBOARD-ALERT", betreff);
+  } catch (e) {
+    Logger.log("Dashboard-Alert konnte nicht gesendet werden: " + e.message);
+  }
+}
+
 // ─── HAUPTLOGIK ─────────────────────────────────────────────────────────────
 
 /**
@@ -842,7 +953,10 @@ function pollFritzBox() {
     // ── 9b. Heartbeat (Dead Man's Switch) ──
     sendHeartbeat(true);
 
-    // ── 10. Status-Anfragen per E-Mail beantworten ──
+    // ── 10. Dashboard-Erreichbarkeit prüfen (externe Perspektive) ──
+    checkDashboardReachability();
+
+    // ── 11. Status-Anfragen per E-Mail beantworten ──
     checkStatusRequests();
   } catch (error) {
     // ── FEHLERBEHANDLUNG ──
