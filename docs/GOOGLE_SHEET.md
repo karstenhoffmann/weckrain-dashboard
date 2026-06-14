@@ -1,6 +1,6 @@
 # Google Sheet — Weckrain Check
 
-Das zentrale Datenarchiv des Weckrain Check ist ein Google Sheet mit dem Namen „Weckrain Check". Es liegt im Drive-Ordner `<DRIVE_FOLDER_URL>` des Monitoring-Accounts (`<MONITORING_GMAIL>`). Zugriff: nur der Monitoring-Account selbst — das Script läuft als dieser User.
+Das zentrale Datenarchiv des Weckrain Check ist ein Google Sheet mit dem Namen „Weckrain Check". Es liegt im Drive-Ordner `<DRIVE_FOLDER_URL>` des Monitoring-Accounts (`weckrain.check@gmail.com`). Zugriff: nur der Monitoring-Account selbst — das Script läuft als dieser User.
 
 Das Sheet hat drei Tabs mit fester Struktur. Änderungen am Schema sind Breaking Changes und müssen mit einem Major-Bump in `backend/Code.gs` einhergehen.
 
@@ -76,7 +76,7 @@ Der `Systemlog`-Tab wird **nicht** automatisch bereinigt, weil er klein bleibt (
 
 ## Zugriff und Ownership
 
-- **Owner:** `<MONITORING_GMAIL>` (der Account, unter dem Apps Script läuft)
+- **Owner:** `weckrain.check@gmail.com` (der Account, unter dem Apps Script läuft)
 - **Editoren:** keine weiteren
 - **Viewer:** keine weiteren
 - **Script-Binding:** Das Apps-Script-Projekt ist an dieses Sheet gebunden (container-bound). `SpreadsheetApp.getActiveSpreadsheet()` verweist immer auf dieses Sheet.

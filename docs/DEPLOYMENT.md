@@ -40,7 +40,7 @@ Das Backend ist Google Apps Script, gebunden an ein bestimmtes Google Sheet. Es 
 
 ### Variante A — Copy-Paste (einfach, kein Tooling)
 
-1. Im Monitoring-Gmail-Account einloggen.
+1. Im Monitoring-Account (weckrain.check@gmail.com) einloggen.
 2. Ziel-Sheet öffnen (siehe `docs/GOOGLE_SHEET.md`, „Zugriff und Ownership").
 3. Menü `Extensions → Apps Script` öffnen.
 4. Im linken Datei-Baum `Code.gs` auswählen.
@@ -53,7 +53,7 @@ Das Backend ist Google Apps Script, gebunden an ein bestimmtes Google Sheet. Es 
 
 ### Variante B — `clasp` (für häufigere Iterationen)
 
-Voraussetzung: Node installiert, `npm install -g @google/clasp`, `clasp login` einmalig im Monitoring-Account.
+Voraussetzung: Node installiert, `npm install -g @google/clasp`, `clasp login` einmalig im Monitoring-Account (weckrain.check@gmail.com).
 
 1. Im Repo-Unterordner `backend/` ein `.clasp.json` mit der `scriptId` des existierenden Apps-Script-Projekts anlegen. Diese Datei **nie** ins Repo committen (`.gitignore`-Eintrag).
 2. `clasp pull` holt den Stand aus dem Script-Editor — einmalig um den lokalen Stand zu verifizieren.
@@ -69,7 +69,7 @@ Die Webapp-URL `https://script.google.com/macros/s/<SCRIPT_ID>/exec` bleibt übe
 
 Beim Bearbeiten des Deployments muss gesetzt sein:
 
-- **Execute as:** Me (der Monitoring-Account)
+- **Execute as:** Me (weckrain.check@gmail.com)
 - **Who has access:** Anyone
 
 „Anyone" ist notwendig, damit das GitHub-Pages-Frontend (ohne Google-Login) die API fetchen kann. Der Zugriffsschutz läuft über den `pw`-Parameter und das Obscurity-Prinzip (siehe `docs/CONFIG.md`, „Sicherheit").
